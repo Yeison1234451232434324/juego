@@ -9,31 +9,43 @@
   --byte:#6fd0f5;
 }
 * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
-html,body { height:100%; overflow:hidden; }
-body { font-family:"Trebuchet MS",Verdana,system-ui,sans-serif; background:#0a0704; color:var(--cream); }
+html,body { height:100%; overflow:hidden; overscroll-behavior:none; }
+body { font-family:"Trebuchet MS",Verdana,system-ui,sans-serif; background:#0a0704; color:var(--cream);
+  -webkit-user-select:none; user-select:none; touch-action:manipulation; }
+/* El mundo y los controles no hacen scroll; los paneles con scroll sí. */
+#game { touch-action:none; }
+.modal-frame, .tut-body, .term-reqs, .term-steps, .mvc-dia, .tut-code { touch-action:pan-y; }
 .hidden { display:none !important; }
 button { font:inherit; cursor:pointer; }
 
-#game { position:fixed; top:0; left:0; right:0; bottom:0; width:100vw; height:100vh;
+/* Contenedores a pantalla completa. 100dvh se ajusta a la barra del navegador
+   móvil; 100vh es el respaldo para navegadores viejos. */
+#game { position:fixed; inset:0; width:100vw; height:100vh; height:100dvh;
   display:flex; align-items:center; justify-content:center;
   background:radial-gradient(circle at 50% 35%, #221607, #0a0704 75%); }
-#game canvas { box-shadow:0 8px 40px #000; }
+#game canvas { box-shadow:0 8px 40px #000; max-width:100vw; max-height:100vh; max-height:100dvh; }
 
-#ui { position:fixed; top:0; left:0; right:0; bottom:0; width:100vw; height:100vh;
+#ui { position:fixed; inset:0; width:100vw; height:100vh; height:100dvh;
   pointer-events:none; font-size:14px; }
 #ui > * { pointer-events:auto; }
 
-/* ---------- aviso pantalla ---------- */
-#rotate-hint { position:fixed; top:0; left:0; right:0; bottom:0; width:100vw; height:100vh; z-index:400; background:rgba(6,4,2,.95);
+/* ---------- aviso: girar el teléfono ---------- */
+#orient-hint { position:fixed; inset:0; z-index:400; background:rgba(6,4,2,.96);
   display:flex; align-items:center; justify-content:center; padding:24px; text-align:center; }
-#rotate-hint div { max-width:360px; line-height:1.6; }
-#rotate-hint button { margin-top:14px; background:var(--gold); color:#241a08; border:none;
-  border-radius:8px; padding:9px 16px; font-weight:800; }
+.oh-card { max-width:340px; line-height:1.55; display:flex; flex-direction:column; gap:8px; align-items:center; }
+.oh-icon { font-size:3rem; animation:oh-rock 1.8s ease-in-out infinite; }
+@keyframes oh-rock { 0%,100% { transform:rotate(-12deg); } 50% { transform:rotate(78deg); } }
+.oh-card p b { color:var(--gold-l); }
+#orient-hint button { margin-top:10px; background:var(--gold); color:#241a08; border:none;
+  border-radius:8px; padding:10px 18px; font-weight:800; }
 
 /* ---------- HUD mínimo (esquina) ---------- */
-.hud { position:fixed; top:10px; left:10px; z-index:40;
+.hud { position:fixed; z-index:40;
+  top:calc(8px + env(safe-area-inset-top));
+  left:calc(8px + env(safe-area-inset-left));
   background:rgba(20,12,6,.82); border:2px solid #4a3a24; border-radius:10px;
-  padding:6px 10px; font-size:.78rem; font-weight:700; min-width:150px; }
+  padding:6px 10px; font-size:.78rem; font-weight:700; min-width:150px;
+  max-width:52vw; }
 .hud .hud-line { display:flex; gap:10px; justify-content:space-between; color:#e8dcc0; }
 .hud .coin { color:var(--gold-l); }
 .hud .lvl { color:#e8dcc0; }
@@ -41,16 +53,22 @@ button { font:inherit; cursor:pointer; }
 .hud .hud-xp i { display:block; height:100%; background:linear-gradient(90deg,#3b6ea5,#6fa8dc); }
 
 /* ---------- prompt in-world + objetivo ---------- */
-.prompt { position:fixed; left:50%; bottom:72px; transform:translateX(-50%); z-index:38;
+.prompt { position:fixed; left:50%; bottom:76px; transform:translateX(-50%); z-index:38;
+  max-width:92vw; text-align:center;
   background:rgba(20,12,6,.9); border:2px solid var(--gold-l); color:var(--gold-l);
-  font-weight:800; font-size:.82rem; padding:4px 14px; border-radius:8px; }
-.objective { position:fixed; left:10px; top:88px; z-index:38; max-width:min(300px,44vw);
+  font-weight:800; font-size:.82rem; padding:5px 14px; border-radius:8px; }
+.objective { position:fixed; z-index:38; max-width:min(300px,52vw);
+  left:calc(10px + env(safe-area-inset-left));
+  top:calc(84px + env(safe-area-inset-top));
   background:rgba(20,12,6,.72); border-left:3px solid var(--gold);
   border-radius:0 8px 8px 0; padding:5px 10px; font-size:.72rem; line-height:1.35; }
 .objective b { color:var(--gold-l); }
 
 /* ---------- toasts / logros / regla ---------- */
-.toasts { position:fixed; right:12px; top:52px; z-index:60; display:flex; flex-direction:column; gap:6px; max-width:280px; }
+.toasts { position:fixed; z-index:60; display:flex; flex-direction:column; gap:6px;
+  right:calc(12px + env(safe-area-inset-right));
+  top:calc(52px + env(safe-area-inset-top));
+  max-width:min(280px, 70vw); }
 .toast { background:rgba(20,12,6,.95); border-left:4px solid var(--gold); border-radius:6px;
   padding:7px 12px; font-size:.8rem; transform:translateX(120%); transition:transform .28s; }
 .toast.in { transform:translateX(0); }
@@ -72,7 +90,9 @@ button { font:inherit; cursor:pointer; }
 .rp-card button { margin-top:12px; width:100%; background:var(--bad); color:#fff; border:none; border-radius:8px; padding:9px; font-weight:800; }
 
 /* ---------- dialogo NPC ---------- */
-.dialogue { position:fixed; top:0; left:0; right:0; bottom:0; width:100vw; height:100vh; z-index:110; display:none; align-items:flex-end; justify-content:center; padding:0 12px 24px; }
+.dialogue { position:fixed; inset:0; width:100vw; height:100vh; height:100dvh; z-index:110; display:none;
+  align-items:flex-end; justify-content:center;
+  padding:0 12px calc(24px + env(safe-area-inset-bottom)); }
 .dialogue.open { display:flex; }
 .dlg-box { display:flex; gap:12px; max-width:560px; width:100%;
   background:var(--wood1); border:3px solid var(--gold); border-radius:14px; padding:14px; }
@@ -83,9 +103,11 @@ button { font:inherit; cursor:pointer; }
 .dlg-foot button { background:var(--gold); color:#241a08; border:none; border-radius:8px; padding:7px 14px; font-weight:800; }
 
 /* ---------- modales (estaciones) ---------- */
-.modal { position:fixed; top:0; left:0; right:0; bottom:0; width:100vw; height:100vh; z-index:100; display:none; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,.55); }
+.modal { position:fixed; inset:0; width:100vw; height:100vh; height:100dvh; z-index:100;
+  display:none; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,.6); }
 .modal.open { display:flex; }
-.modal-frame { width:min(560px,96vw); max-height:88vh; overflow-y:auto; animation:pin .16s ease; }
+.modal-frame { width:min(560px,96vw); max-height:88vh; max-height:88dvh; overflow-y:auto;
+  -webkit-overflow-scrolling:touch; animation:pin .16s ease; }
 @keyframes pin { from { transform:translateY(16px); opacity:.5; } }
 
 /* variante madera */
@@ -198,15 +220,30 @@ button { font:inherit; cursor:pointer; }
 .mb.prim { background:linear-gradient(#f0c04a,var(--gold)); color:#241a08; border-color:#b8860b; }
 .menu-root .foot { position:fixed; bottom:12px; font-size:.72rem; color:#8a6a3a; text-align:center; padding:0 12px; }
 
-/* ---------- táctil ---------- */
-.touch.dpad { position:fixed; left:12px; bottom:14px; width:120px; height:120px;
-  display:grid; grid-template:repeat(3,1fr)/repeat(3,1fr); z-index:44; }
-.touch.dpad button { background:rgba(20,12,6,.7); border:2px solid #ffffff26; color:var(--gold-l); border-radius:10px; font-size:1rem; }
+/* ---------- controles táctiles (móvil / tablet) ---------- */
+.touch { touch-action:none; -webkit-user-select:none; user-select:none; }
+.touch.dpad {
+  position:fixed; z-index:44;
+  left:calc(12px + env(safe-area-inset-left));
+  bottom:calc(14px + env(safe-area-inset-bottom));
+  width:clamp(108px, 34vmin, 168px); height:clamp(108px, 34vmin, 168px);
+  display:grid; grid-template:repeat(3,1fr)/repeat(3,1fr); gap:4px; }
+.touch.dpad button {
+  background:rgba(20,12,6,.66); border:2px solid #ffffff2e; color:var(--gold-l);
+  border-radius:12px; font-size:clamp(1rem, 4.5vmin, 1.5rem); line-height:1;
+  display:flex; align-items:center; justify-content:center; }
+.touch.dpad button:active { background:rgba(224,169,43,.5); color:#140d07; }
 .touch.dpad .t-u { grid-area:1/2; } .touch.dpad .t-l { grid-area:2/1; }
 .touch.dpad .t-r { grid-area:2/3; } .touch.dpad .t-d { grid-area:3/2; }
-.touch.a-btn { position:fixed; right:16px; bottom:22px; width:62px; height:62px; border-radius:50%;
+.touch.a-btn {
+  position:fixed; z-index:44;
+  right:calc(16px + env(safe-area-inset-right));
+  bottom:calc(20px + env(safe-area-inset-bottom));
+  width:clamp(58px, 16vmin, 84px); height:clamp(58px, 16vmin, 84px); border-radius:50%;
   background:radial-gradient(circle at 35% 30%, var(--gold-l), var(--gold)); color:#140d07;
-  font-weight:900; font-size:1.2rem; border:3px solid #fff6; z-index:44; }
+  font-weight:900; font-size:clamp(1.05rem, 4.5vmin, 1.5rem); border:3px solid #fff6;
+  display:flex; align-items:center; justify-content:center; }
+.touch.a-btn:active { transform:scale(.92); }
 
 /* ---------- tutorial (pantalla grande de aprendizaje) ---------- */
 .tutorial-root { position:fixed; top:0; left:0; right:0; bottom:0; width:100vw; height:100vh;
@@ -281,3 +318,58 @@ button { font:inherit; cursor:pointer; }
 .loading-screen.ls-ok .ls-fill { background:linear-gradient(90deg,#5bd06a,#9bffab); }
 .ls-sub { font-size:.72rem; color:#cdbf9f; }
 .ls-pct { font-weight:800; color:var(--gold-l); font-size:.82rem; min-width:2.6em; text-align:right; }
+
+/* ================================================================
+   ADAPTACIÓN A PANTALLAS  (móvil · tablet · PC)
+   ================================================================ */
+
+/* Con controles táctiles visibles, sube lo que vive abajo para no taparlo. */
+body.is-touch.in-game .prompt { bottom:calc(150px + env(safe-area-inset-bottom)); }
+body.is-touch.in-game .loading-screen { bottom:calc(150px + env(safe-area-inset-bottom)); }
+body.is-touch.in-game .dialogue { align-items:center; padding-bottom:0; }
+
+/* --- Pantallas estrechas (teléfonos, ventanas pequeñas) --- */
+@media (max-width: 600px) {
+  #ui { font-size:13px; }
+  .hud { font-size:.72rem; min-width:0; padding:5px 8px; }
+  .objective { font-size:.68rem; max-width:60vw; }
+  .modal { padding:8px; align-items:flex-start; }
+  .modal-frame { width:100%; max-height:94dvh; margin-top:6px; }
+  .wood-panel, .paper-panel, .terminal { padding:12px; border-width:2px; }
+  .k { padding:11px 13px; font-size:.85rem; margin:5px 5px 0 0; }
+  .dlg-box { flex-direction:column; gap:8px; padding:12px; }
+  .dlg-face { align-self:center; font-size:2rem; }
+  .term-btns { gap:5px; }
+  .term-btns .k { flex:1 1 46%; text-align:center; }
+  .tut-card { max-height:100dvh; border-radius:0; border-width:0; width:100%; height:100dvh; }
+  .tut-head { padding:12px 14px; }
+  .tut-body { padding:14px 16px; font-size:.9rem; }
+  .tut-foot { padding:12px 14px calc(12px + env(safe-area-inset-bottom)); }
+  .price-row { flex-wrap:wrap; }
+  .price-row input { width:100%; }
+}
+
+/* --- Landscape muy bajo (teléfono acostado): compactar al máximo --- */
+@media (max-height: 430px) and (orientation: landscape) {
+  .hud { padding:4px 7px; font-size:.68rem; }
+  .hud .hud-xp { height:4px; margin:3px 0; }
+  .objective { top:calc(60px + env(safe-area-inset-top)); font-size:.66rem; padding:4px 8px; }
+  .toasts { top:calc(40px + env(safe-area-inset-top)); }
+  .modal { padding:6px; align-items:stretch; }
+  .modal-frame { max-height:98dvh; }
+  .tut-body { font-size:.84rem; padding:10px 14px; line-height:1.4; }
+  .tut-code, .term-steps { font-size:.76rem; }
+  body.is-touch.in-game .prompt,
+  body.is-touch.in-game .loading-screen { bottom:calc(120px + env(safe-area-inset-bottom)); }
+}
+
+/* --- Pantallas grandes (PC / tablet horizontal): un pelín más de aire --- */
+@media (min-width: 1100px) {
+  #ui { font-size:15px; }
+  .hud { font-size:.82rem; padding:8px 12px; }
+}
+
+/* Si el dispositivo tiene ratón fino, nunca mostramos controles táctiles. */
+@media (pointer: fine) and (min-width: 820px) {
+  .touch.dpad, .touch.a-btn { display:none !important; }
+}

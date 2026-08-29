@@ -2,8 +2,11 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#161009" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>CODECRAFT WORKSHOP</title>
   <link rel="stylesheet" href="./css/game.css" />
 </head>
@@ -11,9 +14,13 @@
   <div id="game"></div>
   <div id="ui"></div>
 
-  <div id="rotate-hint" class="hidden">
-    <div>🖥️ Este taller se juega mejor en <b>pantalla ancha</b> (PC, laptop o tablet en horizontal).
-      <button id="rotate-ok">Entendido</button></div>
+  <div id="orient-hint" class="hidden">
+    <div class="oh-card">
+      <div class="oh-icon">📱↻</div>
+      <p><b>Gira tu teléfono</b></p>
+      <p>Este taller se ve completo en <b>horizontal</b>. Pon el móvil de lado para jugar cómodo.</p>
+      <button id="orient-ok">Jugar así igual</button>
+    </div>
   </div>
 
   <noscript><p style="color:#fff;padding:24px;font-family:sans-serif">Activa JavaScript para jugar.</p></noscript>

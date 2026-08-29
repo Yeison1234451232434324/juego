@@ -31,10 +31,27 @@ import { SalesView } from "./views/SalesView.js";
 import { EvaluationView } from "./views/EvaluationView.js";
 import { TouchView } from "./views/TouchView.js";
 
-// ---------- aviso pantalla pequeña ----------
-const rh = document.getElementById("rotate-hint");
-if (window.innerWidth < 780) rh.classList.remove("hidden");
-document.getElementById("rotate-ok").addEventListener("click", () => rh.classList.add("hidden"));
+// ---------- adaptación a la pantalla (móvil / tablet / PC) ----------
+const orientHint = document.getElementById("orient-hint");
+let orientDismissed = false;
+const isPhone = () =>
+  (window.matchMedia?.("(pointer: coarse)").matches || "ontouchstart" in window) &&
+  Math.min(window.innerWidth, window.innerHeight) < 560;
+const isPortrait = () => window.innerHeight > window.innerWidth;
+
+function refreshLayout() {
+  // Sugerir horizontal solo en teléfonos en vertical (no en tablet/PC).
+  const suggest = isPhone() && isPortrait() && !orientDismissed;
+  orientHint.classList.toggle("hidden", !suggest);
+  document.body.classList.toggle("is-touch", window.matchMedia?.("(pointer: coarse)").matches || "ontouchstart" in window);
+  try { phaser?.scale.refresh(); } catch { /* aún no existe */ }
+}
+document.getElementById("orient-ok").addEventListener("click", () => {
+  orientDismissed = true;
+  orientHint.classList.add("hidden");
+});
+["resize", "orientationchange", "pageshow"].forEach((e) =>
+  window.addEventListener(e, () => { orientDismissed = orientDismissed && isPortrait(); setTimeout(refreshLayout, 60); }));
 
 // ---------- MODELO ----------
 const bus = new EventBus();
@@ -125,10 +142,13 @@ const phaser = new Phaser.Game({
   },
 });
 
+refreshLayout();
+
 phaser.events.on("menu:ready", () => {
   menu.render({ hasSave: save.hasSave() });
   menu.show();
   hud.show(false); touch.show(false);
+  refreshLayout();
   if (sessionStorage.getItem("cc:tutorial") === "1") {
     try { tutorial.open(true); }
     catch (e) { console.warn("tutorial:", e); sessionStorage.removeItem("cc:tutorial"); setTimeout(startGame, 60); }
@@ -145,6 +165,7 @@ phaser.events.on("workshop:ready", (sc) => {
   document.body.classList.add("in-game");
   hud.show(true); touch.show(true);
   hud.render(gs);
+  refreshLayout();
   phaser.scale.refresh();
   setTimeout(() => phaser.scale.refresh(), 120);
   bus.emit("objective:changed", { text: gs.objective, hintStation: gs.hintStation });
