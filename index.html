@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#161009" />
+  <title>CODECRAFT WORKSHOP</title>
+  <link rel="stylesheet" href="./css/game.css" />
+</head>
+<body>
+  <div id="game"></div>
+  <div id="ui"></div>
+
+  <div id="rotate-hint" class="hidden">
+    <div>🖥️ Este taller se juega mejor en <b>pantalla ancha</b> (PC, laptop o tablet en horizontal).
+      <button id="rotate-ok">Entendido</button></div>
+  </div>
+
+  <noscript><p style="color:#fff;padding:24px;font-family:sans-serif">Activa JavaScript para jugar.</p></noscript>
+
+  <script src="./vendor/phaser.min.js"></script>
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

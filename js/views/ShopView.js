@@ -1,0 +1,48 @@
+import { Modal } from "./ui/Modal.js";
+import { CONFIG } from "../config/gameConfig.js";
+
+/**
+ * ShopView — la Tienda de Carlos: comprar materiales y mejoras.
+ * Las mejoras cambian de verdad el gameplay (las consultan los controladores).
+ */
+export class ShopView {
+  #modal; #wsCtrl; #upCtrl; #gs;
+
+  constructor(workshopCtrl, upgradeCtrl, gs, bus) {
+    this.#wsCtrl = workshopCtrl; this.#upCtrl = upgradeCtrl; this.#gs = gs;
+    this.#modal = new Modal({ id: "shop", variant: "wood" });
+    this.#modal.bind({
+      buymat: (d) => { this.#wsCtrl.buy(d.type, 3); this.#render(); },
+      buyup: (d) => { this.#upCtrl.buy(d.key); this.#render(); },
+      close: () => this.#modal.close(),
+    });
+    bus.on("state:changed", () => this.#modal.isOpen && this.#render());
+  }
+
+  open() { this.#render(); this.#modal.open(); }
+
+  #render() {
+    const coins = this.#gs.player.coins;
+    const mat = (type, name) => {
+      const cost = 3 * (CONFIG.ECONOMY.buyPrices[type] ?? 6);
+      return `<div class="shop-row"><span>${name} ×3</span>
+        <button class="k" data-act="buymat" data-type="${type}" ${coins >= cost ? "" : "disabled"}>🪙 ${cost}</button></div>`;
+    };
+    const ups = this.#upCtrl.list().map((u) => `
+      <div class="shop-up ${u.owned ? "owned" : ""}">
+        <div><b>${u.name}</b><br><span class="wp-sub">${u.desc}</span></div>
+        <button class="k" data-act="buyup" data-key="${u.key}" ${u.owned ? "disabled" : coins >= u.cost ? "" : "disabled"}>
+          ${u.owned ? "✓ Comprada" : `🪙 ${u.cost}`}</button>
+      </div>`).join("");
+
+    this.#modal.render(`<div class="wood-panel">
+      <h2>🏪 Tienda de Carlos</h2>
+      <h3>Materiales</h3>
+      ${mat("screws", "Tornillos")}${mat("paint", "Pintura")}${mat("wood", "Madera")}
+      <h3>Mejoras del taller</h3>
+      <p class="wp-sub">Decide: ¿más materiales ahora, o una mejora que te haga más fuerte?</p>
+      ${ups}
+      <button class="k close" data-act="close">Salir [ESC]</button>
+    </div>`);
+  }
+}
