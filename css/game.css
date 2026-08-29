@@ -21,9 +21,10 @@ button { font:inherit; cursor:pointer; }
 /* Contenedores a pantalla completa. 100dvh se ajusta a la barra del navegador
    móvil; 100vh es el respaldo para navegadores viejos. */
 #game { position:fixed; inset:0; width:100vw; height:100vh; height:100dvh;
-  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
   background:radial-gradient(circle at 50% 35%, #221607, #0a0704 75%); }
-#game canvas { box-shadow:0 8px 40px #000; max-width:100vw; max-height:100vh; max-height:100dvh; }
+/* Phaser (autoCenter) coloca y dimensiona el canvas; no lo forzamos por CSS. */
+#game canvas { display:block; box-shadow:0 8px 40px #000; }
 
 #ui { position:fixed; inset:0; width:100vw; height:100vh; height:100dvh;
   pointer-events:none; font-size:14px; }

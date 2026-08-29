@@ -119,18 +119,24 @@ bus.on("order:delivered", (o) => { if (o.isFinal) setTimeout(() => evaluation.op
 // ---------- PHASER ----------
 let scene = null, inGame = false;
 const phaser = new Phaser.Game({
-  // Canvas: el WebGL de este navegador embebido renderiza en negro con muchas
-  // texturas SVG. Canvas 2D es más lento pero para un taller compacto sobra.
-  type: Phaser.CANVAS,
+  // AUTO: usa WebGL (mucho más rápido en móvil) y cae a Canvas 2D si no hay.
+  type: Phaser.AUTO,
   parent: "game",
   width: CONFIG.VIEW.width,
   height: CONFIG.VIEW.height,
   backgroundColor: "#161009",
   pixelArt: false,
   roundPixels: true,
-  fps: { target: 60, forceSetTimeOut: true },
+  // rAF nativo (sin forceSetTimeOut) = animación fluida y menor consumo.
+  fps: { target: 60, min: 30 },
+  render: { antialias: true, powerPreference: "high-performance" },
   physics: { default: "arcade", arcade: { debug: false } },
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: CONFIG.VIEW.width,
+    height: CONFIG.VIEW.height,
+  },
   scene: [BootScene, MenuScene, WorkshopScene],
   callbacks: {
     preBoot: (g) => {
@@ -205,23 +211,20 @@ window.addEventListener("resize", () => phaser.scale.refresh());
 window.addEventListener("load", () => phaser.scale.refresh());
 phaser.events.on("menu:ready", () => phaser.scale.refresh());
 
-// Algunos navegadores embebidos arrancan con el viewport a 0 y no emiten
-// 'resize' al recuperarlo: forzamos el tamaño del canvas hasta que sea válido.
-function fixScale() {
-  const cv = phaser.canvas;
-  if (!cv) return;
-  const w = window.innerWidth || document.documentElement.clientWidth;
-  const h = window.innerHeight || document.documentElement.clientHeight;
-  if (w > 20 && h > 20 && (cv.clientWidth < 20 || cv.clientHeight < 20)) {
-    try {
-      phaser.scale.setParentSize(w, h);
-      phaser.scale.refresh();
-      const s = Math.min(w / CONFIG.VIEW.width, h / CONFIG.VIEW.height);
-      cv.style.width = Math.round(CONFIG.VIEW.width * s) + "px";
-      cv.style.height = Math.round(CONFIG.VIEW.height * s) + "px";
-    } catch { /* noop */ }
-  }
+// Reajusta el lienzo de Phaser a la ventana. En móvil, tras 'orientationchange'
+// las dimensiones tardan un momento en asentarse: refrescamos varias veces.
+function relayoutCanvas() {
+  try {
+    const w = window.innerWidth || document.documentElement.clientWidth;
+    const h = window.innerHeight || document.documentElement.clientHeight;
+    if (w > 20 && h > 20) phaser.scale.setParentSize(w, h);
+    phaser.scale.refresh();
+  } catch { /* noop */ }
 }
-setInterval(fixScale, 400);
-["resize", "focus", "load", "pageshow", "visibilitychange"].forEach((e) =>
-  window.addEventListener(e, () => setTimeout(fixScale, 50)));
+[0, 120, 320, 600].forEach((d) => setTimeout(relayoutCanvas, d));
+["resize", "orientationchange", "focus", "load", "pageshow", "visibilitychange"].forEach((e) =>
+  window.addEventListener(e, () => [60, 260, 500].forEach((d) => setTimeout(relayoutCanvas, d))));
+setInterval(() => {
+  const cv = phaser.canvas;
+  if (cv && cv.clientWidth < 20 && (window.innerWidth || 0) > 20) relayoutCanvas();
+}, 600);

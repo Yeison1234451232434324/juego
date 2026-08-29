@@ -97,20 +97,25 @@ export class WorkshopScene extends Phaser.Scene {
   activateFromButton() { this.#interact(); }
 
   // ---------- suelo ----------
+  // Se "hornean" los ~570 azulejos en UNA sola textura: 1 draw call por frame
+  // en vez de 570. Es la mayor optimización para móviles.
   #floor() {
+    const rt = this.add.renderTexture(0, 0, W, H).setOrigin(0).setDepth(-20);
     for (let y = 0; y < H; y += 32)
       for (let x = 0; x < W; x += 32) {
         const t = (Math.abs((x * 7 + y * 13) % 97) % 10 < 2) ? 2 : ((x / 32 + y / 32) % 2 | 0);
-        this.add.image(x, y, "floor" + t).setOrigin(0).setDepth(-20);
+        rt.draw("floor" + t, x, y);
       }
-    this.add.image(W / 2, 330, "rug").setDepth(-19);
+    const rug = this.textures.get("rug").getSourceImage();
+    rt.draw("rug", W / 2 - rug.width / 2, 330 - rug.height / 2);
   }
 
   #wallsAndWindows() {
     this.solids = this.physics.add.staticGroup();
+    const wallRT = this.add.renderTexture(0, 0, W, 48).setOrigin(0).setDepth(6);
     const seg = (x, y, w, h, draw = true) => {
       if (draw) for (let i = 0; i < w; i += 32) for (let j = 0; j < h; j += 48)
-        this.add.image(x + i, y + j, "wall").setOrigin(0).setDepth(6);
+        wallRT.draw("wall", x + i, y + j);
       const r = this.add.rectangle(x + w / 2, y + h / 2, w, h, 0, 0);
       this.physics.add.existing(r, true); this.solids.add(r);
     };
@@ -289,8 +294,8 @@ export class WorkshopScene extends Phaser.Scene {
   #dust() {
     this.add.particles(0, 0, "spark", {
       x: { min: 40, max: W - 40 }, y: { min: 60, max: H - 60 },
-      lifespan: 7000, speedY: { min: -4, max: 6 }, speedX: { min: -3, max: 3 },
-      scale: { start: 0.5, end: 0 }, alpha: { start: 0.18, end: 0 }, frequency: 500, quantity: 1,
+      lifespan: 6000, speedY: { min: -4, max: 6 }, speedX: { min: -3, max: 3 },
+      scale: { start: 0.5, end: 0 }, alpha: { start: 0.16, end: 0 }, frequency: 1100, quantity: 1,
     }).setDepth(38);
   }
 
