@@ -22,17 +22,27 @@ button { font:inherit; cursor:pointer; }
    móvil; 100vh es el respaldo para navegadores viejos. */
 #game { position:fixed; inset:0; width:100vw; height:100vh; height:100dvh;
   overflow:hidden;
-  background:radial-gradient(circle at 50% 35%, #221607, #0a0704 75%); }
+  /* Marco de "madera": las franjas del letterbox parecen la pared del taller. */
+  background-color:#1c1206;
+  background-image:
+    radial-gradient(circle at 50% 40%, rgba(80,50,20,.35), transparent 70%),
+    repeating-linear-gradient(90deg, #241708 0 46px, #1e1206 46px 48px),
+    repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 2px, transparent 2px 96px); }
 /* Phaser (autoCenter) coloca y dimensiona el canvas; no lo forzamos por CSS. */
-#game canvas { display:block; box-shadow:0 8px 40px #000; }
+#game canvas { display:block; box-shadow:0 0 0 3px #3a2412, 0 10px 44px #000; }
 
 #ui { position:fixed; inset:0; width:100vw; height:100vh; height:100dvh;
   pointer-events:none; font-size:14px; }
 #ui > * { pointer-events:auto; }
 
-/* ---------- aviso: girar el teléfono ---------- */
-#orient-hint { position:fixed; inset:0; z-index:400; background:rgba(6,4,2,.96);
-  display:flex; align-items:center; justify-content:center; padding:24px; text-align:center; }
+/* ---------- aviso: girar el teléfono ----------
+   Solo visible en teléfonos (pantalla táctil + estrecha) en VERTICAL.
+   Al girar a horizontal, la media query deja de aplicar y desaparece. */
+#orient-hint { display:none; position:fixed; inset:0; z-index:400; background:rgba(6,4,2,.97);
+  align-items:center; justify-content:center; padding:24px; text-align:center; }
+@media (orientation: portrait) and (max-width: 600px) and (pointer: coarse) {
+  #orient-hint:not(.dismissed) { display:flex; }
+}
 .oh-card { max-width:340px; line-height:1.55; display:flex; flex-direction:column; gap:8px; align-items:center; }
 .oh-icon { font-size:3rem; animation:oh-rock 1.8s ease-in-out infinite; }
 @keyframes oh-rock { 0%,100% { transform:rotate(-12deg); } 50% { transform:rotate(78deg); } }
@@ -90,18 +100,20 @@ button { font:inherit; cursor:pointer; }
 .rp-note code, .paper-panel code, .wp-sub code { background:#e4d9bf; padding:1px 5px; border-radius:4px; font-size:.85em; }
 .rp-card button { margin-top:12px; width:100%; background:var(--bad); color:#fff; border:none; border-radius:8px; padding:9px; font-weight:800; }
 
-/* ---------- dialogo NPC ---------- */
-.dialogue { position:fixed; inset:0; width:100vw; height:100vh; height:100dvh; z-index:110; display:none;
-  align-items:flex-end; justify-content:center;
-  padding:0 12px calc(24px + env(safe-area-inset-bottom)); }
+/* ---------- diálogo NPC (maquetación propia, NO usa .modal) ---------- */
+.dialogue { position:fixed; inset:0; width:100vw; height:100vh; height:100dvh; z-index:114; display:none;
+  align-items:flex-end; justify-content:center; background:rgba(0,0,0,.4);
+  padding:0 12px calc(20px + env(safe-area-inset-bottom)); }
 .dialogue.open { display:flex; }
 .dlg-box { display:flex; gap:12px; max-width:560px; width:100%;
+  max-height:70dvh; overflow-y:auto;
   background:var(--wood1); border:3px solid var(--gold); border-radius:14px; padding:14px; }
-.dlg-face { font-size:2.4rem; background:#06222e; border-radius:12px; padding:4px 10px; align-self:flex-start; }
+.dlg-face { font-size:2.4rem; background:#06222e; border-radius:12px; padding:4px 10px; align-self:flex-start; flex:0 0 auto; }
+.dlg-body { flex:1; min-width:0; }
 .dlg-body b { color:var(--byte); }
 .dlg-body p { font-size:.92rem; line-height:1.5; margin:5px 0 10px; }
-.dlg-foot { display:flex; justify-content:space-between; align-items:center; font-size:.75rem; color:#a88c5a; }
-.dlg-foot button { background:var(--gold); color:#241a08; border:none; border-radius:8px; padding:7px 14px; font-weight:800; }
+.dlg-foot { display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:.75rem; color:#a88c5a; }
+.dlg-foot button { background:var(--gold); color:#241a08; border:none; border-radius:8px; padding:9px 16px; font-weight:800; flex:0 0 auto; }
 
 /* ---------- modales (estaciones) ---------- */
 .modal { position:fixed; inset:0; width:100vw; height:100vh; height:100dvh; z-index:100;
@@ -324,10 +336,17 @@ button { font:inherit; cursor:pointer; }
    ADAPTACIÓN A PANTALLAS  (móvil · tablet · PC)
    ================================================================ */
 
-/* Con controles táctiles visibles, sube lo que vive abajo para no taparlo. */
-body.is-touch.in-game .prompt { bottom:calc(150px + env(safe-area-inset-bottom)); }
-body.is-touch.in-game .loading-screen { bottom:calc(150px + env(safe-area-inset-bottom)); }
-body.is-touch.in-game .dialogue { align-items:center; padding-bottom:0; }
+/* Con los controles en pantalla, sube lo que vive abajo para no taparlo.
+   .controls-on lo pone TouchView cuando el D-pad + botón A están visibles. */
+body.controls-on .prompt { bottom:calc(160px + env(safe-area-inset-bottom)); }
+body.controls-on .loading-screen { bottom:calc(160px + env(safe-area-inset-bottom)); }
+body.controls-on .dialogue { padding-bottom:calc(160px + env(safe-area-inset-bottom)); }
+@media (max-height: 430px) {
+  body.controls-on .dialogue { align-items:center; padding-bottom:0; }
+  body.controls-on .prompt { bottom:calc(118px + env(safe-area-inset-bottom)); }
+  body.controls-on .loading-screen { bottom:calc(118px + env(safe-area-inset-bottom)); }
+  .dlg-box { max-height:86dvh; }
+}
 
 /* --- Pantallas estrechas (teléfonos, ventanas pequeñas) --- */
 @media (max-width: 600px) {
@@ -354,14 +373,16 @@ body.is-touch.in-game .dialogue { align-items:center; padding-bottom:0; }
 @media (max-height: 430px) and (orientation: landscape) {
   .hud { padding:4px 7px; font-size:.68rem; }
   .hud .hud-xp { height:4px; margin:3px 0; }
+  .touch.dpad { width:clamp(96px, 30vmin, 132px); height:clamp(96px, 30vmin, 132px);
+    left:calc(8px + env(safe-area-inset-left)); bottom:calc(8px + env(safe-area-inset-bottom)); }
+  .touch.a-btn { width:clamp(52px, 14vmin, 66px); height:clamp(52px, 14vmin, 66px);
+    right:calc(10px + env(safe-area-inset-right)); bottom:calc(12px + env(safe-area-inset-bottom)); }
   .objective { top:calc(60px + env(safe-area-inset-top)); font-size:.66rem; padding:4px 8px; }
   .toasts { top:calc(40px + env(safe-area-inset-top)); }
   .modal { padding:6px; align-items:stretch; }
   .modal-frame { max-height:98dvh; }
   .tut-body { font-size:.84rem; padding:10px 14px; line-height:1.4; }
   .tut-code, .term-steps { font-size:.76rem; }
-  body.is-touch.in-game .prompt,
-  body.is-touch.in-game .loading-screen { bottom:calc(120px + env(safe-area-inset-bottom)); }
 }
 
 /* --- Pantallas grandes (PC / tablet horizontal): un pelín más de aire --- */

@@ -14,7 +14,9 @@ const PAL = {
   carlos: { skin: "#d6a26e", skinS: "#bd8955", hair: "#241610", hairH: "#3a271a", shirt: "#7a5230", shirtS: "#5f3f22", pants: "#3a2a18", shoe: "#2a1a0e", acc: "beardcap", ac: "#d6a26e" },
 };
 
-const VB_W = 44, VB_H = 60, RENDER = 2; // textura = 88 x 120
+// RENDER = supersampling de los personajes. 1 = rasteriza al tamaño final
+// (mucho más rápido de decodificar en móvil, misma resolución en pantalla).
+const VB_W = 44, VB_H = 60, RENDER = 1;
 
 const G = (id, a, b) =>
   `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">
@@ -115,14 +117,14 @@ function person(key, dir, frame, work = false) {
 
   const headG = head(p, 22, 14, side, back);
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VB_W} ${VB_H}" shape-rendering="geometricPrecision">
+  // Sin filtros SVG (feGaussianBlur es lentísimo de rasterizar en móvil).
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VB_W} ${VB_H}">
   <defs>
     <radialGradient id="sk" cx="0.38" cy="0.32" r="0.75">
       <stop offset="0" stop-color="${p.skin}"/><stop offset="1" stop-color="${p.skinS}"/></radialGradient>
     ${G("sh", p.shirt, p.shirtS)}
-    <filter id="sf" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.1"/></filter>
   </defs>
-  <ellipse cx="22" cy="${55 + 0}" rx="12.5" ry="3.4" fill="#000" opacity=".24" filter="url(#sf)"/>
+  <ellipse cx="22" cy="55" rx="12" ry="3.2" fill="#000" opacity=".2"/>
   ${legs}
   <g transform="translate(0 ${bob})">
     ${side ? arms : ""}
@@ -210,7 +212,9 @@ export const CHAR_SCALE = 1 / RENDER;   // los sprites de personaje se muestran 
 export function artManifest() {
   const list = [];
   for (const key of Object.keys(PAL)) {
-    for (const dir of ["d", "u", "s"]) for (const f of [0, 1, 2])
+    // Ciclo de caminado de 2 fotogramas (0 y 1). Menos texturas = arranque
+    // más rápido en móvil; el fotograma 2 apenas se notaba.
+    for (const dir of ["d", "u", "s"]) for (const f of [0, 1])
       list.push({ key: `${key}_${dir}_${f}`, svg: person(key, dir, f), w: VB_W, h: VB_H, s: RENDER });
     list.push({ key: `${key}_idle`, svg: person(key, "d", 1), w: VB_W, h: VB_H, s: RENDER });
     list.push({ key: `${key}_work_0`, svg: person(key, "d", 0, true), w: VB_W, h: VB_H, s: RENDER });
@@ -226,13 +230,6 @@ export function artManifest() {
   list.push({ key: "barrel", svg: barrel(), w: 32, h: 46, s: 1 });
   list.push({ key: "planks", svg: planks(), w: 60, h: 34, s: 1 });
   list.push({ key: "chair_done", svg: chairDone(), w: 34, h: 40, s: 1 });
-  list.push({ key: "glow", w: 160, h: 160, s: 1, svg:
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">
-      <defs><radialGradient id="g" cx="0.5" cy="0.5" r="0.5">
-        <stop offset="0" stop-color="#ffe0a0" stop-opacity="0.9"/>
-        <stop offset="0.5" stop-color="#ffbe78" stop-opacity="0.32"/>
-        <stop offset="1" stop-color="#ffbe78" stop-opacity="0"/></radialGradient></defs>
-      <rect width="160" height="160" fill="url(#g)"/></svg>` });
   return list.map((it) => {
     const rw = it.w * it.s, rh = it.h * it.s;
     return { key: it.key, rw, rh, svg: it.svg.replace("<svg ", `<svg width="${rw}" height="${rh}" `) };

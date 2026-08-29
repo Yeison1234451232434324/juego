@@ -53,6 +53,8 @@ export class TouchView {
     const on = this.#wanted && this.#touchLike();
     this.pad.classList.toggle("hidden", !on);
     this.a.classList.toggle("hidden", !on);
+    // Fuente única de verdad: "hay controles en pantalla" para la maquetación.
+    document.body.classList.toggle("controls-on", on);
     if (!on) this.clear?.();
   }
 }

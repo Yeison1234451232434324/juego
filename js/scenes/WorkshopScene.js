@@ -3,6 +3,8 @@ import { CONFIG } from "../config/gameConfig.js";
 import { CHAR_SCALE } from "./art.js";
 
 const W = CONFIG.WORLD.width, H = CONFIG.WORLD.height;
+// Margen a cada lado: el lienzo (VIEW) es más ancho que el taller (WORLD).
+const MX = Math.max(0, Math.round((CONFIG.VIEW.width - W) / 2));
 
 /** Un solo taller compacto. Cámara fija: todo se ve a la vez. */
 const STATIONS = [
@@ -42,7 +44,8 @@ export class WorkshopScene extends Phaser.Scene {
     this.tick = this.registry.get("tick");
     this.facing = "d"; this.animT = 0; this.target = null; this.tKey = "";
 
-    this.cameras.main.setBounds(0, 0, W, H).setBackgroundColor("#20140a");
+    // La cámara ve todo el lienzo (VIEW) y centra el taller (WORLD) dentro.
+    this.cameras.main.setBounds(-MX, 0, W + MX * 2, H).setBackgroundColor("#20140a");
     this.physics.world.setBounds(28, 52, W - 56, H - 84);
 
     this.#floor();
@@ -100,26 +103,29 @@ export class WorkshopScene extends Phaser.Scene {
   // Se "hornean" los ~570 azulejos en UNA sola textura: 1 draw call por frame
   // en vez de 570. Es la mayor optimización para móviles.
   #floor() {
-    const rt = this.add.renderTexture(0, 0, W, H).setOrigin(0).setDepth(-20);
+    const x0 = -Math.ceil(MX / 32) * 32;            // alinear a la rejilla
+    const x1 = W + Math.ceil(MX / 32) * 32;
+    const rt = this.add.renderTexture(x0, 0, x1 - x0, H).setOrigin(0).setDepth(-20);
     for (let y = 0; y < H; y += 32)
-      for (let x = 0; x < W; x += 32) {
-        const t = (Math.abs((x * 7 + y * 13) % 97) % 10 < 2) ? 2 : ((x / 32 + y / 32) % 2 | 0);
-        rt.draw("floor" + t, x, y);
+      for (let x = x0; x < x1; x += 32) {
+        const t = (Math.abs((x * 7 + y * 13) % 97) % 10 < 2) ? 2 : (((x / 32) + (y / 32)) % 2 ? 1 : 0);
+        rt.draw("floor" + t, x - x0, y);
       }
     const rug = this.textures.get("rug").getSourceImage();
-    rt.draw("rug", W / 2 - rug.width / 2, 330 - rug.height / 2);
+    rt.draw("rug", W / 2 - rug.width / 2 - x0, 330 - rug.height / 2);
   }
 
   #wallsAndWindows() {
     this.solids = this.physics.add.staticGroup();
-    const wallRT = this.add.renderTexture(0, 0, W, 48).setOrigin(0).setDepth(6);
+    const wx0 = -Math.ceil(MX / 32) * 32, wx1 = W + Math.ceil(MX / 32) * 32;
+    const wallRT = this.add.renderTexture(wx0, 0, wx1 - wx0, 48).setOrigin(0).setDepth(6);
     const seg = (x, y, w, h, draw = true) => {
       if (draw) for (let i = 0; i < w; i += 32) for (let j = 0; j < h; j += 48)
-        wallRT.draw("wall", x + i, y + j);
+        wallRT.draw("wall", x + i - wx0, y + j);
       const r = this.add.rectangle(x + w / 2, y + h / 2, w, h, 0, 0);
       this.physics.add.existing(r, true); this.solids.add(r);
     };
-    seg(0, 0, W, 48);
+    seg(wx0, 0, wx1 - wx0, 48);
     seg(0, H - 24, W, 24, false); this.#floorTrim(0, H - 26, W);
     seg(0, 0, 24, H, false); seg(W - 24, 0, 24, H, false);
     // ventanas en la pared superior
@@ -345,7 +351,7 @@ export class WorkshopScene extends Phaser.Scene {
     if (moving) {
       this.facing = Math.abs(vx) > Math.abs(vy) ? (vx > 0 ? "r" : "l") : (vy > 0 ? "d" : "u");
       this.animT += dt;
-      const f = [0, 1, 2, 1][Math.floor(this.animT / 120) % 4];
+      const f = Math.floor(this.animT / 130) % 2;
       const d = this.facing === "r" || this.facing === "l" ? "s" : this.facing;
       this.pj.setTexture(`pj_${d}_${f}`).setFlipX(this.facing === "l");
     } else this.pj.setTexture("pj_idle");
@@ -357,7 +363,7 @@ export class WorkshopScene extends Phaser.Scene {
       if (sp._def.work) sp.setTexture(`mario_work_${Math.floor(sp._t / 300) % 2}`);
       else {
         const base = sp._def.dir === "l" || sp._def.dir === "r" ? "s" : sp._def.dir;
-        sp.setTexture(`${sp._def.tex}_${base}_${[0, 1, 2, 1][Math.floor(sp._t / 900) % 4]}`);
+        sp.setTexture(`${sp._def.tex}_${base}_${Math.floor(sp._t / 900) % 2}`);
       }
       sp.setDepth(10 + sp.y * 0.02);
     }

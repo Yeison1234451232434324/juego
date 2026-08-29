@@ -3,7 +3,10 @@
  */
 export const CONFIG = Object.freeze({
   // Un solo taller compacto que cabe entero en pantalla (cámara fija).
-  VIEW: { width: 960, height: 600, zoom: 1 },
+  // VIEW (lienzo) es más ancho que WORLD para llenar mejor las pantallas
+  // panorámicas de los móviles; el contenido del taller vive en WORLD y la
+  // cámara lo centra, extendiendo el suelo a los lados.
+  VIEW: { width: 1200, height: 600, zoom: 1 },
   WORLD: { width: 960, height: 600 },
   PLAYER: { speed: 132 },
   SAVE_KEY: "codecraft-workshop:v4",

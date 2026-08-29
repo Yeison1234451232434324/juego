@@ -32,26 +32,22 @@ import { EvaluationView } from "./views/EvaluationView.js";
 import { TouchView } from "./views/TouchView.js";
 
 // ---------- adaptación a la pantalla (móvil / tablet / PC) ----------
+// El aviso "gira el teléfono" lo controla el CSS (media queries): aparece solo
+// en teléfonos en vertical y desaparece al girar. Aquí solo el botón "jugar así".
 const orientHint = document.getElementById("orient-hint");
-let orientDismissed = false;
-const isPhone = () =>
-  (window.matchMedia?.("(pointer: coarse)").matches || "ontouchstart" in window) &&
-  Math.min(window.innerWidth, window.innerHeight) < 560;
-const isPortrait = () => window.innerHeight > window.innerWidth;
+document.getElementById("orient-ok").addEventListener("click", () => {
+  orientHint.classList.add("dismissed");
+});
 
 function refreshLayout() {
-  // Sugerir horizontal solo en teléfonos en vertical (no en tablet/PC).
-  const suggest = isPhone() && isPortrait() && !orientDismissed;
-  orientHint.classList.toggle("hidden", !suggest);
-  document.body.classList.toggle("is-touch", window.matchMedia?.("(pointer: coarse)").matches || "ontouchstart" in window);
+  document.body.classList.toggle(
+    "is-touch",
+    (window.matchMedia?.("(pointer: coarse)").matches ?? false) || "ontouchstart" in window,
+  );
   try { phaser?.scale.refresh(); } catch { /* aún no existe */ }
 }
-document.getElementById("orient-ok").addEventListener("click", () => {
-  orientDismissed = true;
-  orientHint.classList.add("hidden");
-});
-["resize", "orientationchange", "pageshow"].forEach((e) =>
-  window.addEventListener(e, () => { orientDismissed = orientDismissed && isPortrait(); setTimeout(refreshLayout, 60); }));
+["resize", "orientationchange", "pageshow", "focus"].forEach((e) =>
+  window.addEventListener(e, () => setTimeout(refreshLayout, 60)));
 
 // ---------- MODELO ----------
 const bus = new EventBus();
@@ -107,7 +103,7 @@ const STATION_VIEW = {
   shop: () => shop.open(),
 };
 bus.on("station:open", (id) => STATION_VIEW[id]?.());
-bus.on("open:inventory", () => (document.querySelector(".modal.open") ? bus.emit("ui:close") : inventory.open()));
+bus.on("open:inventory", () => (document.querySelector(".modal.open, .dialogue.open, .tutorial-root:not(.hidden)") ? bus.emit("ui:close") : inventory.open()));
 bus.on("ui:close", () => { document.querySelectorAll(".modal.open").forEach((m) => m.classList.remove("open")); document.querySelector(".rule-pop")?.remove(); });
 
 // ESC funciona SIEMPRE (aunque Phaser tenga el teclado desactivado por un modal)
@@ -128,8 +124,7 @@ const phaser = new Phaser.Game({
   pixelArt: false,
   roundPixels: true,
   // rAF nativo (sin forceSetTimeOut) = animación fluida y menor consumo.
-  fps: { target: 60, min: 30 },
-  render: { antialias: true, powerPreference: "high-performance" },
+  fps: { target: 60 },
   physics: { default: "arcade", arcade: { debug: false } },
   scale: {
     mode: Phaser.Scale.FIT,

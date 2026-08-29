@@ -11,7 +11,10 @@ export class DialogueView {
 
   constructor(bus) {
     this.bus = bus;
-    this.root = el("div", { class: "dialogue modal", attrs: { id: "dlg" } });
+    // Nota: NO lleva la clase "modal" a propósito — su maquetación es propia
+    // (caja abajo/centro) y no debe heredar los estilos responsive de .modal.
+    // La pausa del juego se detecta con ".dialogue.open" en WorkshopScene.
+    this.root = el("div", { class: "dialogue", attrs: { id: "dlg" } });
     $("#ui").append(this.root);
     this.root.addEventListener("click", (e) => {
       if (e.target.closest("[data-act='next']") || e.target === this.root) this.#next();

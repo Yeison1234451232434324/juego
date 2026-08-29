@@ -20,9 +20,9 @@ export class MenuScene extends Phaser.Scene {
       targets: pj, x: W - 150, duration: 5200, yoyo: true, repeat: -1, ease: "Sine.inOut",
       onYoyo: () => pj.setFlipX(true), onRepeat: () => pj.setFlipX(false),
     });
-    this.time.addEvent({ delay: 150, loop: true, callback: () => {
-      pj._f = ((pj._f ?? 0) + 1) % 4;
-      pj.setTexture("pj_s_" + [0, 1, 2, 1][pj._f]);
+    this.time.addEvent({ delay: 170, loop: true, callback: () => {
+      pj._f = ((pj._f ?? 0) + 1) % 2;
+      pj.setTexture("pj_s_" + pj._f);
     }});
 
     this.add.particles(0, 0, "spark", {
