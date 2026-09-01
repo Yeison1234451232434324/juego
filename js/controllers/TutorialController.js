@@ -8,7 +8,8 @@
  *   1  conseguir materiales programando  (BYTE, tecleando)
  *   2  fabricar la silla                 (Mario, martillando)
  *   3  entregar la silla                 (Cliente, esperando)
- *   4  ¡completado! → juego libre
+ *   4  comprar la primera mejora         (Carlos, reparando)
+ *   5  ¡completado! → juego libre
  *
  * Solo actúa mientras gs.tutorialCompleted === false.
  */
@@ -23,6 +24,7 @@ export class TutorialController {
     bus.on("challenge:solved", () => this.#onMaterials());
     bus.on("craft:done", () => this.#onCrafted());
     bus.on("order:delivered", () => this.#onDelivered());
+    bus.on("upgrade:bought", () => this.#onUpgrade());
     bus.on("station:open", (id) => this.#onStationOpen(id));
     bus.on("tutorial:begin", () => this.begin());
   }
@@ -51,6 +53,8 @@ export class TutorialController {
       this.#gs.setObjective("Ya tienes los materiales. Ve con Mario, en el banco de trabajo.", "bench", "bench");
     } else if (s === 3) {
       this.#gs.setObjective("Lleva la silla al cliente que está esperando en el mostrador.", "sales", "sales");
+    } else if (s === 4) {
+      this.#gs.setObjective("Compra tu primera mejora con Carlos, en MEJORAS 🔧.", "shop", "shop");
     }
   }
 
@@ -107,17 +111,32 @@ export class TutorialController {
   }
 
   #onDelivered() {
-    if (this.#done || this.#step() < 3) return;
-    this.#gs.tutorialCompleted = true;
+    if (this.#done || this.#step() !== 3) return;
     this.#setStep(4);
     this.#gs.player.learn("MVC");
-    this.#gs.refillOrders();
     this.#say("BYTE", [
-      "🎉 ¡LO HICISTE! Completaste tu primer trabajo.",
-      "El ciclo es siempre igual: aceptar pedido → conseguir materiales programando → fabricar → entregar → cobrar.",
-      "Y aplicaste POO: definiste CLASES y protegiste un dato (encapsulamiento).",
-      "Ahora tú mandas: acepta hasta 3 trabajos y decide el orden. ¡A trabajar!",
+      "🎉 ¡Tu primer trabajo completado! Ya tienes dinero.",
+      "Antes de soltarte: gástalo en tu PRIMERA MEJORA.",
+      "Ve a MEJORAS y habla con Carlos (el que repara herramientas). Pulsa E y compra una.",
     ]);
+    this.#gs.setObjective("Compra tu primera mejora con Carlos, en MEJORAS 🔧.", "shop", "shop");
+    this.#bus.emit("state:changed");
+  }
+
+  #onUpgrade() {
+    if (this.#done || this.#step() !== 4) return;
+    this.#setStep(5);
+    this.#gs.tutorialCompleted = true;
+    this.#gs.refillOrders();
+    this.#say("Carlos", [
+      "¡Buena elección! Esa mejora te durará para siempre.",
+      "Y ojo: comprar mejoras NO te resuelve los retos. El código siempre lo escribes tú.",
+    ]);
+    setTimeout(() => this.#say("BYTE", [
+      "El ciclo es siempre igual: aceptar → programar para conseguir materiales → fabricar → entregar → cobrar.",
+      "Aplicaste POO (definiste CLASES, protegiste un dato) y viviste el flujo Vista→Controlador→Modelo (MVC).",
+      "Ahora tú mandas: acepta hasta 3 trabajos y decide el orden. ¡A trabajar!",
+    ], 200), 2500);
     this.#bus.emit("tutorial:complete");
     this.#bus.emit("state:changed");
   }
@@ -132,8 +151,9 @@ export class TutorialController {
       coding: ["BYTE", ["Resuelve estos retos y conseguirás madera y clavos para tu pedido."]],
       bench:  ["Mario", ["Trae los materiales al banco y yo te fabrico la pieza."]],
       sales:  ["Cliente", ["¡Por fin! Dame mi silla, por favor."]],
+      shop:   ["Carlos", ["Con tu dinero mejoro tu taller: más velocidad, más materiales…", "Ninguna mejora te resuelve los retos: eso es cosa tuya."]],
     };
-    const rightStation = { 0: "orders", 1: "coding", 2: "bench", 3: "sales" }[s];
+    const rightStation = { 0: "orders", 1: "coding", 2: "bench", 3: "sales", 4: "shop" }[s];
 
     if (id === rightStation && !this.#greeted.has(id) && GREET[id]) {
       this.#greeted.add(id);
@@ -146,5 +166,6 @@ export class TutorialController {
     else if (s === 1 && id === "bench") this.#say("BYTE", ["Todavía no tienes materiales. Consíguelos con los retos de la computadora."]);
     else if (s === 2 && id === "coding") this.#say("BYTE", ["¡Ya tienes los materiales! Llévaselos a Mario, en el banco."]);
     else if (s === 3 && id !== "sales") this.#say("BYTE", ["La silla ya está lista. Llévala al cliente del mostrador."]);
+    else if (s === 4 && id !== "shop") this.#say("BYTE", ["Ve a MEJORAS y compra tu primera mejora con Carlos."]);
   }
 }

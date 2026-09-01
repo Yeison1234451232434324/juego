@@ -71,7 +71,7 @@ button { font:inherit; cursor:pointer; }
 
 /* ---------- panel de OBJETIVOS (esquina superior derecha) ---------- */
 .quest { position:fixed; z-index:41;
-  top:calc(8px + env(safe-area-inset-top));
+  top:calc(48px + env(safe-area-inset-top));
   right:calc(8px + env(safe-area-inset-right));
   width:min(260px, 62vw);
   background:rgba(20,12,6,.88); border:2px solid #4a3a24; border-left:3px solid var(--gold);
@@ -90,6 +90,28 @@ button { font:inherit; cursor:pointer; }
 .q-steps li.done { color:var(--ok); }
 .q-empty { color:#cdbf9f; margin-top:5px; }
 .q-next { margin-top:7px; padding-top:6px; border-top:1px solid #4a3a2455; color:var(--gold-l); font-weight:700; }
+.q-remaining { color:#cdbf9f; font-size:.68rem; margin-top:2px; }
+
+/* ---------- botones flotantes (⚙️ ajustes / 🔊 activar sonido) ---------- */
+#gear-btn { position:fixed; z-index:43;
+  top:calc(8px + env(safe-area-inset-top));
+  right:calc(8px + env(safe-area-inset-right));
+  width:32px; height:32px; border-radius:9px; font-size:.95rem; line-height:1;
+  background:rgba(20,12,6,.82); border:2px solid #4a3a24; color:var(--gold-l); }
+#gear-btn.hidden { display:none; }
+#sound-hint { position:fixed; z-index:120; left:50%; bottom:14px; transform:translateX(-50%);
+  background:var(--gold); color:#241a08; border:none; border-radius:999px;
+  padding:9px 18px; font-weight:800; font-size:.82rem; box-shadow:0 4px 16px #000; }
+#sound-hint.hidden { display:none; }
+
+/* ---------- panel de ajustes ---------- */
+.set-panel h2 { margin-bottom:10px; }
+.set-row { display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:8px 0; border-bottom:1px solid #d8c9a044; }
+.set-row span { font-weight:700; color:#3a2a14; }
+.set-row input[type=range] { flex:1; max-width:150px; accent-color:var(--wood3); }
+.set-toggle { display:inline-block; min-width:40px; text-align:center; font-weight:800; }
+.set-toggle.on { color:#2f7a2b; } .set-toggle:not(.on) { color:#a5372a; }
 
 /* ---------- toasts / logros / regla ---------- */
 .toasts { position:fixed; z-index:60; display:flex; flex-direction:column; gap:6px;

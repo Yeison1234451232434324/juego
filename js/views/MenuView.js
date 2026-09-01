@@ -21,6 +21,7 @@ export class MenuView {
         <button class="mb prim" data-act="new">▶ Nueva partida</button>
         ${hasSave ? '<button class="mb" data-act="continue">⏵ Continuar</button>' : ""}
         <button class="mb" data-act="how">❔ Cómo se juega</button>
+        <button class="mb" data-act="settings">⚙️ Ajustes</button>
       </div>
       <p class="foot">HTML5 · CSS3 · JavaScript ES6 · Phaser 3 · Arquitectura MVC · POO · 100% GitHub Pages</p>`;
   }

@@ -31,7 +31,7 @@ export const CHALLENGE_GROUPS = [
     group: "clase", concept: "clase", rf: "RF-001", minLevel: 1,
     variants: [
       {
-        id: "clase-silla",
+        id: "clase-silla", product: "Chair",
         title: "RETO DE PRODUCCIÓN — LA SILLA",
         brief: 'BYTE: "Para fabricar una silla, primero define QUÉ ES una silla. Eso es una CLASE: un molde con datos y acciones."',
         objetivo: "Crea la clase Silla con una propiedad y un método.",
@@ -80,7 +80,7 @@ export const CHALLENGE_GROUPS = [
         ],
       },
       {
-        id: "clase-mesa",
+        id: "clase-mesa", product: "Table",
         title: "RETO DE PRODUCCIÓN — LA MESA",
         brief: 'BYTE: "Otra pieza, mismo concepto. Define la clase Mesa igual que hiciste con la Silla."',
         objetivo: "Crea la clase Mesa con una propiedad y un método.",
@@ -124,6 +124,49 @@ export const CHALLENGE_GROUPS = [
         checks: [
           { label: "clase Mesa", test: (f) => hasClass(f, "Mesa"), error: "Falta:  class Mesa {", hint: "class Mesa {" },
           { label: 'propiedad nombre = "Mesa"', test: (f) => assigns(f, "nombre", '["’\']?Mesa'), error: 'this.nombre debe valer "Mesa".', hint: 'this.nombre = "Mesa";' },
+          { label: "método fabricar()", test: (f) => hasMethod(f, "fabricar"), error: "Falta fabricar().", hint: "fabricar() { ... }" },
+          { label: "fabricar() devuelve true", test: (f) => inBody(f, "fabricar", /return\s+true\b/), error: "fabricar() debe devolver true.", hint: "return true;" },
+        ],
+      },
+      {
+        id: "clase-armario", product: "Cabinet",
+        title: "RETO DE PRODUCCIÓN — EL ARMARIO",
+        brief: 'BYTE: "Mismo concepto, un armario. Define la clase Armario."',
+        objetivo: "Crea la clase Armario con una propiedad y un método.",
+        pasos: [
+          "1. Escribe una clase llamada Armario:  class Armario { }",
+          '2. En el constructor:  this.nombre = "Armario";',
+          "3. Crea un método fabricar() que haga  return true;",
+          "4. Pulsa EJECUTAR CÓDIGO.",
+        ],
+        requirements: ["Una clase llamada Armario", 'Propiedad nombre con el valor "Armario"', "Método fabricar()", "fabricar() devuelve true"],
+        starter:
+`class Armario {
+  constructor() {
+    // this.nombre = "Armario";
+
+  }
+
+  // método fabricar() que devuelva true
+
+}
+`,
+        ejemplo:
+`class Armario {
+  constructor() {
+    this.nombre = "Armario";
+  }
+
+  fabricar() {
+    return true;
+  }
+}
+`,
+        explainOnFail:
+          "Cada mueble es una CLASE: una propiedad que lo describe (nombre) y un método que dice cómo se fabrica (fabricar).",
+        checks: [
+          { label: "clase Armario", test: (f) => hasClass(f, "Armario"), error: "Falta:  class Armario {", hint: "class Armario {" },
+          { label: 'propiedad nombre = "Armario"', test: (f) => assigns(f, "nombre", '["’\']?Armario'), error: 'this.nombre debe valer "Armario".', hint: 'this.nombre = "Armario";' },
           { label: "método fabricar()", test: (f) => hasMethod(f, "fabricar"), error: "Falta fabricar().", hint: "fabricar() { ... }" },
           { label: "fabricar() devuelve true", test: (f) => inBody(f, "fabricar", /return\s+true\b/), error: "fabricar() debe devolver true.", hint: "return true;" },
         ],
@@ -488,13 +531,21 @@ export class ChallengeService {
     return CHALLENGE_GROUPS.filter((g) => g.minLevel <= Math.max(1, level));
   }
 
-  #variantOf(g) {
+  /** Elige la variante del grupo; si hay una para `product`, esa. */
+  #variantOf(g, product) {
+    if (product && g.variants.length > 1) {
+      const match = g.variants.find((v) => v.product === product);
+      if (match) return match;
+    }
     const idx = (this.#variantIdx.get(g.group) ?? 0) % g.variants.length;
     return g.variants[idx];
   }
 
-  /** El reto actual que se le muestra al jugador. */
-  current(level = 1) {
+  /**
+   * El reto actual. `product` = tipo de mueble del pedido en curso (Chair/Table/
+   * Cabinet) para elegir un reto relacionado con ese producto.
+   */
+  current(level = 1, product = null) {
     const groups = this.#groupsForLevel(level);
     if (!groups.length) return null;
 
@@ -503,11 +554,10 @@ export class ChallengeService {
     const pool = pending.length ? pending : groups;
 
     let pick = pool[this.#groupRot % pool.length];
-    let v = this.#variantOf(pick);
-    // no repetir exactamente el mismo reto dos veces seguidas
+    let v = this.#variantOf(pick, product);
     if (v.id === this.#lastId && pool.length > 1) {
       pick = pool[(this.#groupRot + 1) % pool.length];
-      v = this.#variantOf(pick);
+      v = this.#variantOf(pick, product);
     }
     return { ...v, group: pick.group, concept: pick.concept, rf: pick.rf, minLevel: pick.minLevel };
   }

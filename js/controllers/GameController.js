@@ -94,9 +94,21 @@ export class GameController {
       this.#bus.emit("state:changed");
     }
 
+    // "Producción automática": cada 20 s, +1 del material que falte para el pedido.
     if (this.#gs.upgrades.has("auto")) {
       this.#autoAcc += dt;
-      if (this.#autoAcc >= 12) { this.#autoAcc = 0; this.#gs.workshop.inventory.add("nails", 1); this.#bus.emit("state:changed"); }
+      if (this.#autoAcc >= 20) {
+        this.#autoAcc = 0;
+        const o = this.#gs.focusOrder;
+        const inv = this.#gs.workshop.inventory;
+        let mat = "nails";
+        if (o) {
+          const need = o.materials;
+          mat = Object.keys(need).find((m) => inv.count(m) < need[m]) ?? "wood";
+        }
+        inv.add(mat, 1);
+        this.#bus.emit("state:changed");
+      }
     }
   }
 

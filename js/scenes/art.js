@@ -90,15 +90,29 @@ function head(p, cx, cy, side, back) {
   return s;
 }
 
-/* ---------- posturas de TRABAJO (NPCs de estación) ---------- */
-function torsoOf(p) {
-  return `<rect x="13" y="22" width="18" height="20" rx="6" fill="url(#sh)"/>
-    <rect x="13" y="35" width="18" height="3" fill="#000" opacity=".1"/>
-    <rect x="14" y="23" width="5" height="18" rx="3" fill="#fff" opacity=".08"/>`;
+/* ---------- torso / piernas con más detalle (compartido) ---------- */
+function torsoDetail(p) {
+  return `
+    <rect x="13" y="22" width="18" height="20" rx="6" fill="url(#sh)"/>
+    <path d="M13 27 q9 -8 18 0 l0 -5 q-9 -6 -18 0Z" fill="#ffffff" opacity=".07"/>
+    <path d="M17 22 q5 6 10 0 l-1.5 4 q-3.5 3 -7 0Z" fill="${p.skinS}" opacity=".9"/>
+    <path d="M17 22 q5 6 10 0" stroke="${p.shirtS}" stroke-width="1.4" fill="none"/>
+    <rect x="21.2" y="26" width="1.6" height="15" rx="0.8" fill="${p.shirtS}" opacity=".8"/>
+    <circle cx="22" cy="29" r="0.9" fill="#ffffff" opacity=".5"/>
+    <circle cx="22" cy="34" r="0.9" fill="#ffffff" opacity=".5"/>
+    <rect x="13" y="38" width="18" height="3" rx="1" fill="#000" opacity=".18"/>
+    <rect x="13.5" y="38.5" width="17" height="1.4" fill="${p.ac}" opacity=".35"/>`;
 }
+function torsoOf(p) { return torsoDetail(p); }
+
 function legPair(p) {
-  const l = (x) => `<rect x="${x}" y="38" width="7" height="15" rx="3.2" fill="${p.pants}"/>
-    <rect x="${x - 2}" y="50" width="11" height="5.5" rx="2.5" fill="${p.shoe}"/>`;
+  const l = (x) => `
+    <rect x="${x}" y="38" width="7" height="15" rx="3.2" fill="${p.pants}"/>
+    <rect x="${x}" y="38" width="2.4" height="15" rx="1.2" fill="#ffffff" opacity=".07"/>
+    <rect x="${x - 0.5}" y="45" width="8" height="1" fill="#000" opacity=".15"/>
+    <rect x="${x - 2}" y="49.5" width="11" height="6" rx="2.6" fill="${p.shoe}"/>
+    <rect x="${x - 2}" y="53.5" width="11" height="2" rx="1" fill="#000" opacity=".25"/>
+    <rect x="${x - 1}" y="50" width="8" height="1.4" rx="0.7" fill="#ffffff" opacity=".14"/>`;
   return l(14) + l(23);
 }
 function workPose(p, type, frame) {
@@ -185,28 +199,31 @@ function person(key, dir, frame, work = false) {
 
   const leg = (x, sw) => `<g transform="rotate(${sw} ${x + 3} 40)">
       <rect x="${x}" y="38" width="7" height="15" rx="3.2" fill="${p.pants}"/>
-      <rect x="${x - 2}" y="50" width="11" height="5.5" rx="2.5" fill="${p.shoe}"/>
-      <rect x="${x - 1}" y="50" width="9" height="1.6" rx="0.8" fill="#ffffff" opacity=".12"/></g>`;
+      <rect x="${x}" y="38" width="2.2" height="15" rx="1.1" fill="#ffffff" opacity=".07"/>
+      <rect x="${x - 0.5}" y="45" width="8" height="1" fill="#000" opacity=".14"/>
+      <rect x="${x - 2}" y="49.5" width="11" height="6" rx="2.6" fill="${p.shoe}"/>
+      <rect x="${x - 2}" y="53.5" width="11" height="2" rx="1" fill="#000" opacity=".22"/>
+      <rect x="${x - 1}" y="50" width="9" height="1.5" rx="0.8" fill="#ffffff" opacity=".13"/></g>`;
 
   let legs;
   if (side) legs = `${leg(19, legSw * 0.7)}<g opacity=".82">${leg(21, -legSw * 0.7)}</g>`;
   else legs = `${leg(15, legSw)}${leg(23, -legSw)}`;
 
   const arm = (x, sw, front) => `<g transform="rotate(${sw} ${x + 3} 25)">
-      <rect x="${x}" y="23" width="6.5" height="16" rx="3.2" fill="${front ? p.shirt : p.shirtS}"/>
-      <circle cx="${x + 3}" cy="${x < 22 ? 40 : 40}" r="3.3" fill="url(#sk)"/></g>`;
+      <rect x="${x}" y="23" width="6.5" height="14" rx="3.2" fill="${front ? p.shirt : p.shirtS}"/>
+      <rect x="${x}" y="34" width="6.5" height="3" rx="1.5" fill="${p.shirtS}"/>
+      <circle cx="${x + 3}" cy="39.5" r="3.1" fill="url(#sk)"/>
+      <circle cx="${x + 3}" cy="39.5" r="3.1" fill="none" stroke="${p.skinS}" stroke-width="0.7"/></g>`;
 
   let arms;
   if (side) {
-    arms = `<g transform="rotate(${armSw} 24 25)"><rect x="21" y="23" width="6.5" height="16" rx="3.2" fill="${p.shirt}"/><circle cx="24" cy="40" r="3.3" fill="url(#sk)"/></g>`;
+    arms = `<g transform="rotate(${armSw} 24 25)"><rect x="21" y="23" width="6.5" height="14" rx="3.2" fill="${p.shirt}"/><rect x="21" y="34" width="6.5" height="3" rx="1.5" fill="${p.shirtS}"/><circle cx="24" cy="39.5" r="3.1" fill="url(#sk)"/></g>`;
   } else {
     arms = `${arm(9, armSw, true)}${arm(29, -armSw, true)}`;
   }
 
-  const torso = `<rect x="13" y="22" width="18" height="20" rx="6" fill="url(#sh)"/>
-    <rect x="13" y="35" width="18" height="3" fill="#000" opacity=".1"/>
-    <rect x="14" y="23" width="5" height="18" rx="3" fill="#fff" opacity=".08"/>
-    ${(p.acc === "cap" || p.acc === "beardcap") ? `<rect x="16" y="26" width="12" height="15" rx="2" fill="#6b4423" opacity=".92"/><rect x="16" y="26" width="12" height="2" fill="#00000022"/>` : ""}`;
+  const torso = `${torsoDetail(p)}
+    ${(p.acc === "cap" || p.acc === "beardcap") ? `<path d="M16 26 h12 v13 q-6 3 -12 0Z" fill="#6b4423" opacity=".92"/><rect x="16" y="26" width="12" height="2" fill="#00000022"/><path d="M17 30 l3 3 M21 30 l3 3" stroke="#00000018" stroke-width="1"/>` : ""}`;
 
   const headG = head(p, 22, 14, side, back);
 

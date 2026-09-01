@@ -68,21 +68,33 @@ export class GameState {
     this.setObjective("Proyecto Final del Hotel Gran Roble disponible en el Tablón de Pedidos.");
   }
 
+  /**
+   * Carga un guardado. MIGRACIÓN SEGURA: cada sistema recibe SU parte; lo que
+   * falte usa valores por defecto; un guardado corrupto no rompe el juego.
+   */
   hydrate(d) {
-    if (!d) return;
-    this.player.hydrate(d.player);
-    this.workshop.hydrate(d.workshop);
-    this.requirements.hydrate(d.requirements);
-    this.challenges.hydrate(d.challenges);
-    this.upgrades.hydrate(d.upgrades);
-    this.achievements.hydrate(d.achievements);
-    if (d.objective) this.objective = d.objective;
-    if (d.hintStation) this.hintStation = d.hintStation;
-    if (d.nextArrow) this.nextArrow = d.nextArrow;
+    if (!d || typeof d !== "object") return;
+    try {
+      this.player.hydrate(d.player);
+      this.workshop.hydrate(d.workshop);
+      this.requirements.hydrate(d.requirements);
+      this.challenges.hydrate(d.challenges);       // solo retos REALMENTE resueltos
+      this.upgrades.hydrate(d.upgrades);           // mejoras (ignora las retiradas)
+      this.achievements.hydrate(d.achievements);
+    } catch (e) { console.warn("hydrate parcial:", e); }
+
+    this.objective = d.objective ?? this.objective;
+    this.hintStation = d.hintStation ?? this.hintStation;
+    this.nextArrow = d.nextArrow ?? this.nextArrow;
     this.tutorialCompleted = !!d.tutorialCompleted;
-    this.tutorialStep = d.tutorialStep ?? 0;
+    this.tutorialStep = Number.isFinite(d.tutorialStep) ? d.tutorialStep : 0;
+
+    try {
+      this.availableOrders = (Array.isArray(d.availableOrders) ? d.availableOrders : [])
+        .map((od) => Order.fromJSON(od));
+    } catch (e) { console.warn("pedidos disponibles:", e); this.availableOrders = []; }
+
     this.focusOrderId = d.focusOrderId ?? this.workshop.orders[0]?.id ?? null;
-    this.availableOrders = (d.availableOrders ?? []).map((od) => Order.fromJSON(od));
     if (!this.availableOrders.length && !this.workshop.orders.length) {
       this.availableOrders.push(this.orders.starter());
     }

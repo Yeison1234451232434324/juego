@@ -52,6 +52,11 @@ export class Order extends GameEntity {
     return total;
   }
 
+  /** Tipo de mueble principal del pedido (para elegir retos relacionados). */
+  get mainType() {
+    return this.#lines.slice().sort((a, b) => b.qty - a.qty)[0]?.type ?? "Chair";
+  }
+
   /** Resumen legible: "1 Silla" / "2 Sillas, 1 Mesa". */
   get summary() {
     return this.#lines

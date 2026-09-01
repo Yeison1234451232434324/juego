@@ -38,7 +38,10 @@ export class CraftingController {
 
   #craftSeconds(type) {
     const base = CONFIG.CRAFT_SECONDS[type] ?? 15;
-    return Math.round(base * (this.#gs.upgrades.has("bench") ? 0.7 : 1));
+    let mult = 1;
+    if (this.#gs.upgrades.has("toolkit")) mult -= 0.15;   // Kit de herramientas
+    if (this.#gs.upgrades.has("bench")) mult -= 0.25;     // Banco reforzado
+    return Math.max(3, Math.round(base * mult));
   }
 
   craft(type) {

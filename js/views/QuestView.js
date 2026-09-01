@@ -43,6 +43,14 @@ export class QuestView {
       const haveMats = Object.entries(need).every(([m, q]) => inv.count(m) >= q);
       const madeAll = o.lines.every((l) => gs.workshop.countStock(l.type) + l.done >= l.qty);
 
+      // Mejora "Organizador de materiales": estima cuántos retos faltan.
+      let est = "";
+      if (!haveMats && gs.upgrades.has("organizer")) {
+        const per = gs.upgrades.has("supplier") ? 6 : 4;
+        const short = Object.entries(need).reduce((s, [m, q]) => s + Math.max(0, q - inv.count(m)), 0);
+        est = `<div class="q-remaining">≈ ${Math.ceil(short / per)} reto(s) más para completar materiales</div>`;
+      }
+
       const step = (done, txt) => `<li class="${done ? "done" : ""}">${done ? "✓" : "○"} ${txt}</li>`;
       body = `
         <div class="q-order">
@@ -50,6 +58,7 @@ export class QuestView {
           <span class="q-cust">${o.customer.name}</span>
         </div>
         <div class="q-mats">${mats}</div>
+        ${est}
         <ul class="q-steps">
           ${step(true, "Pedido aceptado")}
           ${step(haveMats, "Conseguir materiales")}

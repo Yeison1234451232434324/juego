@@ -1,23 +1,30 @@
 import { Upgrade } from "../models/Upgrade.js";
 
 /**
- * UpgradeService — la Tienda de Mejoras. Cada mejora es un flag que los
- * controladores consultan para cambiar realmente el gameplay.
+ * UpgradeService — la Tienda de Mejoras (Carlos).
+ *
+ * Cada mejora es un FLAG independiente. Los controladores lo consultan con
+ * `upgrades.has(key)` para cambiar el gameplay. NINGUNA mejora marca retos,
+ * materiales ni pedidos como completados: solo modifican velocidades,
+ * cantidades o ayudas. El aprendizaje siempre hay que hacerlo.
  */
 const DEFS = [
-  { key: "template",  name: "Plantilla de clases",  cost: 150,
-    desc: "Los retos de código muestran una plantilla inicial que puedes completar." },
-  { key: "collector", name: "Recolector eficiente", cost: 300,
-    desc: "Los retos entregan el DOBLE de materiales." },
-  { key: "bench",     name: "Banco optimizado",     cost: 500,
-    desc: "La fabricación tarda un 30% menos." },
-  { key: "analyzer",  name: "Analizador de código", cost: 750,
-    desc: "Muestra pistas concretas cuando tu código tiene errores." },
-  { key: "auto",      name: "Automatización",        cost: 1200,
-    desc: "Se produce 1 clavo automáticamente cada 12 s." },
-  { key: "compiler",  name: "Compilador avanzado",   cost: 2000,
-    desc: "Duplica la XP que ganas al resolver cada reto de programación." },
+  { key: "supplier",  name: "Proveedor confiable",       cost: 120,
+    desc: "Cada reto que resuelvas te da +2 materiales extra. Necesitarás menos retos por pedido." },
+  { key: "toolkit",   name: "Kit de herramientas nuevo", cost: 220,
+    desc: "Mario fabrica un 15% más rápido." },
+  { key: "organizer", name: "Organizador de materiales", cost: 300,
+    desc: "El panel de objetivos te dice cuántos retos te faltan para completar el pedido." },
+  { key: "analyzer",  name: "Analizador de código",      cost: 450,
+    desc: "Cuando fallas un reto, te muestra la pista concreta automáticamente." },
+  { key: "bench",     name: "Banco reforzado",           cost: 700,
+    desc: "Mario fabrica un 25% más rápido (se suma al kit de herramientas)." },
+  { key: "auto",      name: "Producción automática",     cost: 1100,
+    desc: "Cada 20 s aparece 1 material del que te falte para tu pedido actual." },
 ];
+
+// Compatibilidad: mejoras de guardados antiguos que ya no existen.
+const RETIRED = new Set(["template", "collector", "compiler"]);
 
 export class UpgradeService {
   #ups = DEFS.map((d) => new Upgrade(d));
@@ -26,6 +33,11 @@ export class UpgradeService {
   get(key) { return this.#ups.find((u) => u.key === key); }
   has(key) { return !!this.get(key)?.owned; }
 
-  hydrate(list = []) { for (const k of list) this.get(k)?.buy(); }
+  hydrate(list = []) {
+    for (const k of list) {
+      if (RETIRED.has(k)) continue;   // se ignoran; su dinero ya se gastó
+      this.get(k)?.buy();
+    }
+  }
   toJSON() { return this.#ups.filter((u) => u.owned).map((u) => u.key); }
 }

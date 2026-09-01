@@ -9,20 +9,20 @@ const MX = Math.max(0, Math.round((CONFIG.VIEW.width - W) / 2));
 /**
  * Un solo taller compacto. Cámara fija: todo se ve a la vez.
  *
- * NADA de etiquetas de estación. Cada puesto tiene su MUEBLE + un NPC HACIENDO
- * la actividad (revisar papeles, teclear, martillar, cargar, esperar, reparar):
- * el mundo explica el juego. El único texto es el aviso contextual "[E] ..."
- * que aparece SOLO al acercarse.
+ * Cada puesto = mueble + NPC trabajando + una PLACA de madera con su nombre
+ * (pequeña, integrada al mundo, no un panel flotante). El aviso "[E] ..." solo
+ * aparece al acercarse.
  *
  * `solid` = caja de colisión del mueble (ajustada, no una pared invisible).
+ * `sign`  = { name, dy } placa de señalización bajo la estación.
  */
 const STATIONS = [
-  { id: "orders", label: "[E] Revisar pedidos",   x: 190, y: 116, icon: "📋", kind: "board",    npc: "ana",    solid: { w: 60, h: 14, dy: 12 } },
-  { id: "coding", label: "[E] Programar",          x: 470, y: 118, icon: "💻", kind: "pc",       npc: "byte",   solid: { w: 60, h: 14, dy: 14 } },
-  { id: "shelf",  label: "[E] Revisar materiales", x: 806, y: 128, icon: "📦", kind: "shelf",    npc: "beto",   solid: { w: 74, h: 30, dy: 12 } },
-  { id: "bench",  label: "[E] Fabricar",           x: 300, y: 430, icon: "🔨", kind: "bench",    npc: "mario",  solid: { w: 80, h: 16, dy: 4 } },
-  { id: "shop",   label: "[E] Mejorar taller",     x: 130, y: 476, icon: "🏪", kind: "shop",     npc: "carlos", solid: { w: 66, h: 14, dy: 10 } },
-  { id: "sales",  label: "[E] Entregar pedido",    x: 792, y: 486, icon: "🧾", kind: "register", npc: "client", solid: { w: 44, h: 14, dy: 6 } },
+  { id: "orders", label: "[E] Revisar pedidos",   x: 190, y: 116, icon: "📋", kind: "board",    npc: "ana",    solid: { w: 60, h: 14, dy: 12 }, sign: { name: "PEDIDOS",       dy: 60 } },
+  { id: "coding", label: "[E] Programar",          x: 470, y: 118, icon: "💻", kind: "pc",       npc: "byte",   solid: { w: 60, h: 14, dy: 14 }, sign: { name: "PROGRAMACIÓN",  dy: 62 } },
+  { id: "shelf",  label: "[E] Revisar materiales", x: 806, y: 128, icon: "📦", kind: "shelf",    npc: "beto",   solid: { w: 74, h: 30, dy: 12 }, sign: { name: "MATERIALES",    dy: 66 } },
+  { id: "bench",  label: "[E] Fabricar",           x: 300, y: 430, icon: "🔨", kind: "bench",    npc: "mario",  solid: { w: 80, h: 16, dy: 4 },  sign: { name: "FABRICACIÓN",   dy: 46 } },
+  { id: "shop",   label: "[E] Mejorar taller",     x: 130, y: 476, icon: "🔧", kind: "shop",     npc: "carlos", solid: { w: 66, h: 14, dy: 10 }, sign: { name: "MEJORAS",       dy: 46 } },
+  { id: "sales",  label: "[E] Entregar pedido",    x: 792, y: 486, icon: "🧾", kind: "register", npc: "client", solid: { w: 44, h: 14, dy: 6 },  sign: { name: "CLIENTES",      dy: 44 } },
 ];
 
 // Frases cortas que dice el NPC de cada estación (solo en el tutorial).
@@ -232,8 +232,31 @@ export class WorkshopScene extends Phaser.Scene {
         const r = this.add.rectangle(s.x, s.y + s.solid.dy, s.solid.w, s.solid.h, 0, 0);
         this.physics.add.existing(r, true); this.solids.add(r);
       }
-      // SIN etiquetas de texto. El NPC + el mueble explican qué es el puesto.
+      if (s.sign) this.#sign(s.x, s.y + s.sign.dy, s.icon, s.sign.name);
     }
+  }
+
+  /**
+   * Placa de madera con el nombre del puesto, clavada en el borde delantero del
+   * mueble: señalización del taller, no un botón. Va a poca profundidad para que
+   * el NPC y el jugador pasen por delante.
+   */
+  #sign(x, y, icon, name) {
+    const D = 4;
+    const label = this.add.text(x + 9, y, name, {
+      fontFamily: "Verdana, sans-serif", fontSize: "10px", fontStyle: "bold",
+      color: "#f6e4b8", stroke: "#1c1207", strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(D + 1);
+    const w = label.width + 42, h = 19;
+    const g = this.add.graphics().setDepth(D);
+    g.fillStyle(0x000000, 0.22); g.fillEllipse(x, y + 11, w * 0.82, 7);
+    g.fillStyle(0x2f1d0e, 1); g.fillRoundedRect(x - w / 2, y - h / 2, w, h, 3);
+    g.fillStyle(0x60401f, 1); g.fillRoundedRect(x - w / 2 + 2, y - h / 2 + 2, w - 4, h - 4, 2);
+    g.fillStyle(0x7a5228, 0.5); g.fillRect(x - w / 2 + 3, y - h / 2 + 3, w - 6, 3);   // veta de luz
+    g.lineStyle(1, 0x9a7a44, 0.6); g.strokeRoundedRect(x - w / 2 + 2, y - h / 2 + 2, w - 4, h - 4, 2);
+    g.fillStyle(0xc9c9d2, 0.8);
+    g.fillCircle(x - w / 2 + 6, y, 1.5); g.fillCircle(x + w / 2 - 6, y, 1.5);          // tornillos
+    this.add.text(x - w / 2 + 14, y - 0.5, icon, { fontSize: "11px" }).setOrigin(0.5).setDepth(D + 1);
   }
 
   /** Un NPC en cada estación, HACIENDO su actividad (animación de 2 fotogramas). */

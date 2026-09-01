@@ -29,6 +29,7 @@ import { ShopView } from "./views/ShopView.js";
 import { RequirementView } from "./views/RequirementView.js";
 import { SalesView } from "./views/SalesView.js";
 import { EvaluationView } from "./views/EvaluationView.js";
+import { SettingsView } from "./views/SettingsView.js";
 import { TouchView } from "./views/TouchView.js";
 
 // ---------- adaptación a la pantalla (móvil / tablet / PC) ----------
@@ -61,10 +62,34 @@ bus.on("sfx", (n) => audio.play(n));
 bus.on("challenge:solved", () => audio.play("ok"));
 bus.on("challenge:failed", () => audio.play("error"));
 bus.on("rule:blocked", () => audio.play("error"));
+bus.on("order:accepted", () => audio.play("accept"));
 bus.on("order:delivered", () => audio.play("coins"));
 bus.on("craft:done", () => audio.play("craft"));
 bus.on("player:levelup", () => audio.play("level"));
 bus.on("achievement:unlocked", () => audio.play("achieve"));
+bus.on("upgrade:bought", () => audio.play("upgrade"));
+bus.on("station:open", () => audio.play("open"));
+
+// El audio se desbloquea con la 1.ª interacción real del usuario (autoplay).
+const unlockAudio = () => {
+  audio.unlock();
+  updateSoundHint();
+  window.removeEventListener("pointerdown", unlockAudio, true);
+  window.removeEventListener("keydown", unlockAudio, true);
+};
+window.addEventListener("pointerdown", unlockAudio, true);
+window.addEventListener("keydown", unlockAudio, true);
+
+// Botón "🔊 Activar sonido" si el navegador bloqueó el audio.
+const soundHint = document.createElement("button");
+soundHint.id = "sound-hint";
+soundHint.textContent = "🔊 Activar sonido";
+soundHint.className = "hidden";
+soundHint.addEventListener("click", () => { audio.unlock(); updateSoundHint(); });
+document.getElementById("ui").appendChild(soundHint);
+function updateSoundHint() {
+  soundHint.classList.toggle("hidden", !(audio.blocked && audio.prefs.musicOn));
+}
 
 // ---------- CONTROLADOR ----------
 const game = new GameController(gs, bus, save);
@@ -85,10 +110,20 @@ const shop = new ShopView(game.workshop, game.upgrades, gs, bus);
 const req = new RequirementView(game.orders, null, gs, bus);
 const sales = new SalesView(game.orders, gs, bus);
 const evaluation = new EvaluationView(game);
+const settings = new SettingsView(audio);
 
 const menu = new MenuView(onMenu);
 const entrada = { x: 0, y: 0 };
 const touch = new TouchView(entrada, bus);
+
+// Botón ⚙️ del HUD (in-game) → ajustes de audio.
+const gearBtn = document.createElement("button");
+gearBtn.id = "gear-btn";
+gearBtn.textContent = "⚙️";
+gearBtn.className = "hidden";
+gearBtn.setAttribute("aria-label", "Ajustes");
+gearBtn.addEventListener("click", () => settings.open());
+document.getElementById("ui").appendChild(gearBtn);
 
 // ---------- rutas de estación (SOLO 6) ----------
 const STATION_VIEW = {
@@ -148,6 +183,9 @@ phaser.events.on("menu:ready", () => {
   menu.render({ hasSave: save.hasSave() });
   menu.show();
   hud.show(false); touch.show(false); quest.show(false);
+  gearBtn.classList.add("hidden");
+  audio.setInGame(false);
+  updateSoundHint();
   refreshLayout();
   if (sessionStorage.getItem("cc:tutorial") === "1") {
     try { tutorial.open(true); }
@@ -164,6 +202,8 @@ phaser.events.on("workshop:ready", (sc) => {
   scene = sc; inGame = true;
   document.body.classList.add("in-game");
   hud.show(true); touch.show(true); quest.show(true);
+  gearBtn.classList.remove("hidden");
+  audio.setInGame(true);
   hud.render(gs); quest.render();
   refreshLayout();
   phaser.scale.refresh();
@@ -188,6 +228,7 @@ function onMenu(act) {
   if (act === "new") { save.reset(); sessionStorage.setItem("cc:tutorial", "1"); location.reload(); return; }
   if (act === "continue") { startGame(); return; }
   if (act === "how") { try { tutorial.open(false); } catch (e) { console.warn("tutorial:", e); } }
+  if (act === "settings") settings.open();
 }
 
 // ---------- HUD reactivo ----------
