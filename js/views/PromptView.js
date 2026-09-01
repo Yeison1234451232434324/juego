@@ -16,6 +16,11 @@ export class PromptView {
 
   setPrompt(t) {
     this.prompt.classList.toggle("hidden", !t);
-    if (t) this.prompt.textContent = t.label;
+    if (!t) return;
+    // En móvil no hay tecla E: el aviso invita a tocar el botón redondo.
+    const touch = document.body.classList.contains("controls-on");
+    this.prompt.textContent = touch
+      ? t.label.replace(/^\[E\]\s*/, "👆 ")
+      : t.label;
   }
 }

@@ -17,4 +17,16 @@ export class SaveManager {
   }
 
   reset() { try { localStorage.removeItem(this.#key); } catch { /* noop */ } }
+
+  /** Fusiona claves sueltas en el guardado (p. ej. reabrir el tutorial sin
+      borrar el progreso). Si no hay guardado, no hace nada. */
+  patch(partial) {
+    try {
+      const r = localStorage.getItem(this.#key);
+      if (!r) return false;
+      const data = { ...JSON.parse(r), ...partial };
+      localStorage.setItem(this.#key, JSON.stringify(data));
+      return true;
+    } catch (e) { console.warn("patch fail", e); return false; }
+  }
 }

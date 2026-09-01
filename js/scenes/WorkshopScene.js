@@ -345,30 +345,113 @@ export class WorkshopScene extends Phaser.Scene {
     }).setDepth(38);
   }
 
+  /**
+   * Sistema de GUÍA VISUAL del objetivo. Un solo puesto se resalta a la vez
+   * (this.currentTarget). Combina: columna de luz + halo que late en el suelo +
+   * resplandor tras el NPC + bombillo 💡 grande que rebota y pulsa + destello ✨
+   * + flecha ⬇ + etiqueta "OBJETIVO" (texto, no solo color) + rastro de puntos
+   * desde el jugador que se desvanece al llegar.
+   */
   #objectiveMarker() {
-    // Nada de flechas gigantes: un aro suave que late en el suelo del puesto
-    // activo y una lucecita 💡 pequeña encima del NPC.
-    this.markRing = this.add.ellipse(0, 0, 46, 20).setStrokeStyle(2.5, 0xffd98a, 0.8).setDepth(1).setVisible(false);
-    this.markIco = this.add.text(0, 0, "💡", { fontSize: "14px" }).setOrigin(0.5).setDepth(53).setVisible(false);
-    this.tweens.add({ targets: this.markRing, scaleX: 1.25, scaleY: 1.25, alpha: 0.15, duration: 1100, repeat: -1, ease: "Sine.out" });
-    this.tweens.add({ targets: this.markIco, y: "+=4", yoyo: true, repeat: -1, duration: 640, ease: "Sine.inOut" });
+    this.currentTarget = null;
+    const hide = (o) => o.setVisible(false);
+
+    // columna de luz suave (no oscurece el resto del mapa) — tras el NPC
+    this.gBeam = hide(this.add.ellipse(0, 0, 54, 150, 0xffe6a8, 0.10).setDepth(7));
+    // resplandor tras el NPC
+    this.gGlow = hide(this.add.ellipse(0, 0, 92, 104, 0xffe0a0, 0.12).setDepth(7));
+    // halo doble en el suelo del puesto (bajo los pies)
+    this.gHalo = hide(this.add.ellipse(0, 0, 64, 28).setStrokeStyle(3, 0xffe08a, 0.95).setDepth(6));
+    this.gHalo2 = hide(this.add.ellipse(0, 0, 64, 28, 0xffd98a, 0.14).setDepth(5));
+    // bombillo grande + destello + flecha + etiqueta (encima de todo)
+    this.gBulb = hide(this.add.text(0, 0, "💡", { fontSize: "27px" }).setOrigin(0.5).setDepth(53));
+    this.gSpark = hide(this.add.text(0, 0, "✨", { fontSize: "15px" }).setOrigin(0.5).setDepth(54));
+    this.gArrow = hide(this.add.text(0, 0, "⬇", { fontSize: "18px", color: "#ffe08a",
+      stroke: "#1c1207", strokeThickness: 4 }).setOrigin(0.5).setDepth(54));
+    // etiqueta con TEXTO (accesibilidad: no depende solo del color)
+    this.gTag = hide(this.add.text(0, 0, "OBJETIVO", {
+      fontFamily: "Verdana, sans-serif", fontSize: "9px", fontStyle: "bold",
+      color: "#1c1207", backgroundColor: "#ffd98a", padding: { x: 5, y: 2 },
+    }).setOrigin(0.5).setDepth(54));
+    // rastro de puntos jugador → objetivo
+    this.gDots = [];
+    for (let i = 0; i < 7; i++) this.gDots.push(hide(this.add.circle(0, 0, 3.2, 0xffe08a, 0.9).setDepth(6)));
+
+    // Animaciones que NO dependen de la posición (escala/alfa) → tween permanente.
+    this.tweens.add({ targets: [this.gHalo, this.gHalo2], scaleX: 1.4, scaleY: 1.4, alpha: 0,
+      duration: 1200, repeat: -1, ease: "Sine.out" });
+    this.tweens.add({ targets: this.gGlow, alpha: 0.30, duration: 900, yoyo: true, repeat: -1, ease: "Sine.inOut" });
+    this.tweens.add({ targets: this.gBeam, alpha: 0.20, duration: 1500, yoyo: true, repeat: -1, ease: "Sine.inOut" });
+    // El rebote vertical y el pulso del bombillo/flecha se animan en update()
+    // (posición base variable por estación → un tween "+=" se descolocaría).
+    this._bulbBaseY = 0;
+  }
+
+  #guideParts() {
+    return [this.gBeam, this.gGlow, this.gHalo, this.gHalo2, this.gBulb, this.gSpark, this.gArrow, this.gTag];
   }
 
   #setHint(id) {
     const s = STATIONS.find((x) => x.id === id);
+    this.currentTarget = s ? s.id : null;
     const on = !!s;
-    this.markRing?.setVisible(on);
-    this.markIco?.setVisible(on);
+    for (const p of this.#guideParts()) p?.setVisible(on);
+    for (const d of this.gDots ?? []) d.setVisible(false);
     if (!on) return;
+
+    const mob = document.body.classList.contains("controls-on");
     const sp = this.npc?.[s.npc];
-    const ny = sp ? sp.y : s.y;
-    this.markRing.setPosition(s.x, ny + 22);
-    this.markIco.setPosition(s.x, ny - 26);
-    // pequeño "salto" del NPC de ese puesto para llamar la atención
+    const bx = s.x;
+    const by = sp ? (sp._home ?? sp.y) : s.y;
+
+    this.gBeam.setPosition(bx, by - 54).setScale(mob ? 1.25 : 1);
+    this.gGlow.setPosition(bx, by - 6).setScale(mob ? 1.3 : 1);
+    this.gHalo.setPosition(bx, by + 20);
+    this.gHalo2.setPosition(bx, by + 20);
+    this._bulbBaseY = by - (mob ? 60 : 52);
+    this._arrowBaseY = by - (mob ? 40 : 34);
+    this._sparkBase = { x: bx + 20, y: by - (mob ? 58 : 50) };
+    this.gBulb.setPosition(bx, this._bulbBaseY).setFontSize(mob ? 34 : 27);
+    this.gArrow.setPosition(bx, this._arrowBaseY);
+    this.gSpark.setPosition(this._sparkBase.x, this._sparkBase.y);
+    this.gTag.setPosition(bx, by - (mob ? 84 : 74));
+
+    // el NPC de ese puesto da un pequeño salto para llamar la atención
     if (sp) {
-      this.tweens.add({ targets: sp, scaleX: CHAR_SCALE * 1.13, scaleY: CHAR_SCALE * 1.13,
+      this.tweens.add({ targets: sp, scaleX: CHAR_SCALE * 1.14, scaleY: CHAR_SCALE * 1.14,
         duration: 170, yoyo: true, repeat: 2, ease: "Sine.inOut" });
     }
+  }
+
+  /** Rebote/pulso del bombillo + rastro de puntos jugador → objetivo. */
+  #updateGuide() {
+    if (!this.currentTarget) return;
+    const now = this.time.now;
+
+    // bombillo: rebote vertical ~13 px + pulso de escala 1.0↔1.08
+    if (this.gBulb?.visible) {
+      this.gBulb.y = this._bulbBaseY + Math.sin(now * 0.009) * 6.5 - 6.5;
+      const sc = 1 + 0.06 * (0.5 + 0.5 * Math.sin(now * 0.008));
+      this.gBulb.setScale(sc);
+      this.gArrow.y = this._arrowBaseY + Math.sin(now * 0.009 + 0.6) * 3;
+      this.gSpark.setAngle(Math.sin(now * 0.006) * 22);
+      this.gSpark.setAlpha(0.35 + 0.55 * (0.5 + 0.5 * Math.sin(now * 0.006)));
+    }
+
+    const dots = this.gDots;
+    const s = STATIONS.find((x) => x.id === this.currentTarget);
+    if (!s || !dots?.length) return;
+    if (this.paused) { for (const d of dots) d.setVisible(false); return; }
+    const tx = s.x, ty = s.y - 8;
+    if (Phaser.Math.Distance.Between(this.pj.x, this.pj.y, tx, ty) < 92) {
+      for (const d of dots) d.setVisible(false); return;
+    }
+    dots.forEach((d, i) => {
+      const t = (i + 1) / (dots.length + 1);
+      d.setVisible(true);
+      d.setPosition(Phaser.Math.Linear(this.pj.x, tx, t), Phaser.Math.Linear(this.pj.y, ty, t));
+      d.setAlpha(0.25 + 0.6 * (0.5 + 0.5 * Math.sin(now * 0.006 - i * 0.9)));
+    });
   }
 
   // ---------- bucle ----------
@@ -412,6 +495,7 @@ export class WorkshopScene extends Phaser.Scene {
     }
     this.gs.player.setPosition(Math.round(this.pj.x), Math.round(this.pj.y));
     this.#resolveTarget();
+    this.#updateGuide();
   }
 
   #resolveTarget() {

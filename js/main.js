@@ -29,7 +29,7 @@ import { ShopView } from "./views/ShopView.js";
 import { RequirementView } from "./views/RequirementView.js";
 import { SalesView } from "./views/SalesView.js";
 import { EvaluationView } from "./views/EvaluationView.js";
-import { SettingsView } from "./views/SettingsView.js";
+import { SettingsView, toggleFullscreen } from "./views/SettingsView.js";
 import { TouchView } from "./views/TouchView.js";
 
 // ---------- adaptación a la pantalla (móvil / tablet / PC) ----------
@@ -110,13 +110,13 @@ const shop = new ShopView(game.workshop, game.upgrades, gs, bus);
 const req = new RequirementView(game.orders, null, gs, bus);
 const sales = new SalesView(game.orders, gs, bus);
 const evaluation = new EvaluationView(game);
-const settings = new SettingsView(audio);
+const settings = new SettingsView(audio, save);
 
 const menu = new MenuView(onMenu);
 const entrada = { x: 0, y: 0 };
 const touch = new TouchView(entrada, bus);
 
-// Botón ⚙️ del HUD (in-game) → ajustes de audio.
+// Botón ⚙️ del HUD (in-game) → ajustes.
 const gearBtn = document.createElement("button");
 gearBtn.id = "gear-btn";
 gearBtn.textContent = "⚙️";
@@ -124,6 +124,33 @@ gearBtn.className = "hidden";
 gearBtn.setAttribute("aria-label", "Ajustes");
 gearBtn.addEventListener("click", () => settings.open());
 document.getElementById("ui").appendChild(gearBtn);
+
+// Botón ⛶ pantalla completa (solo con controles táctiles; en PC está F11 / Ajustes).
+const fsBtn = document.createElement("button");
+fsBtn.id = "fs-btn";
+fsBtn.textContent = "⛶";
+fsBtn.className = "hidden";
+fsBtn.setAttribute("aria-label", "Pantalla completa");
+fsBtn.addEventListener("click", () => toggleFullscreen());
+document.getElementById("ui").appendChild(fsBtn);
+
+// Banner de objetivo (slim, centrado arriba) — se actualiza solo.
+const objBanner = document.createElement("div");
+objBanner.id = "obj-banner";
+objBanner.className = "hidden";
+document.getElementById("ui").appendChild(objBanner);
+function renderObjective() {
+  const txt = gs.objective || "";
+  objBanner.innerHTML = `<b>🎯 OBJETIVO</b> <span>${txt.replace(/[<>]/g, "")}</span>`;
+}
+bus.on("objective:changed", renderObjective);
+
+// Al entrar/salir de pantalla completa: recalcular el lienzo y el HUD.
+["fullscreenchange", "webkitfullscreenchange"].forEach((e) =>
+  document.addEventListener(e, () => {
+    document.body.classList.toggle("is-fullscreen", !!(document.fullscreenElement || document.webkitFullscreenElement));
+    [0, 120, 350].forEach((d) => setTimeout(() => { try { phaser.scale.refresh(); } catch { /* noop */ } refreshLayout(); }, d));
+  }));
 
 // ---------- rutas de estación (SOLO 6) ----------
 const STATION_VIEW = {
@@ -184,6 +211,8 @@ phaser.events.on("menu:ready", () => {
   menu.show();
   hud.show(false); touch.show(false); quest.show(false);
   gearBtn.classList.add("hidden");
+  fsBtn.classList.add("hidden");
+  objBanner.classList.add("hidden");
   audio.setInGame(false);
   updateSoundHint();
   refreshLayout();
@@ -203,6 +232,9 @@ phaser.events.on("workshop:ready", (sc) => {
   document.body.classList.add("in-game");
   hud.show(true); touch.show(true); quest.show(true);
   gearBtn.classList.remove("hidden");
+  fsBtn.classList.toggle("hidden", !document.body.classList.contains("controls-on"));
+  objBanner.classList.remove("hidden");
+  renderObjective();
   audio.setInGame(true);
   hud.render(gs); quest.render();
   refreshLayout();
@@ -254,6 +286,12 @@ function relayoutCanvas() {
 [0, 120, 320, 600].forEach((d) => setTimeout(relayoutCanvas, d));
 ["resize", "orientationchange", "focus", "load", "pageshow", "visibilitychange"].forEach((e) =>
   window.addEventListener(e, () => [60, 260, 500].forEach((d) => setTimeout(relayoutCanvas, d))));
+
+// El botón ⛶ sigue a los controles táctiles (aparecen/desaparecen al rotar).
+["resize", "orientationchange"].forEach((e) => window.addEventListener(e, () => setTimeout(() => {
+  if (!inGame) return;
+  fsBtn.classList.toggle("hidden", !document.body.classList.contains("controls-on"));
+}, 120)));
 setInterval(() => {
   const cv = phaser.canvas;
   if (cv && cv.clientWidth < 20 && (window.innerWidth || 0) > 20) relayoutCanvas();
