@@ -9,7 +9,13 @@ export const CONFIG = Object.freeze({
   VIEW: { width: 1200, height: 600, zoom: 1 },
   WORLD: { width: 960, height: 600 },
   PLAYER: { speed: 132 },
-  SAVE_KEY: "codecraft-workshop:v4",
+  SAVE_KEY: "codecraft-workshop:v5",
+
+  // --- Reglas de gameplay (datos; la lógica vive en BusinessRules) ---
+  GAMEPLAY: Object.freeze({
+    MAX_ACTIVE_ORDERS: 3,       // trabajos que el jugador puede tener a la vez
+    DEBUG_COLLISIONS: false,    // pinta las cajas de colisión en rojo
+  }),
 
   ECONOMY: Object.freeze({
     startCoins: 100,
@@ -20,15 +26,15 @@ export const CONFIG = Object.freeze({
     reputationPerOrder: 3,
   }),
 
+  // Receta de cada mueble: SOLO madera y clavos. La madera se consigue con
+  // retos de CLASES; los clavos, con retos de PROPIEDADES / MÉTODOS.
   RECIPES: Object.freeze({
     Chair:   { wood: 4, nails: 2 },
-    Table:   { wood: 8, nails: 4, screws: 2 },
-    Cabinet: { wood: 12, nails: 6, screws: 4, paint: 2 },
-    // en la Máquina de Corte se transforman materiales:
-    nails:   { input: { wood: 1 }, output: { nails: 3 }, seconds: 4 },
+    Table:   { wood: 6, nails: 4 },
+    Cabinet: { wood: 10, nails: 6 },
   }),
 
-  CRAFT_SECONDS: Object.freeze({ Chair: 15, Table: 30, Cabinet: 45 }),
+  CRAFT_SECONDS: Object.freeze({ Chair: 12, Table: 20, Cabinet: 30 }),
 
   // Nombre en español de cada mueble (las claves internas están en inglés).
   MUEBLE_ES: Object.freeze({ Chair: "Silla", Table: "Mesa", Cabinet: "Armario" }),
@@ -36,12 +42,11 @@ export const CONFIG = Object.freeze({
   XP: Object.freeze({ perLevel: 260, craft: 100, order: 90, challenge: 50, mvc: 40 }),
 
   MATERIAL_META: Object.freeze({
-    wood:  { name: "Madera",  source: "Resuelve retos de programación en la Mesa de Código." },
-    nails: { name: "Clavos",  source: "Fabrícalos en la Máquina de Corte (1 madera → 3 clavos)." },
-    metal: { name: "Metal",   source: "Se obtiene al completar pedidos de clientes." },
-    screws:{ name: "Tornillos",source: "Cómprale a Carlos en la Tienda." },
-    paint: { name: "Pintura", source: "Cómprale a Carlos en la Tienda." },
-    core:  { name: "Núcleo",  source: "Resuelve retos de arquitectura MVC en la Mesa de Arquitectura." },
+    wood:  { name: "Madera",  source: "Resuelve retos de CLASES en la computadora 💻." },
+    nails: { name: "Clavos",  source: "Resuelve retos de PROPIEDADES y MÉTODOS en la computadora 💻." },
+    metal: { name: "Metal",   source: "Se obtiene al entregar pedidos a los clientes." },
+    screws:{ name: "Tornillos",source: "Cómprale a Carlos en la Zona de Mejoras 🏪." },
+    paint: { name: "Pintura", source: "Cómprale a Carlos en la Zona de Mejoras 🏪." },
   }),
 
   PALETTE: Object.freeze({

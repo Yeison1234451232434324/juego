@@ -1,99 +1,173 @@
 /**
- * ChallengeService — los RETOS de programación (Mesa de Código) y de
- * arquitectura (Mesa de Arquitectura).
+ * ChallengeService — los RETOS DE PRODUCCIÓN de la computadora.
  *
- * Cada reto de código enseña un concepto de POO con instrucciones paso a paso,
- * requisitos verificables y pistas siempre disponibles. Al resolverlo entrega
- * materiales. Los retos de arquitectura enseñan MVC (Modelo–Vista–Controlador).
+ * Cada reto enseña un concepto de POO con INSTRUCCIONES paso a paso muy
+ * explícitas y requisitos verificables. Al resolver un reto, el
+ * ProgrammingController entrega materiales para el pedido actual.
  *
- * Nota: las palabras `class`, `constructor`, `extends`, `super`, `return`,
- * `this`, `new` y `throw` son de JavaScript y no se traducen. Todo lo demás
- * (nombres de clases, métodos y propiedades) está en español.
+ * Los retos NO se agotan: son un grifo de materiales. El servicio los rota,
+ * evita repetir el mismo inmediatamente y, si el jugador falla, ofrece OTRO
+ * reto del mismo concepto para que nunca quede atrapado.
+ *
+ * Nota: `class`, `constructor`, `extends`, `super`, `return`, `this`, `new`,
+ * `throw` y `true` son de JavaScript. Los nombres (Silla, nombre, fabricar…)
+ * están en español.
  */
 
-// helper: ¿aparece `pat` dentro del cuerpo del método `name`?
-const inMethod = (flat, name, pat) => {
+const inBody = (flat, name, pat) => {
   const m = new RegExp(`${name}\\s*\\([^)]*\\)\\s*\\{([\\s\\S]*?)\\}`, "i").exec(flat);
   return m ? pat.test(m[1]) : false;
 };
-const hasMethod = (flat, name) => new RegExp(`(^|[^.\\w])${name}\\s*\\([^)]*\\)\\s*\\{`, "i").test(flat);
-const hasProp = (flat, name) =>
-  new RegExp(`this\\.${name}\\s*=`, "i").test(flat) ||
-  new RegExp(`(^|[{;,\\n\\s])${name}\\s*[:=]`, "i").test(flat) ||
-  new RegExp(`#?${name}\\s*;`, "i").test(flat);
+const hasMethod = (flat, name) =>
+  new RegExp(`(^|[^.\\w])${name}\\s*\\([^)]*\\)\\s*\\{`, "i").test(flat);
+const hasClass = (flat, name) => new RegExp(`class\\s+${name}\\b`, "i").test(flat);
+const assigns = (flat, prop, valPat) =>
+  new RegExp(`this\\.${prop}\\s*=\\s*${valPat}`, "i").test(flat);
 
-export const CODE_CHALLENGES = [
+/** Grupos de retos: cada grupo enseña UN concepto y tiene 1+ variantes. */
+export const CHALLENGE_GROUPS = [
+  // ────────────────────────────────  CLASE  ────────────────────────────────
   {
-    id: "chair", level: 1, concept: "clase", rf: "RF-001",
-    title: "PROYECTO: LA SILLA",
-    brief: 'BYTE: "Antes de fabricar una silla, hay que decirle al taller qué ES una silla: su nombre, su precio y qué sabe hacer. Eso es una CLASE."',
-    objetivo: "Crea la clase Silla con su nombre, su precio y un método para fabricarla.",
-    pasos: [
-      'El nombre ya está escrito: this.nombre = "Silla";',
-      "PASO 1 · Debajo del nombre, escribe el precio:  this.precio = 75;",
-      'PASO 2 · Debajo del constructor, añade el método fabricar() que devuelva un texto:  fabricar() { return "silla lista"; }',
-    ],
-    requirements: ["Una clase llamada Silla", "Propiedad nombre", "Propiedad precio", "Método fabricar()"],
-    starter:
+    group: "clase", concept: "clase", rf: "RF-001", minLevel: 1,
+    variants: [
+      {
+        id: "clase-silla",
+        title: "RETO DE PRODUCCIÓN — LA SILLA",
+        brief: 'BYTE: "Para fabricar una silla, primero define QUÉ ES una silla. Eso es una CLASE: un molde con datos y acciones."',
+        objetivo: "Crea la clase Silla con una propiedad y un método.",
+        pasos: [
+          "1. Escribe una clase llamada Silla:  class Silla { }",
+          '2. Dentro del constructor, crea la propiedad nombre:  this.nombre = "Silla";',
+          "3. Debajo del constructor, crea un método llamado fabricar().",
+          "4. El método fabricar() debe devolver true:  return true;",
+          "5. Cuando termines, pulsa EJECUTAR CÓDIGO.",
+        ],
+        requirements: [
+          "Una clase llamada Silla",
+          'Propiedad nombre con el valor "Silla"',
+          "Método fabricar()",
+          "fabricar() devuelve true",
+        ],
+        starter:
 `class Silla {
   constructor() {
-    this.nombre = "Silla";
-    // PASO 1 · escribe aquí:  this.precio = 75;
+    // PASO 2 · this.nombre = "Silla";
 
   }
 
-  // PASO 2 · escribe aquí el método fabricar()
+  // PASOS 3 y 4 · método fabricar() que devuelva true
 
 }
 `,
-    template:
+        ejemplo:
 `class Silla {
   constructor() {
     this.nombre = "Silla";
-    this.precio = 75;
   }
 
   fabricar() {
-    return "silla lista";
+    return true;
   }
 }
 `,
-    rewards: { wood: 3, nails: 1, xp: 50 },
-    checks: [
-      { label: "clase Silla", test: (f) => /class\s+Silla\b/i.test(f), error: 'No encuentro "class Silla".', hint: "Escribe en la primera línea:  class Silla {" },
-      { label: "propiedad nombre", test: (f) => /this\.nombre\s*=/i.test(f), error: "Falta la propiedad nombre.", hint: 'En el constructor:  this.nombre = "Silla";' },
-      { label: "propiedad precio", test: (f) => /this\.precio\s*=/i.test(f), error: "Falta la propiedad precio.", hint: "En el constructor, debajo del nombre:  this.precio = 75;" },
-      { label: "método fabricar()", test: (f) => hasMethod(f, "fabricar"), error: "No encuentro el método fabricar().", hint: 'Debajo del constructor:  fabricar() { return "silla lista"; }' },
+        explainOnFail:
+          "Una CLASE es el molde de un objeto. La clase Silla necesita una PROPIEDAD (nombre, que la describe) y un MÉTODO (fabricar, que devuelve true cuando la silla se puede construir).",
+        checks: [
+          { label: "clase Silla", test: (f) => hasClass(f, "Silla"), error: 'Falta la clase. Empieza con:  class Silla {', hint: "class Silla {" },
+          { label: 'propiedad nombre = "Silla"', test: (f) => assigns(f, "nombre", '["’\']?Silla'), error: 'La propiedad nombre debe valer "Silla".', hint: 'En el constructor:  this.nombre = "Silla";' },
+          { label: "método fabricar()", test: (f) => hasMethod(f, "fabricar"), error: "Falta el método fabricar().", hint: "fabricar() { ... }" },
+          { label: "fabricar() devuelve true", test: (f) => inBody(f, "fabricar", /return\s+true\b/), error: "fabricar() debe devolver true.", hint: "return true;" },
+        ],
+      },
+      {
+        id: "clase-mesa",
+        title: "RETO DE PRODUCCIÓN — LA MESA",
+        brief: 'BYTE: "Otra pieza, mismo concepto. Define la clase Mesa igual que hiciste con la Silla."',
+        objetivo: "Crea la clase Mesa con una propiedad y un método.",
+        pasos: [
+          "1. Escribe una clase llamada Mesa:  class Mesa { }",
+          '2. En el constructor, crea la propiedad nombre:  this.nombre = "Mesa";',
+          "3. Crea un método llamado fabricar().",
+          "4. fabricar() debe devolver true.",
+          "5. Pulsa EJECUTAR CÓDIGO.",
+        ],
+        requirements: [
+          "Una clase llamada Mesa",
+          'Propiedad nombre con el valor "Mesa"',
+          "Método fabricar()",
+          "fabricar() devuelve true",
+        ],
+        starter:
+`class Mesa {
+  constructor() {
+    // this.nombre = "Mesa";
+
+  }
+
+  // método fabricar() que devuelva true
+
+}
+`,
+        ejemplo:
+`class Mesa {
+  constructor() {
+    this.nombre = "Mesa";
+  }
+
+  fabricar() {
+    return true;
+  }
+}
+`,
+        explainOnFail:
+          "Cada mueble es una CLASE: un molde con una propiedad que lo describe (nombre) y un método que dice cómo se fabrica (fabricar).",
+        checks: [
+          { label: "clase Mesa", test: (f) => hasClass(f, "Mesa"), error: "Falta:  class Mesa {", hint: "class Mesa {" },
+          { label: 'propiedad nombre = "Mesa"', test: (f) => assigns(f, "nombre", '["’\']?Mesa'), error: 'this.nombre debe valer "Mesa".', hint: 'this.nombre = "Mesa";' },
+          { label: "método fabricar()", test: (f) => hasMethod(f, "fabricar"), error: "Falta fabricar().", hint: "fabricar() { ... }" },
+          { label: "fabricar() devuelve true", test: (f) => inBody(f, "fabricar", /return\s+true\b/), error: "fabricar() debe devolver true.", hint: "return true;" },
+        ],
+      },
     ],
   },
 
+  // ──────────────────────────  ENCAPSULAMIENTO  ────────────────────────────
   {
-    id: "table", level: 2, concept: "encapsulamiento", rf: "RF-005",
-    title: "PROYECTO: LA MESA — precio protegido",
-    brief: 'BYTE: "El precio nunca puede ser 0 ni negativo. Guárdalo en _precio y créale un método que lo valide antes de cambiarlo. Eso es ENCAPSULAR."',
-    objetivo: "Haz que ponerPrecio() solo acepte precios mayores que 0.",
-    pasos: [
-      "El constructor ya guarda el precio en this._precio. No lo toques.",
-      "PASO 1 · Dentro de ponerPrecio(nuevo), escribe un if que compruebe:  if (nuevo > 0) { ... }",
-      "PASO 2 · Dentro de ese if, asigna el nuevo precio:  this._precio = nuevo;",
-    ],
-    requirements: ["Una clase llamada Mesa", "El constructor guarda this._precio", "Método ponerPrecio(nuevo)", "ponerPrecio solo acepta valores mayores que 0"],
-    starter:
-`class Mesa {
+    group: "encapsulamiento", concept: "encapsulamiento", rf: "RF-005", minLevel: 1,
+    variants: [
+      {
+        id: "encap-precio",
+        title: "RETO DE PRODUCCIÓN — PRECIO PROTEGIDO",
+        brief: 'BYTE: "El precio NUNCA puede ser negativo. Guárdalo dentro de la clase y créale un método que lo valide antes de cambiarlo."',
+        objetivo: "ponerPrecio() solo debe aceptar precios mayores que 0.",
+        pasos: [
+          "1. La clase Silla ya guarda el precio en this._precio. No lo toques.",
+          "2. Dentro de ponerPrecio(nuevo), escribe un if:  if (nuevo > 0) { }",
+          "3. Dentro del if, asigna el precio:  this._precio = nuevo;",
+          "4. Pulsa EJECUTAR CÓDIGO.",
+        ],
+        requirements: [
+          "Clase llamada Silla",
+          "El constructor guarda this._precio",
+          "Método ponerPrecio(nuevo)",
+          "ponerPrecio solo asigna si nuevo > 0",
+        ],
+        starter:
+`class Silla {
   constructor() {
-    this._precio = 100;
+    this._precio = 0;
   }
 
   ponerPrecio(nuevo) {
-    // PASO 1 y 2 · si nuevo > 0, haz this._precio = nuevo
+    // PASOS 2 y 3 · si nuevo > 0, haz this._precio = nuevo
 
   }
 }
 `,
-    template:
-`class Mesa {
+        ejemplo:
+`class Silla {
   constructor() {
-    this._precio = 100;
+    this._precio = 0;
   }
 
   ponerPrecio(nuevo) {
@@ -101,244 +175,387 @@ export const CODE_CHALLENGES = [
       this._precio = nuevo;
     }
   }
+}
+`,
+        explainOnFail:
+          "ENCAPSULAR es proteger un dato. El precio vive en this._precio y solo se cambia a través de ponerPrecio(), que comprueba que el nuevo valor sea MAYOR QUE 0 antes de guardarlo.",
+        checks: [
+          { label: "clase Silla", test: (f) => hasClass(f, "Silla"), error: "Falta:  class Silla {", hint: "class Silla {" },
+          { label: "this._precio en el constructor", test: (f) => /this\._precio\s*=/i.test(f), error: "El constructor debe guardar el precio en this._precio.", hint: "this._precio = 0;" },
+          { label: "método ponerPrecio(nuevo)", test: (f) => /ponerPrecio\s*\(\s*\w+\s*\)/i.test(f), error: "Falta el método ponerPrecio(nuevo).", hint: "ponerPrecio(nuevo) { ... }" },
+          { label: "valida nuevo > 0", test: (f) => inBody(f, "ponerPrecio", />\s*0/) && inBody(f, "ponerPrecio", /this\._precio\s*=\s*nuevo/i), error: "Dentro de ponerPrecio(): if (nuevo > 0) { this._precio = nuevo; }", hint: "if (nuevo > 0) { this._precio = nuevo; }" },
+        ],
+      },
+      {
+        id: "encap-stock",
+        title: "RETO DE PRODUCCIÓN — STOCK PROTEGIDO",
+        brief: 'BYTE: "El stock no puede bajar de cero. Protégelo con un método que valide antes de restar."',
+        objetivo: "quitar(n) solo debe restar si queda stock suficiente.",
+        pasos: [
+          "1. this._stock ya vale 10. No lo toques.",
+          "2. Dentro de quitar(n), escribe un if:  if (n <= this._stock) { }",
+          "3. Dentro del if:  this._stock = this._stock - n;",
+          "4. Pulsa EJECUTAR CÓDIGO.",
+        ],
+        requirements: [
+          "Clase llamada Almacen",
+          "El constructor guarda this._stock",
+          "Método quitar(n)",
+          "quitar solo resta si n <= this._stock",
+        ],
+        starter:
+`class Almacen {
+  constructor() {
+    this._stock = 10;
+  }
 
-  obtenerPrecio() {
-    return this._precio;
+  quitar(n) {
+    // si n <= this._stock, haz this._stock = this._stock - n
+
   }
 }
 `,
-    rewards: { wood: 4, nails: 2, xp: 60 },
-    checks: [
-      { label: "clase Mesa", test: (f) => /class\s+Mesa\b/i.test(f), error: 'No encuentro "class Mesa".', hint: "class Mesa {" },
-      { label: "this._precio en el constructor", test: (f) => /this\._precio\s*=/i.test(f), error: "El constructor debe guardar el precio en this._precio.", hint: "constructor() { this._precio = 100; }" },
-      { label: "método ponerPrecio(nuevo)", test: (f) => /ponerPrecio\s*\(\s*\w+\s*\)/i.test(f), error: "Falta el método ponerPrecio(nuevo).", hint: "ponerPrecio(nuevo) { ... }" },
-      { label: "valida que nuevo sea mayor que 0", test: (f) => inMethod(f, "ponerPrecio", />\s*0/), error: "ponerPrecio() no valida el precio: debe comprobar que nuevo sea mayor que 0.", hint: "if (nuevo > 0) { this._precio = nuevo; }" },
+        ejemplo:
+`class Almacen {
+  constructor() {
+    this._stock = 10;
+  }
+
+  quitar(n) {
+    if (n <= this._stock) {
+      this._stock = this._stock - n;
+    }
+  }
+}
+`,
+        explainOnFail:
+          "ENCAPSULAR es proteger un dato. El stock vive en this._stock y solo cambia a través de quitar(), que comprueba que haya suficiente ANTES de restar.",
+        checks: [
+          { label: "clase Almacen", test: (f) => hasClass(f, "Almacen"), error: "Falta:  class Almacen {", hint: "class Almacen {" },
+          { label: "this._stock en el constructor", test: (f) => /this\._stock\s*=/i.test(f), error: "El constructor debe guardar this._stock.", hint: "this._stock = 10;" },
+          { label: "método quitar(n)", test: (f) => /quitar\s*\(\s*\w+\s*\)/i.test(f), error: "Falta el método quitar(n).", hint: "quitar(n) { ... }" },
+          { label: "valida n <= this._stock", test: (f) => inBody(f, "quitar", /<=?\s*this\._stock/i) && inBody(f, "quitar", /this\._stock\s*=/i), error: "Dentro de quitar(): if (n <= this._stock) { this._stock = this._stock - n; }", hint: "if (n <= this._stock) { this._stock = this._stock - n; }" },
+        ],
+      },
     ],
   },
 
+  // ────────────────────────────────  HERENCIA  ────────────────────────────
   {
-    id: "inherit", level: 3, concept: "herencia", rf: "RF-002",
-    title: "PROYECTO: FAMILIA DE MUEBLES",
-    brief: 'BYTE: "Silla, Mesa y Armario comparten nombre y precio. En vez de repetirlo, que HEREDEN de Mueble."',
-    objetivo: "Haz que Silla herede de Mueble, llame a super(...) y añada su propio estilo.",
-    pasos: [
-      "La clase Mueble ya existe. Su constructor recibe (nombre, precio).",
-      'PASO 1 · Como primera línea del constructor de Silla, llama a la clase padre:  super("Silla", 75);',
-      "PASO 2 · Debajo, guarda el estilo que llega por parámetro:  this.estilo = estilo;",
-    ],
-    requirements: ["class Silla extends Mueble", "El constructor llama a super(...)", "Añade la propiedad estilo"],
-    starter:
-`// La clase Mueble ya existe. Su constructor recibe (nombre, precio).
+    group: "herencia", concept: "herencia", rf: "RF-002", minLevel: 2,
+    variants: [
+      {
+        id: "herencia-silla",
+        title: "RETO DE PRODUCCIÓN — FAMILIA DE MUEBLES",
+        brief: 'BYTE: "Silla y Mesa comparten nombre y precio. En vez de repetirlo, que HEREDEN de Mueble."',
+        objetivo: "Silla debe heredar de Mueble, llamar a super(...) y añadir sus patas.",
+        pasos: [
+          "1. La clase Mueble ya existe. Su constructor recibe (nombre, precio).",
+          '2. Haz que Silla herede:  class Silla extends Mueble {',
+          '3. Primera línea del constructor:  super("Silla", 75);',
+          "4. Debajo, añade:  this.patas = 4;",
+          "5. Pulsa EJECUTAR CÓDIGO.",
+        ],
+        requirements: [
+          "class Silla extends Mueble",
+          "El constructor llama a super(...)",
+          "Añade la propiedad patas",
+        ],
+        starter:
+`// La clase Mueble ya existe: constructor(nombre, precio)
 
 class Silla extends Mueble {
-  constructor(estilo) {
-    // PASO 1 · llama a la clase padre:  super("Silla", 75);
+  constructor() {
+    // super("Silla", 75);
 
-    // PASO 2 · guarda el estilo:  this.estilo = estilo;
+    // this.patas = 4;
 
   }
 }
 `,
-    template:
+        ejemplo:
 `class Silla extends Mueble {
-  constructor(estilo) {
+  constructor() {
     super("Silla", 75);
-    this.estilo = estilo;
+    this.patas = 4;
   }
 }
 `,
-    rewards: { wood: 3, metal: 1, xp: 70 },
-    checks: [
-      { label: "class Silla extends Mueble", test: (f) => /class\s+Silla\s+extends\s+Mueble\b/i.test(f), error: "Silla debe heredar de Mueble usando extends.", hint: "class Silla extends Mueble {" },
-      { label: "llamada a super(...)", test: (f) => /super\s*\([^)]*\)/i.test(f), error: "El constructor de Silla debe llamar a super(...) en la primera línea.", hint: 'super("Silla", 75);' },
-      { label: "propiedad estilo", test: (f) => /this\.estilo\s*=/i.test(f), error: "Silla debe añadir la propiedad estilo.", hint: "this.estilo = estilo;" },
+        explainOnFail:
+          "HERENCIA: Silla extends Mueble reutiliza lo común. El constructor de Silla debe llamar primero a super(...) para que Mueble prepare nombre y precio, y luego añade lo propio de una silla (las patas).",
+        checks: [
+          { label: "class Silla extends Mueble", test: (f) => /class\s+Silla\s+extends\s+Mueble\b/i.test(f), error: "Silla debe heredar de Mueble usando extends.", hint: "class Silla extends Mueble {" },
+          { label: "llamada a super(...)", test: (f) => /super\s*\([^)]*\)/i.test(f), error: "El constructor de Silla debe llamar a super(...).", hint: 'super("Silla", 75);' },
+          { label: "propiedad patas", test: (f) => /this\.patas\s*=/i.test(f), error: "Añade this.patas = 4;", hint: "this.patas = 4;" },
+        ],
+      },
+      {
+        id: "herencia-armario",
+        title: "RETO DE PRODUCCIÓN — EL ARMARIO HEREDA",
+        brief: 'BYTE: "Mismo concepto, otra pieza. Que Armario también herede de Mueble."',
+        objetivo: "Armario debe heredar de Mueble, llamar a super(...) y añadir sus puertas.",
+        pasos: [
+          "1. La clase Mueble ya existe: constructor(nombre, precio).",
+          "2. Haz que Armario herede:  class Armario extends Mueble {",
+          '3. Primera línea del constructor:  super("Armario", 250);',
+          "4. Debajo, añade:  this.puertas = 2;",
+          "5. Pulsa EJECUTAR CÓDIGO.",
+        ],
+        requirements: ["class Armario extends Mueble", "El constructor llama a super(...)", "Añade la propiedad puertas"],
+        starter:
+`// La clase Mueble ya existe: constructor(nombre, precio)
+
+class Armario extends Mueble {
+  constructor() {
+    // super("Armario", 250);
+
+    // this.puertas = 2;
+
+  }
+}
+`,
+        ejemplo:
+`class Armario extends Mueble {
+  constructor() {
+    super("Armario", 250);
+    this.puertas = 2;
+  }
+}
+`,
+        explainOnFail:
+          "HERENCIA: Armario extends Mueble reutiliza nombre y precio. super(...) llama al constructor del padre; luego añades lo propio del armario (las puertas).",
+        checks: [
+          { label: "class Armario extends Mueble", test: (f) => /class\s+Armario\s+extends\s+Mueble\b/i.test(f), error: "Armario debe heredar de Mueble usando extends.", hint: "class Armario extends Mueble {" },
+          { label: "llamada a super(...)", test: (f) => /super\s*\([^)]*\)/i.test(f), error: "El constructor debe llamar a super(...).", hint: 'super("Armario", 250);' },
+          { label: "propiedad puertas", test: (f) => /this\.puertas\s*=/i.test(f), error: "Añade this.puertas = 2;", hint: "this.puertas = 2;" },
+        ],
+      },
     ],
   },
 
+  // ──────────────────────────────  POLIMORFISMO  ──────────────────────────
   {
-    id: "poly", level: 4, concept: "polimorfismo", rf: "RF-003",
-    title: "PROYECTO: TIEMPOS DE PRODUCCIÓN",
-    brief: 'BYTE: "El mismo método puede responder distinto en cada mueble. Un armario tarda 45 segundos en fabricarse. Eso es POLIMORFISMO."',
-    objetivo: "Añade a Armario el método calcularTiempo() para que devuelva 45.",
-    pasos: [
-      "Armario ya hereda de Mueble (está escrito).",
-      "PASO 1 · Dentro de la clase, escribe el método:  calcularTiempo() { }",
-      "PASO 2 · Dentro del método:  return 45;",
-    ],
-    requirements: ["class Armario extends Mueble", "Método calcularTiempo()", "calcularTiempo() devuelve 45"],
-    starter:
+    group: "polimorfismo", concept: "polimorfismo", rf: "RF-003", minLevel: 3,
+    variants: [
+      {
+        id: "poly-tiempo",
+        title: "RETO DE PRODUCCIÓN — TIEMPOS DISTINTOS",
+        brief: 'BYTE: "El mismo método responde distinto en cada mueble. Un armario tarda 30 segundos."',
+        objetivo: "Añade a Armario el método calcularTiempo() para que devuelva 30.",
+        pasos: [
+          "1. Armario ya hereda de Mueble.",
+          "2. Escribe el método:  calcularTiempo() { }",
+          "3. Dentro:  return 30;",
+          "4. Pulsa EJECUTAR CÓDIGO.",
+        ],
+        requirements: ["class Armario extends Mueble", "Método calcularTiempo()", "calcularTiempo() devuelve 30"],
+        starter:
 `class Armario extends Mueble {
 
-  // PASO 1 y 2 · método calcularTiempo() que haga  return 45;
+  // método calcularTiempo() que devuelva 30
 
 }
 `,
-    template:
+        ejemplo:
 `class Armario extends Mueble {
   calcularTiempo() {
-    return 45;
+    return 30;
   }
 }
 `,
-    rewards: { wood: 5, screws: 2, xp: 80 },
-    checks: [
-      { label: "class Armario extends Mueble", test: (f) => /class\s+Armario\s+extends\s+Mueble\b/i.test(f), error: "Armario debe heredar de Mueble.", hint: "class Armario extends Mueble {" },
-      { label: "método calcularTiempo()", test: (f) => hasMethod(f, "calcularTiempo"), error: "Falta el método calcularTiempo().", hint: "calcularTiempo() { return 45; }" },
-      { label: "devuelve 45", test: (f) => inMethod(f, "calcularTiempo", /return\s+45\b/), error: "calcularTiempo() debe devolver 45.", hint: "return 45;" },
+        explainOnFail:
+          "POLIMORFISMO: el mismo método (calcularTiempo) existe en varios muebles pero devuelve un valor distinto en cada uno. En Armario debe devolver 30.",
+        checks: [
+          { label: "class Armario extends Mueble", test: (f) => /class\s+Armario\s+extends\s+Mueble\b/i.test(f), error: "Armario debe heredar de Mueble.", hint: "class Armario extends Mueble {" },
+          { label: "método calcularTiempo()", test: (f) => hasMethod(f, "calcularTiempo"), error: "Falta calcularTiempo().", hint: "calcularTiempo() { return 30; }" },
+          { label: "devuelve 30", test: (f) => inBody(f, "calcularTiempo", /return\s+30\b/), error: "calcularTiempo() debe devolver 30.", hint: "return 30;" },
+        ],
+      },
     ],
   },
 
+  // ───────────────────────────────  ABSTRACCIÓN  ─────────────────────────
   {
-    id: "abstract", level: 5, concept: "abstracción", rf: "RF-006",
-    title: "PROYECTO: EL MUEBLE ABSTRACTO",
-    brief: 'BYTE: "Mueble es la IDEA general de mueble. Tiene lo común (describir), pero obliga a cada subclase a definir cómo se construye. Eso es ABSTRACCIÓN."',
-    objetivo: "describir() devuelve un texto común; construir() lanza un error para obligar a las subclases.",
-    pasos: [
-      'PASO 1 · Dentro de describir(), devuelve un texto común:  return "Soy un mueble";',
-      'PASO 2 · Dentro de construir(), lanza un error:  throw new Error("Impleméntalo en la subclase");',
-    ],
-    requirements: ["Una clase llamada Mueble", "Método describir() con un return", "construir() lanza un Error"],
-    starter:
+    group: "abstraccion", concept: "abstracción", rf: "RF-006", minLevel: 4,
+    variants: [
+      {
+        id: "abstract-mueble",
+        title: "RETO DE PRODUCCIÓN — MUEBLE ABSTRACTO",
+        brief: 'BYTE: "Mueble es la IDEA de mueble: tiene lo común, pero obliga a cada subclase a decir cómo se construye."',
+        objetivo: "describir() devuelve un texto; construir() lanza un error.",
+        pasos: [
+          '1. Dentro de describir(), devuelve un texto:  return "Soy un mueble";',
+          '2. Dentro de construir(), lanza un error:  throw new Error("Impleméntalo en la subclase");',
+          "3. Pulsa EJECUTAR CÓDIGO.",
+        ],
+        requirements: ["Clase llamada Mueble", "describir() devuelve un texto", "construir() lanza un Error"],
+        starter:
 `class Mueble {
   describir() {
-    // PASO 1 · devuelve un texto común
+    // return "Soy un mueble";
 
   }
 
   construir() {
-    // PASO 2 · throw new Error("...")
+    // throw new Error("...");
 
   }
 }
 `,
-    template:
+        ejemplo:
 `class Mueble {
-  constructor(nombre) {
-    this.nombre = nombre;
-  }
-
   describir() {
-    return "Soy un mueble: " + this.nombre;
+    return "Soy un mueble";
   }
 
   construir() {
-    throw new Error("Método abstracto: impleméntalo en la subclase");
+    throw new Error("Impleméntalo en la subclase");
   }
 }
 `,
-    rewards: { core: 1, wood: 3, xp: 90 },
-    checks: [
-      { label: "clase Mueble", test: (f) => /class\s+Mueble\b/i.test(f), error: 'No encuentro "class Mueble".', hint: "class Mueble {" },
-      { label: "método describir() con return", test: (f) => hasMethod(f, "describir") && inMethod(f, "describir", /return\s+/), error: "describir() debe existir y devolver un texto con return.", hint: 'describir() { return "Soy un mueble"; }' },
-      { label: "construir() lanza un Error", test: (f) => inMethod(f, "construir", /throw\s+new\s+Error/), error: "construir() debe lanzar un Error para obligar a las subclases a implementarlo.", hint: 'construir() { throw new Error("Impleméntalo en la subclase"); }' },
+        explainOnFail:
+          "ABSTRACCIÓN: Mueble define lo común (describir) pero construir() lanza un Error para OBLIGAR a cada subclase a implementarlo. No se puede fabricar un 'mueble' genérico.",
+        checks: [
+          { label: "clase Mueble", test: (f) => hasClass(f, "Mueble"), error: "Falta:  class Mueble {", hint: "class Mueble {" },
+          { label: "describir() devuelve un texto", test: (f) => hasMethod(f, "describir") && inBody(f, "describir", /return\s+["'’]/), error: "describir() debe devolver un texto entre comillas.", hint: 'describir() { return "Soy un mueble"; }' },
+          { label: "construir() lanza un Error", test: (f) => inBody(f, "construir", /throw\s+new\s+Error/), error: "construir() debe lanzar un Error.", hint: 'construir() { throw new Error("..."); }' },
+        ],
+      },
     ],
   },
 
+  // ──────────────────────────────  COMPOSICIÓN  ──────────────────────────
   {
-    id: "compose", level: 6, concept: "composición", rf: "RF-004",
-    title: "PROYECTO: EL TALLER COMO SISTEMA",
-    brief: 'BYTE: "Un taller NO es un inventario: TIENE un inventario, trabajadores y pedidos. Construir algo grande juntando piezas es COMPOSICIÓN."',
-    objetivo: "En el constructor de Taller, crea el inventario y dos listas vacías.",
-    pasos: [
-      "La clase Inventario ya existe.",
-      "PASO 1 · En el constructor:  this.inventario = new Inventario();",
-      "PASO 2 · Añade dos listas vacías:  this.trabajadores = [];  y  this.pedidos = [];",
-    ],
-    requirements: ["Una clase llamada Taller", "this.inventario = new Inventario()", "this.trabajadores = []", "this.pedidos = []"],
-    starter:
+    group: "composicion", concept: "composición", rf: "RF-004", minLevel: 5,
+    variants: [
+      {
+        id: "compose-taller",
+        title: "RETO DE PRODUCCIÓN — EL TALLER COMO SISTEMA",
+        brief: 'BYTE: "Un taller NO es un inventario: TIENE un inventario y una lista de pedidos. Eso es COMPOSICIÓN."',
+        objetivo: "En el constructor de Taller, crea el inventario y la lista de pedidos.",
+        pasos: [
+          "1. La clase Inventario ya existe.",
+          "2. En el constructor:  this.inventario = new Inventario();",
+          "3. Añade una lista vacía:  this.pedidos = [];",
+          "4. Pulsa EJECUTAR CÓDIGO.",
+        ],
+        requirements: ["Clase llamada Taller", "this.inventario = new Inventario()", "this.pedidos = []"],
+        starter:
 `// La clase Inventario ya existe.
 
 class Taller {
   constructor() {
-    // PASO 1 · this.inventario = new Inventario();
+    // this.inventario = new Inventario();
 
-    // PASO 2 · this.trabajadores = [];  y  this.pedidos = [];
+    // this.pedidos = [];
 
   }
 }
 `,
-    template:
+        ejemplo:
 `class Taller {
   constructor() {
     this.inventario = new Inventario();
-    this.trabajadores = [];
     this.pedidos = [];
   }
 }
 `,
-    rewards: { core: 1, metal: 2, xp: 100 },
-    checks: [
-      { label: "clase Taller", test: (f) => /class\s+Taller\b/i.test(f), error: 'No encuentro "class Taller".', hint: "class Taller {" },
-      { label: "this.inventario = new Inventario()", test: (f) => /this\.inventario\s*=\s*new\s+Inventario\s*\(/i.test(f), error: "Taller debe COMPONERSE con un Inventario.", hint: "this.inventario = new Inventario();" },
-      { label: "this.trabajadores = []", test: (f) => /this\.trabajadores\s*=\s*\[/i.test(f), error: "Falta la lista this.trabajadores = [].", hint: "this.trabajadores = [];" },
-      { label: "this.pedidos = []", test: (f) => /this\.pedidos\s*=\s*\[/i.test(f), error: "Falta la lista this.pedidos = [].", hint: "this.pedidos = [];" },
+        explainOnFail:
+          "COMPOSICIÓN: un objeto grande se construye juntando otros. El Taller TIENE un Inventario y una lista de pedidos; no ES ninguno de ellos.",
+        checks: [
+          { label: "clase Taller", test: (f) => hasClass(f, "Taller"), error: "Falta:  class Taller {", hint: "class Taller {" },
+          { label: "this.inventario = new Inventario()", test: (f) => /this\.inventario\s*=\s*new\s+Inventario\s*\(/i.test(f), error: "Compón el Taller con un Inventario.", hint: "this.inventario = new Inventario();" },
+          { label: "this.pedidos = []", test: (f) => /this\.pedidos\s*=\s*\[/i.test(f), error: "Falta la lista this.pedidos = [].", hint: "this.pedidos = [];" },
+        ],
+      },
     ],
   },
 ];
 
-/**
- * Retos de ARQUITECTURA (Mesa de Arquitectura). MVC como parte del gameplay:
- * el jugador lleva un requerimiento y decide en qué capa va cada cosa.
- */
-export const MVC_CHALLENGES = [
-  {
-    id: "mvc-rf007", rf: "RF-007", concept: "MVC",
-    requirement: 'RF-007 — "El sistema debe permitir fabricar una silla."',
-    steps: [
-      { q: "El jugador pulsa el botón «Fabricar». ¿Quién recibe primero esa acción?",
-        options: ["El Modelo", "La Vista", "La base de datos"], correct: 1,
-        explain: "La Vista capta lo que hace el usuario y se lo pasa al Controlador. Ella no decide nada." },
-      { q: "¿Dónde se procesa la acción de fabricar (aplicar reglas, coordinar el trabajo)?",
-        options: ["En la Vista", "En el Controlador", "En el Modelo"], correct: 1,
-        explain: "El Controlador (el de fabricación) recibe la orden y organiza la operación." },
-      { q: "¿Dónde se guarda el estado de la silla y del inventario?",
-        options: ["En la Vista", "En el Controlador", "En el Modelo"], correct: 2,
-        explain: "El Modelo (Silla, Inventario, Taller) guarda el estado y las reglas del negocio." },
-    ],
-    rewards: { core: 2, xp: 120 },
-  },
-  {
-    id: "mvc-rf005", rf: "RF-008", concept: "MVC",
-    requirement: 'RF-008 — "El sistema debe validar el precio de venta."',
-    steps: [
-      { q: "La regla «el precio no puede ser menor o igual a 0», ¿en qué capa vive?",
-        options: ["En la Vista", "En el Modelo (reglas de negocio)", "En el CSS"], correct: 1,
-        explain: "Las reglas de negocio viven en el Modelo (las validaciones de dominio, el método ponerPrecio)." },
-      { q: "Si el jugador escribe un precio inválido, ¿qué hace la Vista?",
-        options: ["Corrige el precio ella misma", "Muestra el mensaje de error que le devuelve el Controlador", "Ignora el error"], correct: 1,
-        explain: "La Vista solo muestra; la validación la hizo el Modelo y se la pasó a través del Controlador." },
-    ],
-    rewards: { core: 2, xp: 100 },
-  },
-];
+/** Índice plano id → {challenge, group}. */
+const BY_ID = new Map();
+for (const g of CHALLENGE_GROUPS) for (const v of g.variants) BY_ID.set(v.id, { v, g });
 
 export class ChallengeService {
-  #done = new Set();          // ids de retos de código resueltos
-  #mvcDone = new Set();       // ids de retos MVC resueltos
+  #solvedGroups = new Set();   // grupos con al menos 1 reto resuelto
+  #variantIdx = new Map();     // group -> índice de variante actual
+  #groupRot = 0;               // rotación entre grupos
+  #lastId = null;
+  #fails = new Map();          // id -> nº de fallos seguidos
+  #totalSolved = 0;
 
-  codeChallenges() { return CODE_CHALLENGES; }
-  mvcChallenges() { return MVC_CHALLENGES; }
-
-  /** Reto de código disponible según el nivel del jugador. */
-  currentCodeChallenge(level) {
-    return CODE_CHALLENGES.find((c) => {
-      if (this.#done.has(c.id)) return false;
-      return c.level <= level + 1;
-    }) ?? CODE_CHALLENGES.find((c) => !this.#done.has(c.id)) ?? null;
+  #groupsForLevel(level) {
+    return CHALLENGE_GROUPS.filter((g) => g.minLevel <= Math.max(1, level));
   }
 
-  currentMvcChallenge() {
-    return MVC_CHALLENGES.find((c) => !this.#mvcDone.has(c.id)) ?? null;
+  #variantOf(g) {
+    const idx = (this.#variantIdx.get(g.group) ?? 0) % g.variants.length;
+    return g.variants[idx];
   }
 
-  isDone(id) { return this.#done.has(id) || this.#mvcDone.has(id); }
-  markDone(id) { this.#done.add(id); }
-  markMvcDone(id) { this.#mvcDone.add(id); }
-  doneCount() { return this.#done.size + this.#mvcDone.size; }
+  /** El reto actual que se le muestra al jugador. */
+  current(level = 1) {
+    const groups = this.#groupsForLevel(level);
+    if (!groups.length) return null;
+
+    // Prioridad: grupos que aún no ha resuelto (progresión del currículo).
+    const pending = groups.filter((g) => !this.#solvedGroups.has(g.group));
+    const pool = pending.length ? pending : groups;
+
+    let pick = pool[this.#groupRot % pool.length];
+    let v = this.#variantOf(pick);
+    // no repetir exactamente el mismo reto dos veces seguidas
+    if (v.id === this.#lastId && pool.length > 1) {
+      pick = pool[(this.#groupRot + 1) % pool.length];
+      v = this.#variantOf(pick);
+    }
+    return { ...v, group: pick.group, concept: pick.concept, rf: pick.rf, minLevel: pick.minLevel };
+  }
+
+  byId(id) {
+    const e = BY_ID.get(id);
+    return e ? { ...e.v, group: e.g.group, concept: e.g.concept, rf: e.g.rf, minLevel: e.g.minLevel } : null;
+  }
+
+  failCount(id) { return this.#fails.get(id) ?? 0; }
+
+  /** El jugador falló: cuenta el fallo y rota a otro reto del mismo concepto. */
+  registerFail(id) {
+    this.#fails.set(id, (this.#fails.get(id) ?? 0) + 1);
+    this.#lastId = id;
+    const e = BY_ID.get(id);
+    if (!e) return;
+    if (e.g.variants.length > 1) {
+      this.#variantIdx.set(e.g.group, (this.#variantIdx.get(e.g.group) ?? 0) + 1);
+    } else {
+      this.#groupRot++;   // sin otra variante: cambia de tema
+    }
+  }
+
+  /** El jugador resolvió un reto. */
+  registerSolved(id) {
+    const e = BY_ID.get(id);
+    if (!e) return { firstOfConcept: false, concept: null, rf: null };
+    const firstOfConcept = !this.#solvedGroups.has(e.g.group);
+    this.#solvedGroups.add(e.g.group);
+    this.#fails.delete(id);
+    this.#lastId = id;
+    this.#variantIdx.set(e.g.group, (this.#variantIdx.get(e.g.group) ?? 0) + 1);
+    this.#groupRot++;
+    this.#totalSolved++;
+    return { firstOfConcept, concept: e.g.concept, rf: e.g.rf };
+  }
+
+  conceptsLearned() { return [...this.#solvedGroups].map((g) => CHALLENGE_GROUPS.find((x) => x.group === g)?.concept); }
+  groupSolved(group) { return this.#solvedGroups.has(group); }
+  doneCount() { return this.#totalSolved; }
 
   hydrate(d) {
-    this.#done = new Set(d?.code ?? []);
-    this.#mvcDone = new Set(d?.mvc ?? []);
+    this.#solvedGroups = new Set(d?.solvedGroups ?? []);
+    this.#totalSolved = d?.totalSolved ?? this.#solvedGroups.size;
+    this.#groupRot = d?.groupRot ?? 0;
   }
-  toJSON() { return { code: [...this.#done], mvc: [...this.#mvcDone] }; }
+  toJSON() {
+    return { solvedGroups: [...this.#solvedGroups], totalSolved: this.#totalSolved, groupRot: this.#groupRot };
+  }
 }

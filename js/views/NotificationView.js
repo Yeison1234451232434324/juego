@@ -1,9 +1,7 @@
 import { el, $ } from "./ui/dom.js";
 import { CONFIG } from "../config/gameConfig.js";
 
-const MAT_ES = { wood: "madera", nails: "clavos", screws: "tornillos", paint: "pintura", metal: "metal", core: "núcleo" };
-const rewardText = (rewards) => Object.entries(rewards)
-  .map(([k, v]) => k === "xp" ? `+${v} XP` : `+${v} ${MAT_ES[k] ?? k}`).join(" · ");
+const MAT_ES = { wood: "madera", nails: "clavos", screws: "tornillos", paint: "pintura", metal: "metal" };
 
 /**
  * NotificationView — toasts discretos, reglas de negocio bloqueadas y logros.
@@ -14,16 +12,16 @@ export class NotificationView {
     this.stack = el("div", { class: "toasts" });
     $("#ui").append(this.stack);
 
-    bus.on("challenge:solved", ({ rewards }) =>
-      this.toast(`✓ Clase creada · ${rewardText(rewards)}`, "ok"));
-    bus.on("craft:done", (j) => this.toast(`✓ ${CONFIG.MUEBLE_ES[j?.type] ?? "Mueble"} fabricada · +100 XP`, "ok"));
+    bus.on("challenge:solved", ({ award, xp }) =>
+      this.toast(`✓ Reto resuelto · +${award?.amount ?? 0} ${MAT_ES[award?.material] ?? "materiales"} · +${xp} XP`, "ok"));
+    bus.on("craft:done", (j) => this.toast(`✓ ${CONFIG.MUEBLE_ES[j?.type] ?? "Mueble"} fabricada`, "ok"));
+    bus.on("order:accepted", (o) => this.toast(`📋 Trabajo aceptado: ${o.summary}`, "info"));
+    bus.on("order:cancelled", (o) => this.toast(`✖️ Trabajo cancelado: ${o.code}`, "info"));
     bus.on("order:delivered", (o) => this.toast(`✓ Pedido ${o.code} entregado · +$${o.reward}`, "ok"));
-    bus.on("cut:done", () => this.toast("🪚 +3 clavos", "info"));
     bus.on("shop:bought", (d) => this.toast(`🛒 +${d.qty} ${MAT_ES[d.type] ?? d.type} (−$${d.cost})`, "info"));
     bus.on("upgrade:bought", (u) => this.toast(`⭐ Mejora: ${u.name}`, "ok"));
     bus.on("player:levelup", (lvl) => this.toast(`⬆️ Nivel ${lvl}`, "level"));
-    bus.on("requirement:done", (r) => this.toast(`📌 ${r.code} completado`, "info"));
-    bus.on("mvc:solved", () => this.toast("🏛️ Arquitectura MVC resuelta", "ok"));
+    bus.on("requirement:done", (r) => this.toast(`📌 ${r.code ?? r} completado`, "info"));
     bus.on("rule:blocked", (r) => this.ruleBlocked(r));
     bus.on("achievement:unlocked", (a) => this.achievement(a));
   }

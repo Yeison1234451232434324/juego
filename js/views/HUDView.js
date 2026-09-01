@@ -1,8 +1,9 @@
 import { el, $ } from "./ui/dom.js";
+import { CONFIG } from "../config/gameConfig.js";
 
 /**
- * HUDView — HUD MÍNIMO en una esquina: monedas, nivel, XP y 2 materiales clave.
- * Todo lo demás aparece contextualmente al interactuar con objetos del taller.
+ * HUDView — HUD MÍNIMO en la esquina: monedas, nivel, XP y materiales. Todo lo
+ * demás (qué hacer, qué pedido) lo dice el panel de objetivos (QuestView).
  */
 export class HUDView {
   constructor() {
@@ -16,11 +17,12 @@ export class HUDView {
     const pct = Math.round((p.xpInLevel / p.xpForNext) * 100);
     const wood = gs.workshop.inventory.count("wood");
     const nails = gs.workshop.inventory.count("nails");
+    const orders = gs.workshop.orders.length;
     this.box.innerHTML =
       `<div class="hud-line"><span class="coin">🪙 ${p.coins}</span>` +
       `<span class="lvl">⭐ Nivel ${p.level}</span></div>` +
       `<div class="hud-xp"><i style="width:${pct}%"></i></div>` +
       `<div class="hud-line"><span>🪵 ${wood}</span><span>🔩 ${nails}</span>` +
-      `<span>⚙️ ${gs.workshop.inventory.count("core")}</span></div>`;
+      `<span>📋 ${orders}/${CONFIG.GAMEPLAY.MAX_ACTIVE_ORDERS}</span></div>`;
   }
 }

@@ -6,32 +6,33 @@ const W = CONFIG.WORLD.width, H = CONFIG.WORLD.height;
 // Margen a cada lado: el lienzo (VIEW) es más ancho que el taller (WORLD).
 const MX = Math.max(0, Math.round((CONFIG.VIEW.width - W) / 2));
 
-/** Un solo taller compacto. Cámara fija: todo se ve a la vez. */
+/**
+ * Un solo taller compacto. Cámara fija: todo se ve a la vez.
+ * SOLO 6 estaciones (nada de "labs"). `solid` = caja de colisión de su mueble
+ * (ajustada al dibujo, no una pared invisible). Sin `solid` = se puede atravesar.
+ */
 const STATIONS = [
-  { id: "shelf",  label: "[E] Inventario",   x: 108, y: 150, icon: "📦", kind: "shelf" },
-  { id: "coding", label: "[E] Programar",    x: 420, y: 120, icon: "💻", kind: "pc" },
-  { id: "arch",   label: "[E] Arquitectura", x: 600, y: 132, icon: "🏛️", kind: "mvc" },
-  { id: "orders", label: "[E] Pedidos",      x: 832, y: 130, icon: "📋", kind: "board" },
-  { id: "bench",  label: "[E] Fabricar",     x: 182, y: 402, icon: "🪚", kind: "bench" },
-  { id: "cutter", label: "[E] Máquina",      x: 792, y: 392, icon: "⚙️", kind: "saw" },
-  { id: "shop",   label: "[E] Mejoras",      x: 150, y: 520, icon: "🏪", kind: "shop" },
-  { id: "sales",  label: "[E] Vender",       x: 800, y: 520, icon: "🧾", kind: "register" },
+  { id: "orders", label: "[E] Revisar pedidos", x: 210, y: 118, icon: "📋", kind: "board" },
+  { id: "coding", label: "[E] Programar",       x: 470, y: 120, icon: "💻", kind: "pc",       solid: { w: 58, h: 16, dy: 10 } },
+  { id: "shelf",  label: "[E] Ver almacén",     x: 792, y: 132, icon: "📦", kind: "shelf",    solid: { w: 72, h: 32, dy: 10 } },
+  { id: "bench",  label: "[E] Fabricar",        x: 300, y: 428, icon: "🔨", kind: "bench",    solid: { w: 78, h: 16, dy: 2 } },
+  { id: "shop",   label: "[E] Mejoras (Carlos)",x: 120, y: 470, icon: "🏪", kind: "shop",     solid: { w: 66, h: 14, dy: 8 } },
+  { id: "sales",  label: "[E] Entregar pedido", x: 770, y: 486, icon: "🧾", kind: "register", solid: { w: 40, h: 14, dy: 4 } },
 ];
 
 const NPCS = [
-  { id: "byte", name: "BYTE", tex: "byte", x: 498, y: 158, dir: "d", lines: [
-    "Tenemos nuestro primer pedido.",
-    "Pero antes de fabricar nada... hay que enseñarle al taller cómo hacerlo.",
-    "Eso se parece mucho a definir una CLASE. Acércate a la computadora 💻 y pulsa E." ] },
-  { id: "mario", name: "Mario", tex: "mario", x: 252, y: 382, dir: "d", work: true, lines: [
-    "Soy Mario. Yo fabrico, pero necesito los materiales encima del banco.",
-    "Y no puedo hacer dos piezas a la vez." ] },
-  { id: "carlos", name: "Carlos", tex: "carlos", x: 236, y: 502, dir: "d", lines: [
-    "Vendo materiales y mejoras. Con tu dinero puedes hacerte más fuerte.",
-    "Decide bien: ¿materiales ahora o una mejora para siempre?" ] },
-  { id: "client", name: "Cliente", tex: "client", x: 728, y: 502, dir: "l", lines: [
-    "Vengo del Restaurante El Roble.",
-    "Cuando tengas mi silla, tráemela al mostrador." ] },
+  { id: "byte", name: "BYTE", tex: "byte", x: 372, y: 190, dir: "d", lines: [
+    "Soy BYTE, tu asistente. Sigue el marcador 💡 y la flecha 👉 del panel.",
+    "El ciclo es: aceptar pedido → conseguir materiales programando → fabricar → entregar → cobrar." ] },
+  { id: "mario", name: "Mario", tex: "mario", x: 244, y: 418, dir: "d", work: true, lines: [
+    "Soy Mario, el carpintero. Trae los materiales al banco y yo fabrico la pieza.",
+    "No puedo hacer dos piezas a la vez, así que ten paciencia." ] },
+  { id: "carlos", name: "Carlos", tex: "carlos", x: 118, y: 424, dir: "d", lines: [
+    "Vendo materiales sueltos y MEJORAS para tu taller.",
+    "Las mejoras cambian de verdad cómo juegas: piénsatelas bien." ] },
+  { id: "client", name: "Cliente", tex: "client", x: 704, y: 474, dir: "l", lines: [
+    "Estoy esperando mi pedido.",
+    "Cuando lo tengas fabricado, entrégamelo en el mostrador 🧾." ] },
 ];
 
 export class WorkshopScene extends Phaser.Scene {
@@ -46,7 +47,9 @@ export class WorkshopScene extends Phaser.Scene {
 
     // La cámara ve todo el lienzo (VIEW) y centra el taller (WORLD) dentro.
     this.cameras.main.setBounds(-MX, 0, W + MX * 2, H).setBackgroundColor("#20140a");
-    this.physics.world.setBounds(28, 52, W - 56, H - 84);
+    // El ÚNICO límite del jugador: los bordes del taller. Nada de paredes sueltas.
+    this.physics.world.setBounds(30, 66, W - 60, H - 100);
+    this.solids = this.physics.add.staticGroup();
 
     this.#floor();
     this.#wallsAndWindows();
@@ -83,11 +86,9 @@ export class WorkshopScene extends Phaser.Scene {
     });
     this._wasPaused = false;
 
+    const bench = STATIONS.find((s) => s.id === "bench");
     this.bus.on("craft:progress", (p) => this.#bar("bench", p.ratio));
-    this.bus.on("craft:done", () => { this.#bar("bench", 0, true); this.#burst(182, 392); });
-    this.bus.on("cut:started", () => { this.cutting = true; });
-    this.bus.on("cut:progress", (p) => this.#bar("cutter", p.ratio));
-    this.bus.on("cut:done", () => { this.#bar("cutter", 0, true); this.cutting = false; this.#burst(792, 380); });
+    this.bus.on("craft:done", () => { this.#bar("bench", 0, true); this.#burst(bench.x, bench.y - 10); });
     this.bus.on("objective:changed", (o) => this.#setHint(o?.hintStation ?? this.gs.hintStation));
 
     const p = this.gs.player;
@@ -116,18 +117,11 @@ export class WorkshopScene extends Phaser.Scene {
   }
 
   #wallsAndWindows() {
-    this.solids = this.physics.add.staticGroup();
+    // La pared superior es solo DECORACIÓN: el límite lo pone physics.world.
     const wx0 = -Math.ceil(MX / 32) * 32, wx1 = W + Math.ceil(MX / 32) * 32;
     const wallRT = this.add.renderTexture(wx0, 0, wx1 - wx0, 48).setOrigin(0).setDepth(6);
-    const seg = (x, y, w, h, draw = true) => {
-      if (draw) for (let i = 0; i < w; i += 32) for (let j = 0; j < h; j += 48)
-        wallRT.draw("wall", x + i - wx0, y + j);
-      const r = this.add.rectangle(x + w / 2, y + h / 2, w, h, 0, 0);
-      this.physics.add.existing(r, true); this.solids.add(r);
-    };
-    seg(wx0, 0, wx1 - wx0, 48);
-    seg(0, H - 24, W, 24, false); this.#floorTrim(0, H - 26, W);
-    seg(0, 0, 24, H, false); seg(W - 24, 0, 24, H, false);
+    for (let i = wx0; i < wx1; i += 32) wallRT.draw("wall", i - wx0, 0);
+    this.#floorTrim(0, H - 26, W);
     // ventanas en la pared superior
     [[220, 0], [640, 0]].forEach(([wx]) => {
       this.add.rectangle(wx + 70, 24, 108, 34, 0x0d1a26).setDepth(7);
@@ -227,20 +221,18 @@ export class WorkshopScene extends Phaser.Scene {
   }
 
   #stations() {
-    this.bars = {}; this.marks = {};
+    this.bars = {};
     for (const s of STATIONS) {
       this.#stationDraw(s.kind, s.x, s.y);
-      if (s.kind !== "board" && s.kind !== "shop" && s.kind !== "shelf") {
-        const r = this.add.rectangle(s.x, s.y + 6, 60, 26, 0, 0);
-        this.physics.add.existing(r, true); this.solids.add(r);
-      } else {
-        const r = this.add.rectangle(s.x, s.y, 66, 30, 0, 0);
+      // Colisión SOLO si la estación tiene un mueble físico (ajustada al dibujo).
+      if (s.solid) {
+        const r = this.add.rectangle(s.x, s.y + s.solid.dy, s.solid.w, s.solid.h, 0, 0);
         this.physics.add.existing(r, true); this.solids.add(r);
       }
-      this.add.text(s.x, s.y + 30, s.label, {
-        fontFamily: "Verdana", fontSize: "10px", fontStyle: "bold", color: "#ffe7b0",
-        backgroundColor: "#1a1109cc", padding: { x: 4, y: 2 },
-      }).setOrigin(0.5).setDepth(50).setName("lbl-" + s.id).setAlpha(0.55);
+      // Un icono pequeño flotando: pista visual de qué es cada puesto, sin texto.
+      this.add.text(s.x, s.y - (s.kind === "shelf" || s.kind === "board" ? 54 : 40), s.icon, {
+        fontSize: "16px",
+      }).setOrigin(0.5).setDepth(45).setAlpha(0.9);
     }
   }
 
@@ -260,10 +252,14 @@ export class WorkshopScene extends Phaser.Scene {
   }
 
   #player() {
-    this.pj = this.physics.add.sprite(480, 330, "pj_d_0").setDepth(9).setScale(CHAR_SCALE);
-    this.pj.body.setSize(24, 16).setOffset(32, 96);
+    this.pj = this.physics.add.sprite(480, 320, "pj_d_0").setDepth(9).setScale(CHAR_SCALE);
+    // La textura mide 44x60. El cuerpo va a los PIES del personaje.
+    this.pj.body.setSize(20, 12);
+    this.pj.body.setOffset(12, 46);
     this.pj.setCollideWorldBounds(true);
     this.physics.add.collider(this.pj, this.solids);
+    // DEBUG_COLLISIONS (en gameConfig) activa el dibujo de cajas de Arcade Physics.
+    if (CONFIG.GAMEPLAY.DEBUG_COLLISIONS) this.physics.world.createDebugGraphic();
   }
 
   #decor() {
@@ -276,16 +272,27 @@ export class WorkshopScene extends Phaser.Scene {
     this.stoveGlow = this.add.rectangle(62, 105, 16, 12, 0xffb14a).setDepth(3);
     this.tweens.add({ targets: this.stoveGlow, alpha: 0.4, scaleX: 1.3, yoyo: true, repeat: -1, duration: 700 });
 
-    const put = (tex, x, y, d = 3) => { const s = this.add.image(x, y, tex).setDepth(d);
-      const r = this.add.rectangle(x, y + 4, s.width - 6, s.height - 12, 0, 0);
-      this.physics.add.existing(r, true); this.solids?.add(r); return s; };
-    put("crate", 70, 470); put("crate", 96, 452, 4); put("planks", 300, 470);
-    put("barrel", 900, 90); put("barrel", 60, 300); put("planks", 640, 470);
-    put("chair_done", 700, 470); put("chair_done", 736, 456, 4);
-    // pila de aserrín cerca del banco (no sólido)
+    // solid()  = objeto físico real (caja de colisión ajustada al dibujo)
+    // deco()   = decoración pura, se puede atravesar (nada de paredes invisibles)
+    const solid = (tex, x, y, d = 3) => {
+      const s = this.add.image(x, y, tex).setDepth(d);
+      const r = this.add.rectangle(x, y + s.height / 4, s.width - 10, s.height / 2.4, 0, 0);
+      this.physics.add.existing(r, true); this.solids?.add(r); return s;
+    };
+    const deco = (tex, x, y, d = 3) => this.add.image(x, y, tex).setDepth(d);
+
+    // esquinas y paredes: cajas y barriles reales
+    solid("crate", 64, 468); solid("crate", 92, 448, 4);
+    solid("barrel", 906, 96); solid("barrel", 52, 300);
+    solid("crate", 900, 470);
+    // decoración ambiental (atravesable)
+    deco("planks", 430, 470); deco("planks", 620, 466, 4);
+    deco("chair_done", 560, 300); deco("chair_done", 596, 288, 4);
+    deco("planks", 150, 300);
+    // pila de aserrín cerca del banco
     const s = this.add.graphics().setDepth(3);
-    s.fillStyle(0xd8c49a, 0.8); s.fillEllipse(230, 430, 34, 12);
-    s.fillStyle(0xc8b184, 0.8); s.fillEllipse(230, 428, 22, 8);
+    s.fillStyle(0xd8c49a, 0.8); s.fillEllipse(300, 458, 34, 12);
+    s.fillStyle(0xc8b184, 0.8); s.fillEllipse(300, 456, 22, 8);
   }
 
   #lighting() {
@@ -367,28 +374,21 @@ export class WorkshopScene extends Phaser.Scene {
       }
       sp.setDepth(10 + sp.y * 0.02);
     }
-    // humo de la máquina cuando corta
-    if (this.cutting && Math.random() < 0.3) {
-      const s = this.add.image(792, 372, "smoke").setDepth(20).setAlpha(0.5);
-      this.tweens.add({ targets: s, y: 340, alpha: 0, scale: 2, duration: 900, onComplete: () => s.destroy() });
-    }
-
     this.gs.player.setPosition(Math.round(this.pj.x), Math.round(this.pj.y));
     this.#resolveTarget();
   }
 
   #resolveTarget() {
     let best = null, bd = 999, kind = null;
-    for (const n of NPCS) {
-      const d = Phaser.Math.Distance.Between(this.pj.x, this.pj.y, n.x, n.y);
-      if (d < 44 && d < bd) { bd = d; best = { id: n.id, label: `[E] Hablar con ${n.name}` }; kind = "npc"; }
-    }
+    // Las estaciones tienen prioridad (radio mayor); los NPC solo si estás muy cerca.
     for (const s of STATIONS) {
       const d = Phaser.Math.Distance.Between(this.pj.x, this.pj.y, s.x, s.y);
-      if (d < 54 && d < bd) { bd = d; best = { id: s.id, label: s.label }; kind = "station"; }
+      if (d < 62 && d < bd) { bd = d; best = { id: s.id, label: s.label }; kind = "station"; }
     }
-    for (const s of STATIONS)
-      this.children.getByName("lbl-" + s.id)?.setAlpha(best && kind === "station" && best.id === s.id ? 1 : 0.55);
+    for (const n of NPCS) {
+      const d = Phaser.Math.Distance.Between(this.pj.x, this.pj.y, n.x, n.y);
+      if (d < 40 && d < bd) { bd = d; best = { id: n.id, label: `[E] Hablar con ${n.name}` }; kind = "npc"; }
+    }
 
     const key = best ? kind + best.id : "";
     if (key !== this.tKey) {

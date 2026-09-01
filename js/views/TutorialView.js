@@ -16,19 +16,18 @@ const PAGES = [
     ico: "🛠️",
     title: "Bienvenido a CodeCraft Workshop",
     html: `
-      <p>Diriges un pequeño taller de muebles. Para fabricar algo, primero hay que
-      <b>enseñarle al taller cómo hacerlo</b>: eso se hace <b>programando</b>.</p>
+      <p>Diriges un pequeño taller de muebles. Cada trabajo sigue SIEMPRE el mismo ciclo:</p>
       <p class="tut-cycle">
-        <span>1 · PROGRAMAR</span> ➜ <span>2 · MATERIALES</span> ➜
-        <span>3 · FABRICAR</span> ➜ <span>4 · VENDER</span> ➜ <span>5 · MEJORAR</span>
+        <span>1 · ACEPTAR PEDIDO</span> ➜ <span>2 · CONSEGUIR MATERIALES</span> ➜
+        <span>3 · FABRICAR</span> ➜ <span>4 · ENTREGAR</span> ➜ <span>5 · COBRAR</span>
       </p>
       <ul>
-        <li>En la <b>computadora 💻</b> escribes clases de JavaScript reales. Si compilan
-        y cumplen los requisitos, ganas materiales.</li>
-        <li>Con materiales <b>fabricas muebles</b> en el banco y los <b>vendes</b> en el mostrador.</li>
-        <li>Con el dinero compras <b>mejoras</b> que cambian de verdad cómo juegas.</li>
+        <li>Los materiales (🪵 madera, 🔩 clavos) se consiguen <b>resolviendo retos de
+        programación reales</b> en la computadora.</li>
+        <li>Cuando tienes los materiales, <b>fabricas</b> el mueble y lo <b>entregas</b> al cliente.</li>
+        <li>Con el dinero compras <b>mejoras</b> para tu taller.</li>
       </ul>
-      <p class="tut-note">Sigue siempre el marcador <b>💡</b>: te señala la siguiente estación.</p>`,
+      <p class="tut-note">Solo puedes tener <b>3 trabajos</b> activos a la vez. Sigue el marcador <b>💡</b>.</p>`,
   },
   {
     ico: "📋",
@@ -88,9 +87,9 @@ const PAGES = [
         <div><b>Controlador</b><span>Recibe la acción de la Vista, aplica reglas con el Modelo y responde.</span></div>
       </div>
       <p class="tut-flow">Clic en la Vista ➜ Controlador ➜ Modelo (valida) ➜ Controlador ➜ la Vista muestra el resultado</p>
-      <p class="tut-note">Regla de oro: <b>la Vista nunca valida</b>. Si escribes un precio inválido,
-      la Vista solo <i>muestra</i> el error que el Modelo detectó. En la <b>Mesa de Arquitectura 🏛️</b>
-      decidirás en qué capa va cada cosa.</p>`,
+      <p class="tut-note">Regla de oro: <b>la Vista nunca valida</b>. Cuando entregas un pedido sin
+      haberlo fabricado, la Vista solo <i>muestra</i> el error que el Modelo (las reglas de negocio)
+      detectó. Vivirás este flujo en cada acción del taller.</p>`,
   },
   {
     ico: "🎮",
@@ -104,14 +103,17 @@ const PAGES = [
         <div>📱<span>en móvil: cruceta y botón <b>A</b> en pantalla</span></div>
       </div>
       <div class="tut-ex">
-        <b>Estaciones del taller:</b>
+        <b>El taller tiene 6 puestos:</b>
         <ul>
-          <li>💻 <b>Programar</b> · 🏛️ <b>Arquitectura</b> · 📋 <b>Pedidos</b></li>
-          <li>🪚 <b>Fabricar</b> · ⚙️ <b>Máquina</b> (cortar material) · 🧾 <b>Vender</b></li>
-          <li>🏪 <b>Mejoras</b> · 📦 <b>Inventario</b></li>
+          <li>📋 <b>Tablón de Pedidos</b> — aceptar trabajos</li>
+          <li>💻 <b>Computadora</b> — resolver retos para conseguir materiales</li>
+          <li>🔨 <b>Banco de trabajo</b> — fabricar los muebles</li>
+          <li>🧾 <b>Mostrador</b> — entregar pedidos y cobrar</li>
+          <li>📦 <b>Almacén</b> — ver tus materiales · 🏪 <b>Mejoras</b> (Carlos)</li>
         </ul>
       </div>
-      <p class="tut-note">El marcador <b>💡</b> siempre te lleva al siguiente paso. ¡Empieza con el pedido de la silla!</p>`,
+      <p class="tut-note">El marcador <b>💡</b> y la flecha <b>👉</b> del panel siempre te dicen el siguiente paso.
+      BYTE te guiará en tu primer trabajo. ¡Vamos!</p>`,
   },
 ];
 

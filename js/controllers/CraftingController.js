@@ -12,6 +12,17 @@ export class CraftingController {
 
   constructor(gs, bus) { this.#gs = gs; this.#bus = bus; }
 
+  /** Tipos de mueble que algún pedido activo necesita fabricar. */
+  neededTypes() {
+    const out = [];
+    for (const t of Object.keys(CONFIG.RECIPES)) {
+      const rem = this.#gs.workshop.orders.reduce((s, o) => s + o.remainingOf(t), 0);
+      const inStock = this.#gs.workshop.countStock(t);
+      if (rem - inStock > 0) out.push({ type: t, remaining: rem - inStock });
+    }
+    return out;
+  }
+
   /** Info para la Vista (sin decidir nada). */
   status(type) {
     const recipe = CONFIG.RECIPES[type];
@@ -32,6 +43,10 @@ export class CraftingController {
 
   craft(type) {
     const recipe = CONFIG.RECIPES[type];
+    if (!recipe) return this.#deny({ reason: "Ese mueble no existe.", rule: "" });
+
+    const r0 = BusinessRules.furnitureIsNeeded(type, this.#gs.workshop.orders);
+    if (!r0.ok) return this.#deny(r0);
     const r1 = BusinessRules.canCraft(recipe, this.#gs.workshop.inventory);
     if (!r1.ok) return this.#deny(r1);
     const r2 = BusinessRules.workerAvailable(this.#gs.workshop.worker);
@@ -62,6 +77,7 @@ export class CraftingController {
     this.#gs.workshop.worker.release();
     this.#gs.workshop.addStock(job.type);
     this.#gs.player.stats.objectsCreated++;
+    this.#gs.requirements.complete("RF-006");
     const lvls = this.#gs.player.addXp(CONFIG.XP.craft);
     this.#bus.emit("craft:done", job);
     if (lvls) this.#bus.emit("player:levelup", this.#gs.player.level);

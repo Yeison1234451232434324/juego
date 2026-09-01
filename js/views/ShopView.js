@@ -36,11 +36,12 @@ export class ShopView {
       </div>`).join("");
 
     this.#modal.render(`<div class="wood-panel">
-      <h2>🏪 Tienda de Carlos</h2>
-      <h3>Materiales</h3>
-      ${mat("screws", "Tornillos")}${mat("paint", "Pintura")}${mat("wood", "Madera")}
+      <h2>🏪 Zona de Mejoras — Carlos</h2>
+      <h3>Materiales sueltos</h3>
+      <p class="wp-sub">Un atajo si tienes prisa. Lo normal es conseguirlos programando.</p>
+      ${mat("wood", "Madera")}${mat("nails", "Clavos")}
       <h3>Mejoras del taller</h3>
-      <p class="wp-sub">Decide: ¿más materiales ahora, o una mejora que te haga más fuerte?</p>
+      <p class="wp-sub">Cambian de verdad cómo juegas. Piénsalas bien.</p>
       ${ups}
       <button class="k close" data-act="close">Salir [ESC]</button>
     </div>`);

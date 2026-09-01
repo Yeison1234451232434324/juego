@@ -17,10 +17,8 @@ const DEFS = [
     rule: "El precio no puede ser menor o igual a cero." },
   { code: "RF-006", text: "El sistema debe impedir fabricar sin materiales.",
     rule: "No se fabrica si el inventario no cubre la receta." },
-  { code: "RF-007", text: "El sistema debe permitir fabricar una silla (flujo MVC).",
-    rule: "Vista → Controlador → Modelo. La Vista no aplica reglas." },
-  { code: "RF-008", text: "El sistema debe procesar los pedidos por capas.",
-    rule: "La regla del precio vive en el Modelo, no en la Vista." },
+  { code: "RF-007", text: "El sistema debe entregar los pedidos por capas (Vista → Controlador → Modelo).",
+    rule: "La Vista capta el clic, el Controlador coordina y el Modelo aplica las reglas." },
 ];
 
 export class RequirementService {

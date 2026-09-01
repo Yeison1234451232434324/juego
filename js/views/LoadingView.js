@@ -30,18 +30,14 @@ export class LoadingView {
     this.#sub = this.#root.querySelector(".ls-sub");
 
     bus.on("craft:started", (job) => this.#start(
-      `🪚 Fabricando ${CONFIG.MUEBLE_ES[job?.type] ?? "mueble"}…`,
+      `🔨 Fabricando ${CONFIG.MUEBLE_ES[job?.type] ?? "mueble"}…`,
       "Mario está trabajando. Puedes seguir con otras tareas."));
     bus.on("craft:progress", (p) => this.#progress(p?.ratio));
     bus.on("craft:done", (job) => {
       const n = CONFIG.MUEBLE_ES[job?.type] ?? "Mueble";
       const g = n === "Armario" ? "listo" : "lista";
-      this.#done(`✓ ¡${n} ${g}!`, "Ya está en el almacén. Entrégala en el Mostrador.");
+      this.#done(`✓ ¡${n} ${g}!`, "Ahora entrégala al Cliente en el Mostrador 🧾.");
     });
-
-    bus.on("cut:started", () => this.#start("⚙️ Cortando madera…", "1 madera → 3 clavos."));
-    bus.on("cut:progress", (p) => this.#progress(p?.ratio));
-    bus.on("cut:done", () => this.#done("✓ ¡Clavos listos!", "+3 clavos en tu mochila."));
 
     bus.on("workshop:ready", () => this.#hideNow());
     bus.on("menu:ready", () => this.#hideNow());

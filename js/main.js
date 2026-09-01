@@ -15,6 +15,7 @@ import { MenuScene } from "./scenes/MenuScene.js";
 import { WorkshopScene } from "./scenes/WorkshopScene.js";
 
 import { HUDView } from "./views/HUDView.js";
+import { QuestView } from "./views/QuestView.js";
 import { PromptView } from "./views/PromptView.js";
 import { DialogueView } from "./views/DialogueView.js";
 import { TutorialView } from "./views/TutorialView.js";
@@ -23,7 +24,6 @@ import { NotificationView } from "./views/NotificationView.js";
 import { MenuView } from "./views/MenuView.js";
 import { CodingStationView } from "./views/CodingStationView.js";
 import { CraftingView } from "./views/CraftingView.js";
-import { CutterView } from "./views/CutterView.js";
 import { InventoryView } from "./views/InventoryView.js";
 import { ShopView } from "./views/ShopView.js";
 import { RequirementView } from "./views/RequirementView.js";
@@ -71,6 +71,7 @@ const game = new GameController(gs, bus, save);
 
 // ---------- VISTAS ----------
 const hud = new HUDView();
+const quest = new QuestView(gs, bus);
 new PromptView(bus);
 new DialogueView(bus);
 new NotificationView(bus);
@@ -79,10 +80,9 @@ new LoadingView(bus);
 
 const coding = new CodingStationView(game.programming, bus);
 const crafting = new CraftingView(game.crafting, gs, bus);
-const cutter = new CutterView(game.workshop, gs, bus);
 const inventory = new InventoryView(gs, bus);
 const shop = new ShopView(game.workshop, game.upgrades, gs, bus);
-const req = new RequirementView(game.orders, game.requirements, gs, bus);
+const req = new RequirementView(game.orders, null, gs, bus);
 const sales = new SalesView(game.orders, gs, bus);
 const evaluation = new EvaluationView(game);
 
@@ -90,16 +90,13 @@ const menu = new MenuView(onMenu);
 const entrada = { x: 0, y: 0 };
 const touch = new TouchView(entrada, bus);
 
-// ---------- rutas de estación ----------
+// ---------- rutas de estación (SOLO 6) ----------
 const STATION_VIEW = {
-  coding: () => coding.open(),
-  arch: () => req.openArch(),
   orders: () => req.openOrders(),
-  sales: () => sales.open(),
-  bench: () => crafting.open(),
-  cutter: () => cutter.open(),
+  coding: () => coding.open(),
   shelf: () => inventory.open(),
-  storage: () => inventory.open(),
+  bench: () => crafting.open(),
+  sales: () => sales.open(),
   shop: () => shop.open(),
 };
 bus.on("station:open", (id) => STATION_VIEW[id]?.());
@@ -114,9 +111,10 @@ bus.on("order:delivered", (o) => { if (o.isFinal) setTimeout(() => evaluation.op
 
 // ---------- PHASER ----------
 let scene = null, inGame = false;
+const FORCE_CANVAS = typeof location !== "undefined" && new URLSearchParams(location.search).has("canvas");
 const phaser = new Phaser.Game({
   // AUTO: usa WebGL (mucho más rápido en móvil) y cae a Canvas 2D si no hay.
-  type: Phaser.AUTO,
+  type: FORCE_CANVAS ? Phaser.CANVAS : Phaser.AUTO,
   parent: "game",
   width: CONFIG.VIEW.width,
   height: CONFIG.VIEW.height,
@@ -125,7 +123,8 @@ const phaser = new Phaser.Game({
   roundPixels: true,
   // rAF nativo (sin forceSetTimeOut) = animación fluida y menor consumo.
   fps: { target: 60 },
-  physics: { default: "arcade", arcade: { debug: false } },
+  loader: { maxParallelDownloads: 6 },   // más suave para móviles y navegadores lentos
+  physics: { default: "arcade", arcade: { debug: CONFIG.GAMEPLAY.DEBUG_COLLISIONS } },
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -148,7 +147,7 @@ refreshLayout();
 phaser.events.on("menu:ready", () => {
   menu.render({ hasSave: save.hasSave() });
   menu.show();
-  hud.show(false); touch.show(false);
+  hud.show(false); touch.show(false); quest.show(false);
   refreshLayout();
   if (sessionStorage.getItem("cc:tutorial") === "1") {
     try { tutorial.open(true); }
@@ -164,23 +163,18 @@ bus.on("tutorial:done", () => {
 phaser.events.on("workshop:ready", (sc) => {
   scene = sc; inGame = true;
   document.body.classList.add("in-game");
-  hud.show(true); touch.show(true);
-  hud.render(gs);
+  hud.show(true); touch.show(true); quest.show(true);
+  hud.render(gs); quest.render();
   refreshLayout();
   phaser.scale.refresh();
   setTimeout(() => phaser.scale.refresh(), 120);
   bus.emit("objective:changed", { text: gs.objective, hintStation: gs.hintStation });
 
-  if (!gs.introSeen) {
-    gs.introSeen = true;
-    setTimeout(() => bus.emit("dialogue:open", {
-      name: "BYTE",
-      lines: [
-        "Soy BYTE. Tenemos el primer pedido: una silla.",
-        "Sigue el marcador 💡 hasta la computadora 💻 y pulsa E para empezar.",
-      ],
-    }), 500);
-  }
+  // El tutorial guiado arranca (o se reanuda) si aún no está completado.
+  setTimeout(() => {
+    if (!gs.tutorialCompleted) bus.emit("tutorial:begin");
+    else bus.emit("game:resume");
+  }, 450);
 });
 
 function startGame() {

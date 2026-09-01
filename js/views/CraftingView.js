@@ -1,11 +1,13 @@
 import { Modal } from "./ui/Modal.js";
+import { CONFIG } from "../config/gameConfig.js";
+
+const LABEL = { wood: "Madera", nails: "Clavos" };
+const mueble = (t) => CONFIG.MUEBLE_ES[t] ?? t;
 
 /**
- * CraftingView — el Banco de Carpintería. Panel pequeño con estado de materiales
- * y botón FABRICAR. La regla (materiales, trabajador) la aplica el controlador.
+ * CraftingView — el BANCO DE TRABAJO. Solo muestra los muebles que algún pedido
+ * necesita. Con los materiales listos, Mario los fabrica en tiempo real.
  */
-const LABEL = { wood: "Madera", nails: "Clavos", screws: "Tornillos", paint: "Pintura", metal: "Metal" };
-
 export class CraftingView {
   #modal; #ctrl; #gs; #bus;
 
@@ -22,30 +24,41 @@ export class CraftingView {
 
   open() { this.#render(); this.#modal.open(); }
 
-  #row(type) {
+  #row({ type, remaining }) {
     const st = this.#ctrl.status(type);
     const inProgress = this.#ctrl.jobs.some((j) => j.type === type);
     const mats = Object.entries(st.recipe).map(([m, q]) => {
       const ok = st.have[m] >= q;
-      return `<span class="m ${ok ? "ok" : "bad"}">${LABEL[m] ?? m} ${st.have[m]}/${q} ${ok ? "✓" : "✗"}</span>`;
+      return `<span class="m ${ok ? "ok" : "bad"}">${LABEL[m] ?? m} ${Math.min(st.have[m], q)}/${q} ${ok ? "✓" : "✗"}</span>`;
     }).join(" ");
-    const can = st.canCraft && st.workerFree && !inProgress;
+    const ready = st.canCraft && st.workerFree && !inProgress;
+    const estado = inProgress ? "FABRICANDO…"
+      : !st.workerFree ? "Mario está ocupado"
+      : st.canCraft ? "LISTO PARA FABRICAR"
+      : "Faltan materiales";
+
     return `<div class="craft-row">
-      <div class="cr-head"><b>${type === "Chair" ? "Silla" : type === "Table" ? "Mesa" : "Armario"}</b>
-        <span class="cr-time">⏱ ${st.seconds}s</span></div>
+      <div class="cr-head"><b>${mueble(type)}</b>
+        <span class="cr-time">faltan ${remaining} · ⏱ ${st.seconds}s</span></div>
       <div class="cr-mats">${mats}</div>
-      <div class="cr-worker">Carpintero: ${st.workerFree ? "disponible ✓" : "ocupado ✗"}</div>
-      <button class="k" data-act="craft" data-type="${type}" ${can ? "" : "disabled"}>
-        ${inProgress ? "Fabricando…" : "FABRICAR"}</button>
+      <div class="cr-worker">Estado: <b>${estado}</b></div>
+      <button class="k" data-act="craft" data-type="${type}" ${ready ? "" : "disabled"}>
+        ${inProgress ? "Fabricando…" : `CONSTRUIR ${mueble(type).toUpperCase()}`}</button>
     </div>`;
   }
 
   #render() {
+    const needed = this.#ctrl.neededTypes();
+    const body = needed.length
+      ? needed.map((n) => this.#row(n)).join("")
+      : `<p class="wp-sub">No tienes ningún pedido que requiera fabricación ahora mismo.
+         Acepta un trabajo en el Tablón de Pedidos 📋.</p>`;
+
     this.#modal.render(`
       <div class="wood-panel">
-        <h2>🔨 Banco de carpintería</h2>
-        <p class="wp-sub">Con los materiales necesarios, Mario fabrica la pieza en tiempo real.</p>
-        ${["Chair", "Table", "Cabinet"].map((t) => this.#row(t)).join("")}
+        <h2>🔨 Banco de trabajo</h2>
+        <p class="wp-sub">Mario fabrica aquí las piezas que necesitan tus pedidos.</p>
+        ${body}
         <button class="k close" data-act="close">Salir [ESC]</button>
       </div>`);
   }

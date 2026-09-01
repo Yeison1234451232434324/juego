@@ -1,5 +1,6 @@
 import { Inventory } from "./Inventory.js";
 import { Worker } from "./Worker.js";
+import { Order } from "./Order.js";
 
 /**
  * Workshop — COMPOSICIÓN central del MODELO.
@@ -28,14 +29,26 @@ export class Workshop {
 
   addOrder(o) { this.#orders.push(o); }
   removeOrder(id) { this.#orders = this.#orders.filter((o) => o.id !== id); }
+  hasOrder(id) { return this.#orders.some((o) => o.id === id); }
+  cancelOrder(id) {
+    const before = this.#orders.length;
+    this.#orders = this.#orders.filter((o) => o.id !== id);
+    return this.#orders.length < before;
+  }
 
   hydrate(d) {
     if (!d) return;
     this.#inventory = new Inventory(d.inventory ?? {});
     this.#stock = d.stock ?? [];
+    this.#worker = new Worker("Mario");   // siempre libre al recargar
+    this.#orders = (d.orders ?? []).map((od) => Order.fromJSON(od));
   }
 
   toJSON() {
-    return { inventory: this.#inventory.toJSON(), stock: this.#stock };
+    return {
+      inventory: this.#inventory.toJSON(),
+      stock: this.#stock,
+      orders: this.#orders.map((o) => o.toJSON()),
+    };
   }
 }

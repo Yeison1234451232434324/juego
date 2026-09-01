@@ -2,12 +2,13 @@ import { Modal } from "./ui/Modal.js";
 import { esc } from "./ui/dom.js";
 import { CodeValidator } from "../services/CodeValidator.js";
 
+const MAT_ES = { wood: "madera", nails: "clavos", screws: "tornillos", paint: "pintura", metal: "metal" };
+
 /**
- * CodingStationView — la "computadora" del taller. Aquí el jugador escribe
- * código JavaScript REAL y lo ejecuta. Si es correcto, el ProgrammingController
- * entrega materiales. Muestra instrucciones paso a paso, una lista de requisitos
- * que se marca en verde, pistas siempre disponibles y una pantalla de carga
- * mientras "compila".
+ * CodingStationView — la COMPUTADORA. El jugador escribe código JavaScript real
+ * siguiendo instrucciones numeradas muy explícitas. Si acierta, gana materiales
+ * para su pedido. Si falla: ve el error, una explicación del concepto, una pista
+ * y puede pedir OTRO reto del mismo tema (nunca se queda atrapado).
  */
 export class CodingStationView {
   #modal; #ctrl; #bus; #ch; #hintsShown = 0; #busy = false;
@@ -18,14 +19,12 @@ export class CodingStationView {
     this.#modal.bind({
       run: () => this.#run(),
       hint: () => this.#showHint(),
+      example: () => this.#fillExample(),
+      other: () => this.open(),          // otro reto (ya rotado tras el fallo)
       close: () => this.#modal.close(),
-      tpl: () => {
-        const t = this.#modal.frame.querySelector("#editor");
-        if (t && this.#ch) { t.value = this.#ch.template; this.#refreshChecklist(t.value); }
-      },
     });
-    bus.on("challenge:solved", ({ challenge, rewards, doubled }) => this.#solved(challenge, rewards, doubled));
-    bus.on("challenge:failed", ({ result }) => this.#failed(result));
+    bus.on("challenge:solved", (d) => this.#solved(d));
+    bus.on("challenge:failed", (d) => this.#failed(d));
   }
 
   open() {
@@ -33,33 +32,37 @@ export class CodingStationView {
     this.#hintsShown = 0;
     this.#busy = false;
     if (!this.#ch) {
-      this.#modal.render(`<div class="term"><p class="ok">✓ Has resuelto todos los retos de programación disponibles.</p>
+      this.#modal.render(`<div class="term"><p class="ok">✓ No hay más retos ahora mismo.</p>
         <button class="k" data-act="close">Salir [ESC]</button></div>`);
       this.#modal.open();
       return;
     }
 
-    const pasos = this.#ch.pasos?.map((p) => `<li>${esc(p)}</li>`).join("") ?? "";
+    const fails = this.#ctrl.failCount(this.#ch.id);
+    const pasos = (this.#ch.pasos ?? []).map((p) => `<li>${esc(p)}</li>`).join("");
     const reqs = this.#ch.requirements
-      .map((r, i) => `<li data-req="${i}"><span class="rq-mark">▫</span> ${esc(r)}</li>`).join("");
+      .map((r) => `<li><span class="rq-mark">▫</span> ${esc(r)}</li>`).join("");
+    // tras 2 fallos, empieza con el ejemplo ya puesto
+    const startCode = fails >= 2 ? this.#ch.ejemplo : this.#ctrl.editorText(this.#ch);
 
     this.#modal.render(`
       <div class="term">
         <div class="term-top">━━━ ${esc(this.#ch.title)} ━━━</div>
         <p class="term-brief">${esc(this.#ch.brief)}</p>
         ${this.#ch.objetivo ? `<p class="term-goal">🎯 ${esc(this.#ch.objetivo)}</p>` : ""}
-        ${pasos ? `<div class="term-steps"><b>Instrucciones:</b><ol>${pasos}</ol></div>` : ""}
-        <p class="term-h">Requisitos que debe cumplir tu código:</p>
+        ${pasos ? `<div class="term-steps"><b>INSTRUCCIONES — hazlas en orden:</b><ul class="term-steps-list">${pasos}</ul></div>` : ""}
+        <p class="term-h">Requisitos que revisará la computadora:</p>
         <ul class="term-reqs" id="term-reqs">${reqs}</ul>
-        <textarea id="editor" spellcheck="false" rows="10">${esc(this.#ctrl.editorText(this.#ch))}</textarea>
-        <div id="term-out" class="term-out">&gt; Escribe tu código siguiendo los PASOS y pulsa EJECUTAR.</div>
+        <textarea id="editor" spellcheck="false" rows="10">${esc(startCode)}</textarea>
+        <div id="term-out" class="term-out">${fails >= 2
+          ? "&gt; Te dejo el ejemplo resuelto. Ajústalo si quieres y pulsa EJECUTAR CÓDIGO."
+          : "&gt; Escribe tu código siguiendo las INSTRUCCIONES y pulsa EJECUTAR CÓDIGO."}</div>
         <div class="term-btns">
           <button class="k run" data-act="run">▶ EJECUTAR CÓDIGO</button>
-          <button class="k" data-act="hint">💡 Pedir una pista</button>
-          <button class="k" data-act="tpl">Ver ejemplo resuelto</button>
+          <button class="k" data-act="hint">💡 Pista</button>
+          <button class="k" data-act="example">Ver ejemplo</button>
           <button class="k" data-act="close">Salir [ESC]</button>
         </div>
-        <p class="term-reward">Recompensa: ${this.#rewardText(this.#ch.rewards)}</p>
       </div>`);
     this.#modal.open();
     setTimeout(() => {
@@ -69,8 +72,8 @@ export class CodingStationView {
       this.#refreshChecklist(ed.value);
       ed.addEventListener("input", () => this.#refreshChecklist(ed.value));
       ed.addEventListener("keydown", (e) => {
-        e.stopPropagation();                       // que Phaser no lo vea
-        if (e.key === "Tab") {                     // Tab inserta 2 espacios
+        e.stopPropagation();
+        if (e.key === "Tab") {
           e.preventDefault();
           const s = ed.selectionStart, en = ed.selectionEnd;
           ed.value = ed.value.slice(0, s) + "  " + ed.value.slice(en);
@@ -82,7 +85,6 @@ export class CodingStationView {
     }, 60);
   }
 
-  /** Marca en verde cada requisito ya cumplido (sin ejecutar código del jugador). */
   #refreshChecklist(code) {
     const list = this.#modal.frame.querySelector("#term-reqs");
     if (!list || !this.#ch) return;
@@ -97,9 +99,14 @@ export class CodingStationView {
     });
   }
 
-  #rewardText(r) {
-    const MAT = { wood: "madera", nails: "clavos", screws: "tornillos", paint: "pintura", metal: "metal", core: "núcleo" };
-    return Object.entries(r).map(([k, v]) => k === "xp" ? `+${v} XP` : `+${v} ${MAT[k] ?? k}`).join("  ·  ");
+  #fillExample() {
+    const ed = this.#modal.frame.querySelector("#editor");
+    if (ed && this.#ch) {
+      ed.value = this.#ch.ejemplo;
+      this.#refreshChecklist(ed.value);
+      const out = this.#modal.frame.querySelector("#term-out");
+      if (out) { out.className = "term-out hint"; out.textContent = "💡 Este es un ejemplo válido. Púlsalo EJECUTAR o adáptalo a tu manera."; }
+    }
   }
 
   #showHint() {
@@ -126,36 +133,58 @@ export class CodingStationView {
     this.#busy = true;
     if (out) { out.className = "term-out loading"; out.textContent = "⏳ Compilando y revisando tu código…"; }
     this.#bus.emit("sfx", "compile");
-    // pequeña pausa para que se vea la "carga" y no parezca instantáneo
-    setTimeout(() => {
-      this.#busy = false;
-      this.#ctrl.submit(code);
-    }, 650);
+    setTimeout(() => { this.#busy = false; this.#ctrl.submit(code); }, 600);
   }
 
-  #failed(result) {
+  #failed({ result, explain, fails }) {
     const out = this.#modal.frame.querySelector("#term-out");
     if (!out) return;
-    this.#refreshChecklist(this.#modal.frame.querySelector("#editor")?.value ?? "");
-    const fails = result.failed;
+    const code = this.#modal.frame.querySelector("#editor")?.value ?? "";
+    this.#refreshChecklist(code);
+    const first = result.failed[0];
     out.className = "term-out bad";
-    let txt = `✗ Todavía no compila / no cumple.\n> ${fails[0]?.error ?? "Revisa tu código."}`;
-    // pista de la primera pendiente, siempre
-    const firstHint = fails.find((f) => f.hint);
-    if (firstHint?.hint) txt += `\n💡 ${firstHint.hint}`;
-    if (result.passed.length)
-      txt += `\n\nYa cumples:\n` + result.passed.map((p) => `  ✓ ${p}`).join("\n");
+    let txt = `❌ RESPUESTA INCORRECTA\n> ${first?.error ?? "Revisa tu código."}`;
+    if (explain) txt += `\n\n${explain}`;
+    // la pista siempre disponible (aquí no depende de la mejora)
+    let hint = result.failed.find((f) => f.hint)?.hint;
+    if (!hint) {
+      try { hint = CodeValidator.validate(code, this.#ch.checks, true).failed.find((f) => f.hint)?.hint; } catch { /* noop */ }
+    }
+    if (hint) txt += `\n\n💡 PISTA: ${hint}`;
     out.textContent = txt;
+
+    // botón para probar otro reto del mismo concepto (ya rotado)
+    const btns = this.#modal.frame.querySelector(".term-btns");
+    if (btns && !btns.querySelector("[data-act='other']")) {
+      const b = document.createElement("button");
+      b.className = "k"; b.dataset.act = "other"; b.textContent = "↻ Probar otro reto";
+      btns.appendChild(b);
+    }
+    if (fails >= 2) {
+      const ed = this.#modal.frame.querySelector("#editor");
+      if (ed) { ed.value = this.#ch.ejemplo; this.#refreshChecklist(ed.value); }
+      out.textContent += `\n\n(Te he puesto un ejemplo válido en el editor. Ajústalo y pulsa EJECUTAR.)`;
+    }
   }
 
-  #solved(challenge, rewards, doubled) {
+  #solved({ challenge, award, xp, orderReady }) {
+    const matEs = MAT_ES[award?.material] ?? award?.material ?? "materiales";
+    const progreso = award?.need
+      ? `\n${award.material === "wood" ? "🪵" : "🔩"} ${matEs}: ${Math.min(award.have, award.need)}/${award.need}`
+      : "";
     this.#modal.render(`
       <div class="term">
-        <div class="term-top ok">✓ CLASE CREADA</div>
-        <p>"${esc(challenge.title.replace(/^PROYECTO:\s*/i, ""))}" quedó registrada correctamente.</p>
-        <p class="term-concept">Concepto aplicado: <b>${esc(challenge.concept)}</b>${challenge.rf ? ` · ${challenge.rf} ✓` : ""}</p>
-        <p class="term-reward big">Recompensa${doubled ? " (x2)" : ""}: ${this.#rewardText(rewards)}</p>
-        <button class="k run" data-act="close">Continuar [ESC]</button>
+        <div class="term-top ok">✓ RETO COMPLETADO</div>
+        <p>Aplicaste: <b>${esc(challenge.concept)}</b>${challenge.rf ? ` · ${challenge.rf} ✓` : ""}</p>
+        <p class="term-reward big">Recompensa:  +${award?.amount ?? 0} ${matEs}   ·   +${xp} XP</p>
+        <pre class="term-progress">${esc(progreso.trim())}</pre>
+        ${orderReady
+          ? `<p class="ok">✓ MATERIALES COMPLETOS. Ya puedes fabricar tu pedido en el Banco de trabajo 🔨.</p>`
+          : `<p class="wp-sub">Aún faltan materiales para tu pedido. Resuelve otro reto.</p>`}
+        <div class="term-btns">
+          ${orderReady ? "" : `<button class="k run" data-act="other">Siguiente reto</button>`}
+          <button class="k" data-act="close">Salir [ESC]</button>
+        </div>
       </div>`);
     this.#bus.emit("sfx", "ok");
   }

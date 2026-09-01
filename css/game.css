@@ -63,23 +63,39 @@ button { font:inherit; cursor:pointer; }
 .hud .hud-xp { height:6px; border-radius:3px; background:#0007; overflow:hidden; margin:4px 0; box-shadow:inset 0 0 0 1px #0008; }
 .hud .hud-xp i { display:block; height:100%; background:linear-gradient(90deg,#3b6ea5,#6fa8dc); }
 
-/* ---------- prompt in-world + objetivo ---------- */
+/* ---------- prompt in-world ---------- */
 .prompt { position:fixed; left:50%; bottom:76px; transform:translateX(-50%); z-index:38;
   max-width:92vw; text-align:center;
   background:rgba(20,12,6,.9); border:2px solid var(--gold-l); color:var(--gold-l);
   font-weight:800; font-size:.82rem; padding:5px 14px; border-radius:8px; }
-.objective { position:fixed; z-index:38; max-width:min(300px,52vw);
-  left:calc(10px + env(safe-area-inset-left));
-  top:calc(84px + env(safe-area-inset-top));
-  background:rgba(20,12,6,.72); border-left:3px solid var(--gold);
-  border-radius:0 8px 8px 0; padding:5px 10px; font-size:.72rem; line-height:1.35; }
-.objective b { color:var(--gold-l); }
+
+/* ---------- panel de OBJETIVOS (esquina superior derecha) ---------- */
+.quest { position:fixed; z-index:41;
+  top:calc(8px + env(safe-area-inset-top));
+  right:calc(8px + env(safe-area-inset-right));
+  width:min(260px, 62vw);
+  background:rgba(20,12,6,.88); border:2px solid #4a3a24; border-left:3px solid var(--gold);
+  border-radius:10px; padding:8px 10px; font-size:.74rem; line-height:1.4; }
+.quest.hidden { display:none; }
+.q-head { font-weight:800; color:#cdbf9f; letter-spacing:.5px; font-size:.68rem; }
+.q-head b { color:var(--gold-l); }
+.q-order { margin-top:5px; display:flex; flex-direction:column; }
+.q-order b { color:#fff; font-size:.86rem; }
+.q-cust { color:#a88c5a; font-size:.7rem; }
+.q-mats { margin:4px 0; display:flex; gap:6px; flex-wrap:wrap; }
+.q-mat { background:#0006; border-radius:5px; padding:1px 6px; font-weight:700; color:#e8c98a; }
+.q-mat.ok { background:#2f5e2688; color:#bff0b0; }
+.q-steps { list-style:none; margin:4px 0 0; padding:0; }
+.q-steps li { color:#b7a985; padding:1px 0; }
+.q-steps li.done { color:var(--ok); }
+.q-empty { color:#cdbf9f; margin-top:5px; }
+.q-next { margin-top:7px; padding-top:6px; border-top:1px solid #4a3a2455; color:var(--gold-l); font-weight:700; }
 
 /* ---------- toasts / logros / regla ---------- */
 .toasts { position:fixed; z-index:60; display:flex; flex-direction:column; gap:6px;
-  right:calc(12px + env(safe-area-inset-right));
-  top:calc(52px + env(safe-area-inset-top));
-  max-width:min(280px, 70vw); }
+  left:calc(10px + env(safe-area-inset-left));
+  top:calc(118px + env(safe-area-inset-top));
+  max-width:min(260px, 62vw); }
 .toast { background:rgba(20,12,6,.95); border-left:4px solid var(--gold); border-radius:6px;
   padding:7px 12px; font-size:.8rem; transform:translateX(120%); transition:transform .28s; }
 .toast.in { transform:translateX(0); }
@@ -174,6 +190,9 @@ button { font:inherit; cursor:pointer; }
 .term-steps b { color:#8fd9b8; }
 .term-steps ol { margin:4px 0 0 20px; }
 .term-steps li { padding:3px 0; color:#d6ffe6; line-height:1.4; }
+.term-steps-list { list-style:none; margin:5px 0 0; padding:0; }
+.term-steps-list li { padding:3px 0; color:#d6ffe6; line-height:1.45; }
+.term-progress { color:var(--gold-l); font-family:ui-monospace,monospace; margin:4px 0; white-space:pre-wrap; }
 .term-h { color:#8fd9b8; margin-bottom:4px; }
 .term-reqs { list-style:none; margin-bottom:10px; }
 .term-reqs li { padding:2px 0; color:#9fd8c0; transition:color .15s; }
@@ -203,11 +222,18 @@ button { font:inherit; cursor:pointer; }
   padding:12px 12px 12px 14px; margin-bottom:10px; box-shadow:2px 3px 0 #0001;
   font-size:.84rem; line-height:1.45; }
 .doc.final { border-color:var(--gold); background:#fff7df; }
-.doc.active { border-left:4px solid var(--ok); }
+.doc.active { border-left:4px solid #9aa3af; background:#f4efe2; }
+.doc.active.focus { border-left:4px solid var(--ok); background:#eef6e6; }
 .doc-pin { position:absolute; top:-6px; left:50%; width:10px; height:10px; border-radius:50%; background:#c0392b; }
 .doc b { display:block; margin-bottom:4px; }
 .doc-notes { color:#6a5233; font-size:.78rem; }
+.doc-mats { color:#3a5a2a; font-weight:700; font-size:.8rem; margin:4px 0; }
 .doc-reward { color:#7a5a15; font-weight:700; }
+.doc-reward.big { font-size:1rem; }
+.doc-btns { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:6px; }
+.doc-tag { background:var(--ok); color:#0a2a08; font-weight:800; font-size:.68rem; padding:2px 7px; border-radius:4px; }
+.k.sm { padding:6px 9px; font-size:.74rem; margin:0; }
+.k.bad { background:linear-gradient(#e88, #c0392b); border-color:#8a2b20; color:#fff; }
 .mvc-dia { background:#0e1e18; color:#8fd9b8; padding:10px; border-radius:6px; font-size:.72rem; overflow-x:auto; margin:8px 0; }
 .mvc-q { font-weight:700; margin:8px 0; }
 .mvc-opts { display:flex; flex-direction:column; gap:6px; }
@@ -351,8 +377,9 @@ body.controls-on .dialogue { padding-bottom:calc(160px + env(safe-area-inset-bot
 /* --- Pantallas estrechas (teléfonos, ventanas pequeñas) --- */
 @media (max-width: 600px) {
   #ui { font-size:13px; }
-  .hud { font-size:.72rem; min-width:0; padding:5px 8px; }
-  .objective { font-size:.68rem; max-width:60vw; }
+  .hud { font-size:.72rem; min-width:0; padding:5px 8px; max-width:40vw; }
+  .quest { width:min(220px, 52vw); font-size:.68rem; padding:6px 8px; }
+  .quest .q-order b { font-size:.78rem; }
   .modal { padding:8px; align-items:flex-start; }
   .modal-frame { width:100%; max-height:94dvh; margin-top:6px; }
   .wood-panel, .paper-panel, .terminal { padding:12px; border-width:2px; }
@@ -377,8 +404,9 @@ body.controls-on .dialogue { padding-bottom:calc(160px + env(safe-area-inset-bot
     left:calc(8px + env(safe-area-inset-left)); bottom:calc(8px + env(safe-area-inset-bottom)); }
   .touch.a-btn { width:clamp(52px, 14vmin, 66px); height:clamp(52px, 14vmin, 66px);
     right:calc(10px + env(safe-area-inset-right)); bottom:calc(12px + env(safe-area-inset-bottom)); }
-  .objective { top:calc(60px + env(safe-area-inset-top)); font-size:.66rem; padding:4px 8px; }
-  .toasts { top:calc(40px + env(safe-area-inset-top)); }
+  .quest { font-size:.64rem; padding:5px 7px; width:min(200px, 46vw); }
+  .quest .q-steps { display:none; }
+  .toasts { top:calc(92px + env(safe-area-inset-top)); max-width:44vw; }
   .modal { padding:6px; align-items:stretch; }
   .modal-frame { max-height:98dvh; }
   .tut-body { font-size:.84rem; padding:10px 14px; line-height:1.4; }

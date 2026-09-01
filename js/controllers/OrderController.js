@@ -3,8 +3,8 @@ import { FurnitureFactory } from "../services/FurnitureFactory.js";
 import { CONFIG } from "../config/gameConfig.js";
 
 /**
- * OrderController — CONTROLADOR de pedidos (Mesa de Pedidos + Mostrador de Ventas).
- * Aceptar un pedido y entregarlo si está cumplido, cobrando la recompensa.
+ * OrderController — CONTROLADOR de pedidos (Tablón de pedidos + Mostrador/Cliente).
+ * Aceptar, cancelar y entregar pedidos, aplicando las reglas de negocio.
  */
 export class OrderController {
   #gs; #bus;
@@ -12,16 +12,40 @@ export class OrderController {
 
   available() { return this.#gs.availableOrders; }
   active() { return this.#gs.workshop.orders; }
+  max() { return CONFIG.GAMEPLAY.MAX_ACTIVE_ORDERS; }
+
+  /** La regla decide; la vista solo muestra el resultado. */
+  canAccept(id) {
+    const o = this.#gs.availableOrders.find((x) => x.id === id);
+    return BusinessRules.canAcceptOrder(this.#gs.workshop, o ?? { status: "closed" });
+  }
 
   accept(id) {
     const i = this.#gs.availableOrders.findIndex((o) => o.id === id);
-    if (i < 0) return { ok: false };
-    const [o] = this.#gs.availableOrders.splice(i, 1);
+    if (i < 0) return { ok: false, reason: "Ese pedido ya no está en el tablón." };
+    const o = this.#gs.availableOrders[i];
+
+    const rule = BusinessRules.canAcceptOrder(this.#gs.workshop, o);
+    if (!rule.ok) { this.#bus.emit("rule:blocked", rule); return { ok: false, ...rule }; }
+
+    this.#gs.availableOrders.splice(i, 1);
     this.#gs.workshop.addOrder(o);
+    if (!this.#gs.focusOrderId) this.#gs.focusOrderId = o.id;
     this.#gs.refillOrders();
     this.#bus.emit("order:accepted", o);
     this.#bus.emit("state:changed");
     return { ok: true, order: o };
+  }
+
+  /** Cancelar un trabajo activo (libera un espacio). */
+  cancel(id) {
+    const o = this.#gs.workshop.orders.find((x) => x.id === id);
+    if (!o) return { ok: false };
+    this.#gs.workshop.cancelOrder(id);
+    if (this.#gs.focusOrderId === id) this.#gs.focusOrderId = this.#gs.workshop.orders[0]?.id ?? null;
+    this.#bus.emit("order:cancelled", o);
+    this.#bus.emit("state:changed");
+    return { ok: true };
   }
 
   /** Precio de venta validado por la regla de negocio (no puede ser <= 0). */
@@ -46,17 +70,20 @@ export class OrderController {
       }
     }
 
-    const rule = BusinessRules.canDeliver(o);
+    const rule = BusinessRules.canDeliver(o, this.#gs.workshop);
     this.#gs.player.stats.rulesTotal++;
     if (!rule.ok) { this.#bus.emit("rule:blocked", rule); return { ok: false, ...rule }; }
     this.#gs.player.stats.rulesRespected++;
 
     o.deliver();
     this.#gs.workshop.removeOrder(o.id);
+    if (this.#gs.focusOrderId === o.id) this.#gs.focusOrderId = this.#gs.workshop.orders[0]?.id ?? null;
     this.#gs.player.earn(o.reward);
     this.#gs.player.addReputation(CONFIG.ECONOMY.reputationPerOrder);
-    this.#gs.workshop.inventory.add("metal", o.metalReward);
+    if (o.metalReward) this.#gs.workshop.inventory.add("metal", o.metalReward);
     this.#gs.player.stats.ordersDelivered++;
+    this.#gs.player.learn("MVC");                 // vivió el flujo Vista→Controlador→Modelo
+    this.#gs.requirements.complete("RF-007");
     const lvls = this.#gs.player.addXp(CONFIG.XP.order);
     if (o.isFinal) this.#gs.player.stats.finalDone = true;
 
