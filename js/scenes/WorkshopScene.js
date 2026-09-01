@@ -8,32 +8,32 @@ const MX = Math.max(0, Math.round((CONFIG.VIEW.width - W) / 2));
 
 /**
  * Un solo taller compacto. Cámara fija: todo se ve a la vez.
- * SOLO 6 estaciones (nada de "labs"). `solid` = caja de colisión de su mueble
- * (ajustada al dibujo, no una pared invisible). Sin `solid` = se puede atravesar.
+ *
+ * NADA de etiquetas de estación. Cada puesto tiene su MUEBLE + un NPC HACIENDO
+ * la actividad (revisar papeles, teclear, martillar, cargar, esperar, reparar):
+ * el mundo explica el juego. El único texto es el aviso contextual "[E] ..."
+ * que aparece SOLO al acercarse.
+ *
+ * `solid` = caja de colisión del mueble (ajustada, no una pared invisible).
  */
 const STATIONS = [
-  { id: "orders", label: "[E] Revisar pedidos", x: 210, y: 118, icon: "📋", kind: "board" },
-  { id: "coding", label: "[E] Programar",       x: 470, y: 120, icon: "💻", kind: "pc",       solid: { w: 58, h: 16, dy: 10 } },
-  { id: "shelf",  label: "[E] Ver almacén",     x: 792, y: 132, icon: "📦", kind: "shelf",    solid: { w: 72, h: 32, dy: 10 } },
-  { id: "bench",  label: "[E] Fabricar",        x: 300, y: 428, icon: "🔨", kind: "bench",    solid: { w: 78, h: 16, dy: 2 } },
-  { id: "shop",   label: "[E] Mejoras (Carlos)",x: 120, y: 470, icon: "🏪", kind: "shop",     solid: { w: 66, h: 14, dy: 8 } },
-  { id: "sales",  label: "[E] Entregar pedido", x: 770, y: 486, icon: "🧾", kind: "register", solid: { w: 40, h: 14, dy: 4 } },
+  { id: "orders", label: "[E] Revisar pedidos",   x: 190, y: 116, icon: "📋", kind: "board",    npc: "ana",    solid: { w: 60, h: 14, dy: 12 } },
+  { id: "coding", label: "[E] Programar",          x: 470, y: 118, icon: "💻", kind: "pc",       npc: "byte",   solid: { w: 60, h: 14, dy: 14 } },
+  { id: "shelf",  label: "[E] Revisar materiales", x: 806, y: 128, icon: "📦", kind: "shelf",    npc: "beto",   solid: { w: 74, h: 30, dy: 12 } },
+  { id: "bench",  label: "[E] Fabricar",           x: 300, y: 430, icon: "🔨", kind: "bench",    npc: "mario",  solid: { w: 80, h: 16, dy: 4 } },
+  { id: "shop",   label: "[E] Mejorar taller",     x: 130, y: 476, icon: "🏪", kind: "shop",     npc: "carlos", solid: { w: 66, h: 14, dy: 10 } },
+  { id: "sales",  label: "[E] Entregar pedido",    x: 792, y: 486, icon: "🧾", kind: "register", npc: "client", solid: { w: 44, h: 14, dy: 6 } },
 ];
 
-const NPCS = [
-  { id: "byte", name: "BYTE", tex: "byte", x: 372, y: 190, dir: "d", lines: [
-    "Soy BYTE, tu asistente. Sigue el marcador 💡 y la flecha 👉 del panel.",
-    "El ciclo es: aceptar pedido → conseguir materiales programando → fabricar → entregar → cobrar." ] },
-  { id: "mario", name: "Mario", tex: "mario", x: 244, y: 418, dir: "d", work: true, lines: [
-    "Soy Mario, el carpintero. Trae los materiales al banco y yo fabrico la pieza.",
-    "No puedo hacer dos piezas a la vez, así que ten paciencia." ] },
-  { id: "carlos", name: "Carlos", tex: "carlos", x: 118, y: 424, dir: "d", lines: [
-    "Vendo materiales sueltos y MEJORAS para tu taller.",
-    "Las mejoras cambian de verdad cómo juegas: piénsatelas bien." ] },
-  { id: "client", name: "Cliente", tex: "client", x: 704, y: 474, dir: "l", lines: [
-    "Estoy esperando mi pedido.",
-    "Cuando lo tengas fabricado, entrégamelo en el mostrador 🧾." ] },
-];
+// Frases cortas que dice el NPC de cada estación (solo en el tutorial).
+const NPC_HINT = {
+  ana:    "Aquí llegan los pedidos de los clientes.",
+  byte:   "Resuelve estos retos y conseguirás madera y clavos.",
+  beto:   "Aquí guardo todos los materiales del taller.",
+  mario:  "Trae los materiales y yo te fabrico la pieza.",
+  carlos: "Con dinero puedo mejorar tus herramientas y tu banco.",
+  client: "¡Estaba esperando mi pedido! Muchas gracias.",
+};
 
 export class WorkshopScene extends Phaser.Scene {
   constructor() { super("Workshop"); }
@@ -138,19 +138,23 @@ export class WorkshopScene extends Phaser.Scene {
 
   #wallDecor() {
     const g = this.add.graphics().setDepth(7);
-    // pegboard con herramientas (encima del banco)
-    g.fillStyle(0x6b4a2a, 1); g.fillRoundedRect(90, 6, 150, 34, 3);
-    g.fillStyle(0xc9c9d2, 1); g.fillTriangle(110, 34, 100, 12, 120, 12);       // sierra
-    g.fillStyle(0x8a5a30, 1); g.fillRect(150, 10, 5, 24); g.fillStyle(0x9aa3af, 1); g.fillRect(144, 8, 17, 7); // martillo
-    g.lineStyle(4, 0xc9c9d2, 1); g.beginPath(); g.arc(200, 22, 12, 0, Math.PI); g.strokePath(); // llave
-    // cuadro
-    g.fillStyle(0x2f5c86, 1); g.fillRect(430, 8, 60, 30); g.lineStyle(3, 0xe0a92b, 1); g.strokeRect(430, 8, 60, 30);
-    // reloj
-    g.fillStyle(0x1c1c1c, 1); g.fillCircle(560, 24, 13); g.fillStyle(0xf3e6cc, 1); g.fillCircle(560, 24, 10);
-    g.lineStyle(2, 0x1c1c1c, 1); g.lineBetween(560, 24, 560, 17); g.lineBetween(560, 24, 566, 24);
+    // panel de corcho con notas ENCIMA del tablón de pedidos (izquierda)
+    g.fillStyle(0x8a6a3a, 1); g.fillRoundedRect(120, 6, 120, 34, 3);
+    [[130, 12], [158, 10], [186, 14], [210, 9]].forEach(([nx, ny]) => {
+      g.fillStyle(0xfdf6e3, 1); g.fillRect(nx, ny, 18, 14);
+      g.fillStyle(0xc0392b, 1); g.fillCircle(nx + 9, ny, 1.6);
+    });
+    // reloj de pared (centro)
+    g.fillStyle(0x1c1c1c, 1); g.fillCircle(600, 24, 13); g.fillStyle(0xf3e6cc, 1); g.fillCircle(600, 24, 10);
+    g.lineStyle(2, 0x1c1c1c, 1); g.lineBetween(600, 24, 600, 17); g.lineBetween(600, 24, 606, 24);
+    // pegboard con herramientas ENCIMA del banco (Mario, x300)
+    g.fillStyle(0x6b4a2a, 1); g.fillRoundedRect(230, 8, 150, 32, 3);
+    g.fillStyle(0xc9c9d2, 1); g.fillTriangle(255, 34, 245, 14, 265, 14);       // sierra
+    g.fillStyle(0x8a5a30, 1); g.fillRect(300, 12, 5, 22); g.fillStyle(0x9aa3af, 1); g.fillRect(294, 10, 17, 7); // martillo
+    g.lineStyle(4, 0xc9c9d2, 1); g.beginPath(); g.arc(345, 22, 11, 0, Math.PI); g.strokePath(); // llave
     // vigas del techo
     g.fillStyle(0x3a2412, 1);
-    [140, 480, 820].forEach((x) => g.fillRect(x, 48, 24, 14));
+    [140, 470, 800].forEach((x) => g.fillRect(x, 48, 24, 14));
   }
 
   #shelfDraw(x, y) {
@@ -224,30 +228,29 @@ export class WorkshopScene extends Phaser.Scene {
     this.bars = {};
     for (const s of STATIONS) {
       this.#stationDraw(s.kind, s.x, s.y);
-      // Colisión SOLO si la estación tiene un mueble físico (ajustada al dibujo).
       if (s.solid) {
         const r = this.add.rectangle(s.x, s.y + s.solid.dy, s.solid.w, s.solid.h, 0, 0);
         this.physics.add.existing(r, true); this.solids.add(r);
       }
-      // Un icono pequeño flotando: pista visual de qué es cada puesto, sin texto.
-      this.add.text(s.x, s.y - (s.kind === "shelf" || s.kind === "board" ? 54 : 40), s.icon, {
-        fontSize: "16px",
-      }).setOrigin(0.5).setDepth(45).setAlpha(0.9);
+      // SIN etiquetas de texto. El NPC + el mueble explican qué es el puesto.
     }
   }
 
+  /** Un NPC en cada estación, HACIENDO su actividad (animación de 2 fotogramas). */
   #npcs() {
     this.npc = {};
-    for (const n of NPCS) {
-      const key = n.dir === "l" ? `${n.tex}_s_0` : `${n.tex}_${n.dir === "r" ? "s" : n.dir}_0`;
-      const sp = this.add.sprite(n.x, n.y, key).setDepth(9).setScale(CHAR_SCALE);
-      if (n.dir === "l") sp.setFlipX(true);
-      sp._t = Math.random() * 500; sp._def = n;
-      this.add.text(n.x, n.y - 34, n.name, {
-        fontFamily: "Verdana", fontSize: "9px", fontStyle: "bold", color: "#fff",
-        backgroundColor: "#0008", padding: { x: 3, y: 1 },
-      }).setOrigin(0.5).setDepth(20);
-      this.npc[n.id] = sp;
+    const DY = { board: 26, pc: 24, shelf: 28, bench: -34, shop: -30, register: -30 };
+    for (const s of STATIONS) {
+      const id = s.npc;
+      const ny = s.y + (DY[s.kind] ?? 22);
+      const sp = this.add.sprite(s.x, ny, `${id}_work_0`).setScale(CHAR_SCALE);
+      sp._t = Math.random() * 900;
+      sp.setDepth(8 + ny * 0.02);
+      this.npc[id] = sp;
+      this.npc[id]._home = ny;
+      // respiración sutil para que nunca se vea 100% estático
+      this.tweens.add({ targets: sp, y: ny - 1.4, duration: 1500 + Math.random() * 700,
+        yoyo: true, repeat: -1, ease: "Sine.inOut" });
     }
   }
 
@@ -320,23 +323,29 @@ export class WorkshopScene extends Phaser.Scene {
   }
 
   #objectiveMarker() {
-    this.mark = this.add.container(0, 0).setDepth(52).setVisible(false);
-    const halo = this.add.circle(0, -6, 16, 0xffd98a, 0.25);
-    const arrow = this.add.text(0, 6, "▼", { fontSize: "22px", color: "#ffd98a", stroke: "#3a2412", strokeThickness: 3 }).setOrigin(0.5);
-    this.markIco = this.add.text(0, -14, "💡", { fontSize: "20px" }).setOrigin(0.5);
-    this.mark.add([halo, this.markIco, arrow]);
-    this.tweens.add({ targets: this.mark, y: "+=7", yoyo: true, repeat: -1, duration: 520, ease: "Sine.inOut" });
-    this.tweens.add({ targets: halo, scale: 1.4, alpha: 0, yoyo: false, repeat: -1, duration: 900 });
+    // Nada de flechas gigantes: un aro suave que late en el suelo del puesto
+    // activo y una lucecita 💡 pequeña encima del NPC.
+    this.markRing = this.add.ellipse(0, 0, 46, 20).setStrokeStyle(2.5, 0xffd98a, 0.8).setDepth(1).setVisible(false);
+    this.markIco = this.add.text(0, 0, "💡", { fontSize: "14px" }).setOrigin(0.5).setDepth(53).setVisible(false);
+    this.tweens.add({ targets: this.markRing, scaleX: 1.25, scaleY: 1.25, alpha: 0.15, duration: 1100, repeat: -1, ease: "Sine.out" });
+    this.tweens.add({ targets: this.markIco, y: "+=4", yoyo: true, repeat: -1, duration: 640, ease: "Sine.inOut" });
   }
 
   #setHint(id) {
     const s = STATIONS.find((x) => x.id === id);
-    if (!s) { this.mark?.setVisible(false); return; }
-    this.mark.setVisible(true);
-    this.mark.setPosition(s.x, s.y - 34);
-    this.markIco.setText(s.icon);
-    this.tweens.killTweensOf(this.mark);
-    this.tweens.add({ targets: this.mark, y: s.y - 34 + 7, yoyo: true, repeat: -1, duration: 520, ease: "Sine.inOut" });
+    const on = !!s;
+    this.markRing?.setVisible(on);
+    this.markIco?.setVisible(on);
+    if (!on) return;
+    const sp = this.npc?.[s.npc];
+    const ny = sp ? sp.y : s.y;
+    this.markRing.setPosition(s.x, ny + 22);
+    this.markIco.setPosition(s.x, ny - 26);
+    // pequeño "salto" del NPC de ese puesto para llamar la atención
+    if (sp) {
+      this.tweens.add({ targets: sp, scaleX: CHAR_SCALE * 1.13, scaleY: CHAR_SCALE * 1.13,
+        duration: 170, yoyo: true, repeat: 2, ease: "Sine.inOut" });
+    }
   }
 
   // ---------- bucle ----------
@@ -371,46 +380,34 @@ export class WorkshopScene extends Phaser.Scene {
     } else this.pj.setTexture("pj_idle");
     this.pj.setDepth(10 + this.pj.y * 0.02);
 
-    // Mario trabajando + otros NPC idle (respiran / se mueven un poco)
+    // Cada NPC hace su actividad (2 fotogramas). Mario más rápido (martillo).
+    const rate = { mario: 260, carlos: 420, byte: 300, beto: 520, ana: 640, client: 900 };
     for (const id in this.npc) {
       const sp = this.npc[id]; sp._t += dt;
-      if (sp._def.work) sp.setTexture(`mario_work_${Math.floor(sp._t / 300) % 2}`);
-      else {
-        const base = sp._def.dir === "l" || sp._def.dir === "r" ? "s" : sp._def.dir;
-        sp.setTexture(`${sp._def.tex}_${base}_${Math.floor(sp._t / 900) % 2}`);
-      }
-      sp.setDepth(10 + sp.y * 0.02);
+      const per = rate[id] ?? 500;
+      sp.setTexture(`${id}_work_${Math.floor(sp._t / per) % 2}`);
     }
     this.gs.player.setPosition(Math.round(this.pj.x), Math.round(this.pj.y));
     this.#resolveTarget();
   }
 
   #resolveTarget() {
-    let best = null, bd = 999, kind = null;
-    // Las estaciones tienen prioridad (radio mayor); los NPC solo si estás muy cerca.
+    let best = null, bd = 999;
     for (const s of STATIONS) {
       const d = Phaser.Math.Distance.Between(this.pj.x, this.pj.y, s.x, s.y);
-      if (d < 62 && d < bd) { bd = d; best = { id: s.id, label: s.label }; kind = "station"; }
+      if (d < 66 && d < bd) { bd = d; best = { id: s.id, label: s.label }; }
     }
-    for (const n of NPCS) {
-      const d = Phaser.Math.Distance.Between(this.pj.x, this.pj.y, n.x, n.y);
-      if (d < 40 && d < bd) { bd = d; best = { id: n.id, label: `[E] Hablar con ${n.name}` }; kind = "npc"; }
-    }
-
-    const key = best ? kind + best.id : "";
+    const key = best ? best.id : "";
     if (key !== this.tKey) {
       this.tKey = key;
-      this.target = best ? { kind, ...best } : null;
+      this.target = best ? { kind: "station", ...best } : null;
       this.bus.emit("workshop:prompt", this.target);
     }
   }
 
   #interact() {
     if (this.paused || !this.target) return;
-    if (this.target.kind === "npc") {
-      const n = NPCS.find((x) => x.id === this.target.id);
-      this.bus.emit("dialogue:open", { name: n.name, lines: n.lines });
-    } else this.bus.emit("station:open", this.target.id);
+    this.bus.emit("station:open", this.target.id);
   }
 
   #bar(id, ratio, done = false) {

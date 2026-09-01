@@ -12,6 +12,16 @@ const PAL = {
   mario:  { skin: "#e6b58a", skinS: "#cf9c72", hair: "#241610", hairH: "#3a271a", shirt: "#b0402f", shirtS: "#872f23", pants: "#4a3a24", shoe: "#241608", acc: "cap", ac: "#e6b58a" },
   client: { skin: "#ecc9a4", skinS: "#d6ac81", hair: "#3a2a1e", hairH: "#4d3826", shirt: "#41539a", shirtS: "#2c3a6e", pants: "#232f4c", shoe: "#161616", acc: "tophat", ac: "#c9b48a" },
   carlos: { skin: "#d6a26e", skinS: "#bd8955", hair: "#241610", hairH: "#3a271a", shirt: "#7a5230", shirtS: "#5f3f22", pants: "#3a2a18", shoe: "#2a1a0e", acc: "beardcap", ac: "#d6a26e" },
+  // Ana — recepcionista de pedidos
+  ana:    { skin: "#f0c9a4", skinS: "#dcb187", hair: "#6b3b1f", hairH: "#8a5533", shirt: "#c86a86", shirtS: "#a04a66", pants: "#3a3f52", shoe: "#2a2a2a", acc: "bun", ac: "#f0c9a4" },
+  // Beto — almacenista
+  beto:   { skin: "#c98d5c", skinS: "#ad7346", hair: "#1c130c", hairH: "#2e2114", shirt: "#3d7a4a", shirtS: "#2c5a37", pants: "#4a3a24", shoe: "#241608", acc: "beanie", ac: "#c98d5c" },
+};
+
+/** Actividad de cada NPC de estación (el mundo explica el juego sin texto). */
+export const NPC_WORK = {
+  ana: "read", byte: "type", beto: "carry", mario: "hammer",
+  client: "wait", carlos: "fix",
 };
 
 // RENDER = supersampling de los personajes. 1 = rasteriza al tamaño final
@@ -72,15 +82,106 @@ function head(p, cx, cy, side, back) {
   if (a === "tophat") s += `<rect x="${cx - r - 1}" y="${cy - r - 1}" width="${2 * r + 2}" height="2.6" rx="1" fill="#1c1c1c"/>
     <rect x="${cx - r + 2}" y="${cy - r - 9}" width="${2 * r - 4}" height="9" fill="#222"/>
     <rect x="${cx - r + 2}" y="${cy - r - 3}" width="${2 * r - 4}" height="2" fill="${p.ac}"/>`;
+  if (a === "bun") s += `<circle cx="${cx}" cy="${cy - r - 1.5}" r="3.6" fill="${p.hair}"/>
+    <circle cx="${cx}" cy="${cy - r - 1.5}" r="1.8" fill="${p.hairH}"/>`;
+  if (a === "beanie") s += `<path d="M${cx - r} ${cy - 2} q0 -${r + 3} ${r} -${r + 3} q${r} 0 ${r} ${r + 3}Z" fill="#c85a3a"/>
+    <rect x="${cx - r}" y="${cy - 4} " width="${2 * r}" height="3" rx="1.4" fill="#a8482e"/>
+    <circle cx="${cx}" cy="${cy - r - 3}" r="2" fill="#e8b98a"/>`;
   return s;
+}
+
+/* ---------- posturas de TRABAJO (NPCs de estación) ---------- */
+function torsoOf(p) {
+  return `<rect x="13" y="22" width="18" height="20" rx="6" fill="url(#sh)"/>
+    <rect x="13" y="35" width="18" height="3" fill="#000" opacity=".1"/>
+    <rect x="14" y="23" width="5" height="18" rx="3" fill="#fff" opacity=".08"/>`;
+}
+function legPair(p) {
+  const l = (x) => `<rect x="${x}" y="38" width="7" height="15" rx="3.2" fill="${p.pants}"/>
+    <rect x="${x - 2}" y="50" width="11" height="5.5" rx="2.5" fill="${p.shoe}"/>`;
+  return l(14) + l(23);
+}
+function workPose(p, type, frame) {
+  const t = frame ? 1 : 0;
+  const hand = (x, y) => `<circle cx="${x}" cy="${y}" r="3.1" fill="url(#sk)"/>`;
+  const armL = (x, y, w = 6, h = 13) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${p.shirtS}"/>`;
+  const armR = (x, y, w = 6, h = 13) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${p.shirt}"/>`;
+  let tool = "";
+
+  if (type === "type") {                       // teclear
+    const dy = t ? 0 : -1.6;
+    tool = `<g transform="translate(0 ${dy})">
+      ${armL(10, 26)}${armR(28, 26)}${hand(13, 39)}${hand(31, 39)}
+      <rect x="9" y="40" width="26" height="4" rx="1.5" fill="#1c1c1c"/>
+      <rect x="10" y="40.6" width="24" height="1.2" fill="#3a3a3a"/></g>`;
+  } else if (type === "hammer") {               // martillar
+    const up = t ? -52 : -6;
+    tool = `${armL(9, 25)}${hand(12, 37)}
+      <g transform="rotate(${up} 32 25)">
+        ${armR(29, 20, 6, 15)}${hand(32, 34)}
+        <rect x="30.5" y="5" width="4" height="16" rx="1.5" fill="#6b4423"/>
+        <rect x="26.5" y="3" width="12" height="6.5" rx="1.5" fill="#8a8f99"/>
+        <rect x="26.5" y="3" width="12" height="2" rx="1" fill="#c3c8cf"/></g>
+      <rect x="10" y="44" width="24" height="6" rx="1" fill="#b9884e" stroke="#6b4423" stroke-width="1"/>`;
+  } else if (type === "read") {                  // revisar documentos
+    const flip = t ? 2.5 : 0;
+    tool = `${armL(11, 27, 6, 11)}${armR(27, 27, 6, 11)}
+      <g transform="translate(${flip} 0)">
+        <rect x="13" y="30" width="18" height="21" rx="1.5" fill="#efe6cf" stroke="#8a7350" stroke-width="1"/>
+        <rect x="17" y="27.5" width="10" height="4" rx="1" fill="#9aa3af"/>
+        <line x1="16" y1="35" x2="28" y2="35" stroke="#8a7350" stroke-width="0.8"/>
+        <line x1="16" y1="39" x2="28" y2="39" stroke="#8a7350" stroke-width="0.8"/>
+        <line x1="16" y1="43" x2="25" y2="43" stroke="#8a7350" stroke-width="0.8"/>
+      </g>${hand(14, 39)}${hand(30, 39)}`;
+  } else if (type === "carry") {                 // cargar materiales
+    const bob = t ? 0 : -1.3;
+    tool = `<g transform="translate(0 ${bob})">
+      ${armL(9, 24)}${armR(29, 24)}
+      <rect x="7" y="29" width="30" height="13" rx="2" fill="#b9884e" stroke="#6b4423" stroke-width="1"/>
+      <rect x="7" y="32" width="30" height="1.4" fill="#00000022"/>
+      <rect x="7" y="36" width="30" height="1.4" fill="#00000022"/>
+      ${hand(10, 42)}${hand(34, 42)}</g>`;
+  } else if (type === "fix") {                   // reparar herramienta
+    const tw = t ? 22 : -12;
+    tool = `${armL(10, 26)}${hand(13, 39)}
+      <g transform="rotate(${tw} 30 33)">
+        ${armR(27, 24, 6, 14)}${hand(30, 37)}
+        <rect x="28" y="29" width="4" height="13" fill="#9aa3af"/>
+        <path d="M25.5 42 h9 v2.6 h-3.3 v-1.6 h-2.4 v1.6 h-3.3Z" fill="#c3c8cf"/></g>
+      <rect x="10" y="44" width="16" height="5" rx="1" fill="#6b7280"/>
+      <circle cx="14" cy="46.5" r="2.6" fill="#4a5158"/>`;
+  } else {                                       // "wait" — cliente esperando
+    const sh = t ? 1 : -1;
+    tool = `<g transform="translate(${sh} 0)">
+      <rect x="11" y="26" width="22" height="6" rx="3" fill="${p.shirt}"/>
+      <rect x="11" y="26" width="22" height="6" rx="3" fill="#00000012"/>
+      ${hand(13, 29)}${hand(31, 29)}</g>`;
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VB_W} ${VB_H}">
+  <defs>
+    <radialGradient id="sk" cx="0.38" cy="0.32" r="0.75">
+      <stop offset="0" stop-color="${p.skin}"/><stop offset="1" stop-color="${p.skinS}"/></radialGradient>
+    ${G("sh", p.shirt, p.shirtS)}
+  </defs>
+  <ellipse cx="22" cy="55" rx="12" ry="3.2" fill="#000" opacity=".2"/>
+  ${legPair(p)}
+  ${torsoOf(p)}
+  ${tool}
+  <rect x="20" y="19" width="4" height="4" fill="url(#sk)"/>
+  ${head(p, 22, type === "read" || type === "fix" ? 15 : 14, false, false)}
+</svg>`;
 }
 
 function person(key, dir, frame, work = false) {
   const p = PAL[key];
+  // Los NPC de estación se dibujan en una POSTURA DE TRABAJO (de frente).
+  if (work) return workPose(p, typeof work === "string" ? work : "hammer", frame);
+
   const side = dir === "s", back = dir === "u";
-  const bob = frame === 1 && !work ? -2 : 0;
-  const legSw = work ? 0 : [7, 0, -7][frame];
-  const armSw = work ? (frame ? -46 : 12) : [-16, 0, 16][frame];
+  const bob = frame === 1 ? -2 : 0;
+  const legSw = [7, 0, -7][frame];
+  const armSw = [-16, 0, 16][frame];
 
   const leg = (x, sw) => `<g transform="rotate(${sw} ${x + 3} 40)">
       <rect x="${x}" y="38" width="7" height="15" rx="3.2" fill="${p.pants}"/>
@@ -96,15 +197,7 @@ function person(key, dir, frame, work = false) {
       <circle cx="${x + 3}" cy="${x < 22 ? 40 : 40}" r="3.3" fill="url(#sk)"/></g>`;
 
   let arms;
-  if (work) {
-    arms = `${arm(8, armSw * 0.4, true)}
-      <g transform="rotate(${armSw} 34 22)">
-        <rect x="31" y="18" width="6.5" height="16" rx="3.2" fill="${p.shirt}"/>
-        <circle cx="34" cy="34" r="3.3" fill="url(#sk)"/>
-        <rect x="32" y="6" width="4.5" height="16" rx="1.5" fill="#6b4423"/>
-        <rect x="28.5" y="4" width="11" height="6" rx="1.5" fill="#9aa3af"/>
-        <rect x="28.5" y="4" width="11" height="2" rx="1" fill="#cbd5e1"/></g>`;
-  } else if (side) {
+  if (side) {
     arms = `<g transform="rotate(${armSw} 24 25)"><rect x="21" y="23" width="6.5" height="16" rx="3.2" fill="${p.shirt}"/><circle cx="24" cy="40" r="3.3" fill="url(#sk)"/></g>`;
   } else {
     arms = `${arm(9, armSw, true)}${arm(29, -armSw, true)}`;
@@ -211,14 +304,19 @@ export const CHAR_SCALE = 1 / RENDER;   // los sprites de personaje se muestran 
 
 export function artManifest() {
   const list = [];
-  for (const key of Object.keys(PAL)) {
-    // Ciclo de caminado de 2 fotogramas (0 y 1). Menos texturas = arranque
-    // más rápido en móvil; el fotograma 2 apenas se notaba.
-    for (const dir of ["d", "u", "s"]) for (const f of [0, 1])
-      list.push({ key: `${key}_${dir}_${f}`, svg: person(key, dir, f), w: VB_W, h: VB_H, s: RENDER });
-    list.push({ key: `${key}_idle`, svg: person(key, "d", 1), w: VB_W, h: VB_H, s: RENDER });
-    list.push({ key: `${key}_work_0`, svg: person(key, "d", 0, true), w: VB_W, h: VB_H, s: RENDER });
-    list.push({ key: `${key}_work_1`, svg: person(key, "d", 1, true), w: VB_W, h: VB_H, s: RENDER });
+  const push = (key, svg) => list.push({ key, svg, w: VB_W, h: VB_H, s: RENDER });
+
+  // El JUGADOR camina en 3 orientaciones (d/u/s), 2 fotogramas cada una.
+  for (const dir of ["d", "u", "s"]) for (const f of [0, 1]) push(`pj_${dir}_${f}`, person("pj", dir, f));
+  push("pj_idle", person("pj", "d", 1));
+
+  // Los NPC de estación NO caminan: solo postura estática + 2 de trabajo.
+  for (const [key, act] of Object.entries(NPC_WORK)) {
+    push(`${key}_d_0`, person(key, "d", 0));
+    push(`${key}_d_1`, person(key, "d", 1));
+    push(`${key}_idle`, person(key, "d", 1));
+    push(`${key}_work_0`, person(key, "d", 0, act));
+    push(`${key}_work_1`, person(key, "d", 1, act));
   }
   // props: se rasterizan a 1x (tamaño final)
   list.push({ key: "floor0", svg: floorTile(0), w: 32, h: 32, s: 1 });

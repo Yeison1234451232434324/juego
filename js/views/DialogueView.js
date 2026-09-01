@@ -4,7 +4,7 @@ import { el, $ } from "./ui/dom.js";
  * DialogueView — diálogos cortos de NPC (BYTE, Ana, Mario, Carlos).
  * Integra la teoría dentro de la historia sin paneles enormes.
  */
-const PORTRAIT = { BYTE: "🤖", Ana: "🧑‍💼", Mario: "🧑‍🔧", Carlos: "🧔" };
+const PORTRAIT = { BYTE: "🤖", Ana: "🧑‍💼", Mario: "🧑‍🔧", Carlos: "🧔", Beto: "🧑‍🏭", Cliente: "🙂" };
 
 export class DialogueView {
   #i = 0; #lines = []; #name = "";

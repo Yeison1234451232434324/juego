@@ -1,20 +1,19 @@
 /**
  * TutorialController — GUÍA de la primera partida.
  *
- * Es una pequeña máquina de estados. Escucha hechos del juego y va marcando el
- * objetivo + la flecha 👉 + las frases de BYTE, EXACTAMENTE en este orden:
+ * Máquina de estados. Va marcando el objetivo, resaltando suavemente el puesto
+ * y poniendo frases de BYTE + del NPC de cada estación, en este orden:
  *
- *   0  aceptar el primer trabajo
- *   1  conseguir los materiales resolviendo retos
- *   2  fabricar la silla en el banco
- *   3  entregar la silla al cliente
- *   4  ¡tutorial completado! → juego libre
+ *   0  aceptar el primer trabajo         (Ana, revisando papeles)
+ *   1  conseguir materiales programando  (BYTE, tecleando)
+ *   2  fabricar la silla                 (Mario, martillando)
+ *   3  entregar la silla                 (Cliente, esperando)
+ *   4  ¡completado! → juego libre
  *
- * Solo actúa mientras gs.tutorialCompleted === false. Después NO vuelve a
- * obligar a nada: el jugador gestiona sus trabajos libremente.
+ * Solo actúa mientras gs.tutorialCompleted === false.
  */
 export class TutorialController {
-  #gs; #bus;
+  #gs; #bus; #greeted = new Set();
 
   constructor(gs, bus) {
     this.#gs = gs; this.#bus = bus;
@@ -32,28 +31,26 @@ export class TutorialController {
   #step() { return this.#gs.tutorialStep; }
   #setStep(n) { this.#gs.tutorialStep = n; this.#bus.emit("state:changed"); }
 
-  #say(lines) {
-    setTimeout(() => this.#bus.emit("dialogue:open", { name: "BYTE", lines }), 350);
+  #say(name, lines, delay = 350) {
+    setTimeout(() => this.#bus.emit("dialogue:open", { name, lines }), delay);
   }
 
-  /** Arranca (o reanuda) el tutorial al entrar al taller. */
   begin() {
     if (this.#done) return;
     const s = this.#step();
     if (s === 0) {
-      this.#say([
+      this.#say("BYTE", [
         "¡Bienvenido al taller! Soy BYTE, tu asistente.",
-        "Tenemos nuestro PRIMER TRABAJO esperando.",
-        "Antes de fabricar nada, hay que ACEPTAR el pedido.",
-        "Camina hasta el Tablón de Pedidos 📋 (arriba, a la izquierda) y pulsa E.",
+        "Antes de fabricar nada hay que ACEPTAR un pedido.",
+        "Busca a Ana, que está revisando papeles junto al tablón. Acércate y pulsa E.",
       ]);
-      this.#gs.setObjective("Ve al Tablón de Pedidos 📋 y acepta el trabajo de la silla.", "orders", "orders");
+      this.#gs.setObjective("Acércate a Ana (la del tablón de papeles) y acepta el trabajo.", "orders", "orders");
     } else if (s === 1) {
       this.#materialsObjective();
     } else if (s === 2) {
-      this.#gs.setObjective("Ya tienes los materiales. Fabrica la Silla en el Banco 🔨.", "bench", "bench");
+      this.#gs.setObjective("Ya tienes los materiales. Ve con Mario, en el banco de trabajo.", "bench", "bench");
     } else if (s === 3) {
-      this.#gs.setObjective("Lleva la Silla al Cliente 🧾 y entrégala.", "sales", "sales");
+      this.#gs.setObjective("Lleva la silla al cliente que está esperando en el mostrador.", "sales", "sales");
     }
   }
 
@@ -63,7 +60,7 @@ export class TutorialController {
     const inv = this.#gs.workshop.inventory;
     const txt = Object.entries(need)
       .map(([m, q]) => `${m === "wood" ? "🪵" : "🔩"} ${inv.count(m)}/${q}`).join("  ");
-    this.#gs.setObjective(`Consigue materiales en la computadora 💻.  ${txt}`, "coding", "coding");
+    this.#gs.setObjective(`Resuelve retos con BYTE, en la computadora.  ${txt}`, "coding", "coding");
   }
 
   #hasAllMaterials(o) {
@@ -75,11 +72,10 @@ export class TutorialController {
   #onAccepted() {
     if (this.#done || this.#step() !== 0) return;
     this.#setStep(1);
-    this.#say([
-      "¡Perfecto! Ahora sabemos QUÉ fabricar: una Silla.",
-      "Necesitamos MATERIALES: madera 🪵 y clavos 🔩.",
-      "Para conseguirlos hay que resolver RETOS DE PROGRAMACIÓN.",
-      "Camina hasta la computadora 💻 (sobre el escritorio) y pulsa E.",
+    this.#say("BYTE", [
+      "¡Perfecto! Ya sabemos qué fabricar: una silla.",
+      "Necesita MADERA 🪵 y CLAVOS 🔩. Se consiguen resolviendo retos de programación.",
+      "Ve a la computadora: verás a BYTE (a mí) tecleando. Acércate y pulsa E.",
     ]);
     this.#materialsObjective();
   }
@@ -89,25 +85,25 @@ export class TutorialController {
     const o = this.#gs.focusOrder;
     if (this.#hasAllMaterials(o)) {
       this.#setStep(2);
-      this.#say([
-        "¡Ya tienes TODOS los materiales para la silla!",
-        "Ahora ve al Banco de trabajo 🔨 y pulsa E para fabricarla.",
-        "Mario, el carpintero, la construirá en unos segundos.",
+      this.#say("BYTE", [
+        "¡Ya tienes TODOS los materiales!",
+        "Llévaselos a Mario, el carpintero del banco (el que está martillando).",
+        "Acércate a su banco y pulsa E para que fabrique la silla.",
       ]);
-      this.#gs.setObjective("Fabrica la Silla en el Banco de trabajo 🔨.", "bench", "bench");
+      this.#gs.setObjective("Ve con Mario, en el banco de trabajo, y fabrica la silla.", "bench", "bench");
     } else {
-      this.#materialsObjective();   // actualiza el contador 🪵 x/y
+      this.#materialsObjective();
     }
   }
 
   #onCrafted() {
     if (this.#done || this.#step() !== 2) return;
     this.#setStep(3);
-    this.#say([
-      "¡Excelente! La silla está TERMINADA.",
-      "Ahora entrégasela al cliente. Ve al Mostrador 🧾 (abajo a la derecha) y pulsa E.",
+    this.#say("Mario", [
+      "¡Listo! Aquí tienes tu silla, recién fabricada.",
+      "El cliente lleva un rato esperándola en el mostrador. Llévasela.",
     ]);
-    this.#gs.setObjective("Entrega la Silla al Cliente en el Mostrador 🧾.", "sales", "sales");
+    this.#gs.setObjective("Lleva la silla al cliente que espera en el mostrador.", "sales", "sales");
   }
 
   #onDelivered() {
@@ -115,29 +111,40 @@ export class TutorialController {
     this.#gs.tutorialCompleted = true;
     this.#setStep(4);
     this.#gs.player.learn("MVC");
-    this.#gs.refillOrders();     // ahora habrá hasta 3 pedidos disponibles
-    this.#say([
+    this.#gs.refillOrders();
+    this.#say("BYTE", [
       "🎉 ¡LO HICISTE! Completaste tu primer trabajo.",
-      "Aprendiste el ciclo: aceptar pedido → conseguir materiales programando → fabricar → entregar → cobrar.",
-      "Y de paso aplicaste POO: definiste CLASES y protegiste datos (encapsulamiento).",
-      "Ahora puedes aceptar hasta 3 trabajos y decidir tú el orden. ¡A trabajar!",
+      "El ciclo es siempre igual: aceptar pedido → conseguir materiales programando → fabricar → entregar → cobrar.",
+      "Y aplicaste POO: definiste CLASES y protegiste un dato (encapsulamiento).",
+      "Ahora tú mandas: acepta hasta 3 trabajos y decide el orden. ¡A trabajar!",
     ]);
     this.#bus.emit("tutorial:complete");
     this.#bus.emit("state:changed");
   }
 
+  /** Al abrir la estación correcta por primera vez, su NPC saluda una vez. */
   #onStationOpen(id) {
     if (this.#done) return;
     const s = this.#step();
-    // Empujoncitos si el jugador va a la estación equivocada.
-    if (s === 0 && id !== "orders") {
-      this.#say(["Primero hay que ACEPTAR el pedido.", "Ve al Tablón de Pedidos 📋 y pulsa E."]);
-    } else if (s === 1 && id === "bench") {
-      this.#say(["Todavía no tienes materiales.", "Resuelve retos en la computadora 💻 para conseguir madera y clavos."]);
-    } else if (s === 2 && id === "coding") {
-      this.#say(["¡Ya tienes los materiales!", "Ve al Banco de trabajo 🔨 para fabricar la silla."]);
-    } else if (s === 3 && id !== "sales") {
-      this.#say(["La silla está lista.", "Llévala al Mostrador 🧾 y entrégala al cliente."]);
+
+    const GREET = {
+      orders: ["Ana", ["Aquí llegan los pedidos de los clientes.", "Elige el de la silla y pulsa ACEPTAR."]],
+      coding: ["BYTE", ["Resuelve estos retos y conseguirás madera y clavos para tu pedido."]],
+      bench:  ["Mario", ["Trae los materiales al banco y yo te fabrico la pieza."]],
+      sales:  ["Cliente", ["¡Por fin! Dame mi silla, por favor."]],
+    };
+    const rightStation = { 0: "orders", 1: "coding", 2: "bench", 3: "sales" }[s];
+
+    if (id === rightStation && !this.#greeted.has(id) && GREET[id]) {
+      this.#greeted.add(id);
+      this.#say(GREET[id][0], GREET[id][1], 120);
+      return;
     }
+
+    // Empujoncitos si va al puesto equivocado (guía, no obliga).
+    if (s === 0 && id !== "orders") this.#say("BYTE", ["Primero hay que aceptar el pedido con Ana, en el tablón."]);
+    else if (s === 1 && id === "bench") this.#say("BYTE", ["Todavía no tienes materiales. Consíguelos con los retos de la computadora."]);
+    else if (s === 2 && id === "coding") this.#say("BYTE", ["¡Ya tienes los materiales! Llévaselos a Mario, en el banco."]);
+    else if (s === 3 && id !== "sales") this.#say("BYTE", ["La silla ya está lista. Llévala al cliente del mostrador."]);
   }
 }
