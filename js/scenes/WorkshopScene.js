@@ -281,18 +281,25 @@ export class WorkshopScene extends Phaser.Scene {
     };
     const deco = (tex, x, y, d = 3) => this.add.image(x, y, tex).setDepth(d);
 
-    // esquinas y paredes: cajas y barriles reales
-    solid("crate", 64, 468); solid("crate", 92, 448, 4);
-    solid("barrel", 906, 96); solid("barrel", 52, 300);
-    solid("crate", 900, 470);
-    // decoración ambiental (atravesable)
-    deco("planks", 430, 470); deco("planks", 620, 466, 4);
-    deco("chair_done", 560, 300); deco("chair_done", 596, 288, 4);
-    deco("planks", 150, 300);
-    // pila de aserrín cerca del banco
+    // esquinas y paredes: cajas y barriles reales (colisionan, pegados a los bordes)
+    solid("crate", 58, 470); solid("crate", 86, 450, 4); solid("crate", 74, 428, 5);
+    solid("barrel", 912, 100); solid("barrel", 40, 300);
+    solid("crate", 910, 466); solid("barrel", 890, 430, 4);
+
+    // decoración ambiental (atravesable, llena el taller sin estorbar el paso)
+    deco("planks", 470, 486); deco("planks", 700, 300);
+    deco("chair_done", 636, 486); deco("chair_done", 672, 476, 4);
+    deco("chair_done", 150, 250); deco("planks", 850, 300); deco("planks", 150, 486);
+    // montones de aserrín repartidos
     const s = this.add.graphics().setDepth(3);
-    s.fillStyle(0xd8c49a, 0.8); s.fillEllipse(300, 458, 34, 12);
-    s.fillStyle(0xc8b184, 0.8); s.fillEllipse(300, 456, 22, 8);
+    [[300, 458, 34], [190, 420, 24], [760, 452, 28]].forEach(([x, y, w]) => {
+      s.fillStyle(0xd8c49a, 0.75); s.fillEllipse(x, y, w, w * 0.35);
+      s.fillStyle(0xc8b184, 0.75); s.fillEllipse(x, y - 2, w * 0.6, w * 0.22);
+    });
+    // clavos y tablas sueltas cerca de la computadora
+    const t = this.add.graphics().setDepth(3);
+    t.fillStyle(0x6b7280, 1); for (let i = 0; i < 5; i++) t.fillRect(410 + i * 5, 168, 2, 9);
+    t.fillStyle(0xa5763f, 1); t.fillRect(400, 182, 46, 5); t.fillRect(404, 189, 40, 5);
   }
 
   #lighting() {
