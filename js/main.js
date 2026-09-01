@@ -7,6 +7,7 @@ import { CONFIG } from "./config/gameConfig.js";
 import { EventBus } from "./services/EventBus.js";
 import { SaveManager } from "./services/SaveManager.js";
 import { AudioManager } from "./services/AudioManager.js";
+import { EduPrefs } from "./services/EduPrefs.js";
 import { GameState } from "./services/GameState.js";
 import { GameController } from "./controllers/GameController.js";
 
@@ -31,6 +32,8 @@ import { SalesView } from "./views/SalesView.js";
 import { EvaluationView } from "./views/EvaluationView.js";
 import { SettingsView, toggleFullscreen } from "./views/SettingsView.js";
 import { IntroView, introSeen } from "./views/IntroView.js";
+import { TraceabilityView } from "./views/TraceabilityView.js";
+import { MvcFlowView } from "./views/MvcFlowView.js";
 import { TouchView } from "./views/TouchView.js";
 
 // ---------- adaptación a la pantalla (móvil / tablet / PC) ----------
@@ -55,6 +58,7 @@ function refreshLayout() {
 const bus = new EventBus();
 const save = new SaveManager();
 const audio = new AudioManager();
+const edu = new EduPrefs();
 const gs = new GameState(bus);
 const loaded = save.load();
 if (loaded) gs.hydrate(loaded);
@@ -112,7 +116,10 @@ const req = new RequirementView(game.orders, null, gs, bus);
 const sales = new SalesView(game.orders, gs, bus);
 const evaluation = new EvaluationView(game);
 const intro = new IntroView(audio);
-const settings = new SettingsView(audio, save, (after) => intro.open(after));
+const traceability = new TraceabilityView(gs, bus);
+const mvcFlow = new MvcFlowView(bus, edu);
+const settings = new SettingsView(audio, save, (after) => intro.open(after), edu, bus);
+bus.on("edu:mvcflow", () => mvcFlow.showManual());
 
 const menu = new MenuView(onMenu);
 const entrada = { x: 0, y: 0 };

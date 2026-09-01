@@ -654,3 +654,75 @@ body.is-fullscreen #game, body.is-fullscreen #ui { height:100vh; height:100dvh; 
 @media (prefers-reduced-motion: reduce) {
   .intro-card, .intro-body > *, .intro-shop, .intro-btn.pulse { animation:none !important; }
 }
+
+/* ================================================================
+   FASE 1 — requerimientos, trazabilidad, flujo MVC, debugger
+   ================================================================ */
+
+/* --- Ajustes: sección educativa --- */
+.set-sec { margin:12px 0 2px; font-weight:800; font-size:.7rem; letter-spacing:1px;
+  color:#8a6a3a; border-bottom:1px solid #d8c9a044; padding-bottom:4px; }
+
+/* --- Requerimientos del pedido (tablón) --- */
+.diff { font-size:.68rem; font-weight:800; padding:1px 6px; border-radius:5px; }
+.diff.b { background:#cfe8c8; color:#2f5e26; }
+.diff.i { background:#fdeecb; color:#8a5a15; }
+.diff.a { background:#f2ccc6; color:#8a2b20; }
+.oreq { margin-top:8px; background:#fffef7; border:1px solid #d8c9a0; border-radius:8px; padding:10px 12px; }
+.oreq h4 { font-size:.78rem; color:#4a2c14; margin:6px 0 3px; }
+.oreq h4:first-child { margin-top:0; }
+.oreq-list { list-style:none; margin:0; padding:0; font-size:.8rem; line-height:1.45; }
+.oreq-list li { padding:3px 0; color:#3a2a18; border-bottom:1px dashed #e0d3b0; }
+.oreq-list li:last-child { border-bottom:0; }
+.oreq-list b { color:#7a5a15; margin-right:4px; }
+.oreq-list code { background:#e4d9bf; padding:0 4px; border-radius:4px; font-size:.9em; }
+.oreq-c { color:#4c8b3f; font-weight:700; white-space:nowrap; }
+.oreq-foot { font-size:.74rem; color:#6a5233; margin-top:8px; }
+.oreq-foot code { background:#e4d9bf; padding:0 4px; border-radius:4px; }
+
+/* --- Trazabilidad --- */
+.trace-row { border:1px solid #d8c9a0; border-left:4px solid #9aa3af; border-radius:8px;
+  padding:9px 11px; margin-bottom:8px; background:#fffef7; }
+.trace-row.ok { border-left-color:var(--ok); background:#f1f8ec; }
+.trace-row.bad { border-left-color:var(--bad); background:#fbeceb; }
+.trace-row.pend { border-left-color:#c9a94a; }
+.trace-head { font-size:.86rem; color:#2c2013; }
+.trace-head b { color:#7a5a15; margin-right:6px; }
+.trace-st { float:right; font-weight:800; font-size:.76rem; }
+.trace-chain { display:flex; flex-wrap:wrap; align-items:center; gap:5px; margin-top:6px; font-size:.76rem; color:#4a3a20; }
+.trace-chain code { background:#e4d9bf; padding:0 4px; border-radius:4px; }
+.trace-chain i { color:#a88c5a; font-style:normal; }
+
+/* --- Flujo MVC (overlay breve, no bloquea) --- */
+.mvc-flow { position:fixed; z-index:125; left:50%; top:50%; transform:translate(-50%,-50%) scale(.92);
+  pointer-events:none; opacity:0; transition:opacity .28s, transform .28s; max-width:min(92vw,420px); }
+.mvc-flow.hidden { display:none; }
+.mvc-flow.in { opacity:1; transform:translate(-50%,-50%) scale(1); }
+.mvcf-card { background:linear-gradient(#241708f5,#160d05f5); border:2px solid var(--gold);
+  border-radius:14px; padding:14px 16px; box-shadow:0 14px 44px #000; }
+.mvcf-top { text-align:center; color:var(--gold-l); font-weight:800; font-size:.82rem; letter-spacing:.5px; margin-bottom:8px; }
+.mvcf-steps { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; align-items:center; }
+.mvcf-steps li { text-align:center; color:#ece0c8; font-size:.8rem; opacity:1; animation:mvcf-in .3s ease; }
+.mvcf-steps li b { color:var(--gold-l); display:block; }
+.mvcf-steps li span { color:#cdbf9f; font-family:ui-monospace,Consolas,monospace; font-size:.74rem; }
+.mvcf-steps i { color:var(--gold); font-style:normal; font-size:.8rem; line-height:1.1; }
+@keyframes mvcf-in { from { opacity:0; transform:translateY(8px); } }
+.mvcf-foot { text-align:center; font-size:.72rem; color:#a88c5a; margin-top:8px; border-top:1px solid #4a3a24; padding-top:6px; }
+
+/* --- Debugger de código --- */
+.dbg { text-align:left; }
+.dbg-top { color:var(--bad); font-weight:800; margin-bottom:6px; }
+.dbg-code { position:relative; background:#06100c; border:1px solid #5a2a24; border-radius:6px;
+  padding:6px 8px; margin-bottom:6px; overflow-x:auto; }
+.dbg-code code { font-family:ui-monospace,Consolas,monospace; color:#ffd9d0; white-space:pre; }
+.dbg-ln { display:inline-block; min-width:2.4em; color:#8a6a3a; user-select:none; }
+.dbg-caret { color:var(--gold-l); font-weight:800; padding-left:calc(2.4em + (var(--c) - 1) * .62ch); }
+.dbg-problem { color:#ffe0d6; margin:3px 0; }
+.dbg-concept { color:#bfe9d5; margin:3px 0; }
+.dbg-explain { color:#cdbf9f; font-size:.92em; margin:4px 0; }
+.dbg-hint { color:#ffe07a; margin-top:4px; }
+.dbg-note { color:#cdbf9f; font-style:italic; margin-top:6px; }
+
+/* --- regla ejecutada en el pop de reglas de negocio --- */
+.rp-fn { margin-top:6px; font-size:.82rem; color:#4a2c14; }
+.rp-fn code { background:#e4d9bf; padding:1px 5px; border-radius:4px; }

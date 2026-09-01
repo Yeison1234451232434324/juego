@@ -7,12 +7,14 @@ import { el, $ } from "./ui/dom.js";
  * El contenido es scrollable (.modal-frame) para caber en móviles pequeños.
  */
 export class SettingsView {
-  #audio; #save; #onIntro;
+  #audio; #save; #onIntro; #edu; #bus;
 
-  constructor(audio, save, onIntro) {
+  constructor(audio, save, onIntro, edu, bus) {
     this.#audio = audio;
     this.#save = save ?? null;
     this.#onIntro = typeof onIntro === "function" ? onIntro : null;
+    this.#edu = edu ?? null;
+    this.#bus = bus ?? null;
     this.root = el("div", { class: "modal", attrs: { id: "settings" } });
     this.frame = el("div", { class: "modal-frame wood" });
     this.root.append(this.frame);
@@ -30,6 +32,9 @@ export class SettingsView {
       if (act === "music") { this.#audio.setMusicOn(!this.#audio.prefs.musicOn); this.#render(); }
       if (act === "sfx") { this.#audio.setSfxOn(!this.#audio.prefs.sfxOn); this.#audio.play("click"); this.#render(); }
       if (act === "fs") { toggleFullscreen(); }
+      if (act === "mvcflow" && this.#edu) { this.#edu.set("mvcFlow", !this.#edu.get("mvcFlow")); this.#render(); }
+      if (act === "mvcsee" && this.#bus) { this.close(); this.#bus.emit("edu:mvcflow"); }
+      if (act === "trace" && this.#bus) { this.close(); this.#bus.emit("open:traceability"); }
       if (act === "intro" && this.#onIntro) { this.close(); this.#onIntro(() => this.open()); }
       if (act === "retut") this.#confirmReset(true);
       if (act === "reset") this.#confirmReset(false);
@@ -96,6 +101,20 @@ export class SettingsView {
       ${this.#onIntro ? `<div class="set-row">
         <span>🎓 Ver introducción educativa</span>
         <button class="k sm" data-act="intro">VER</button>
+      </div>` : ""}
+
+      ${this.#edu ? `<div class="set-sec">Educativo</div>
+      <div class="set-row">
+        <span>🏗️ Mostrar flujo MVC</span>
+        <button class="k sm" data-act="mvcflow">${toggle(this.#edu.get("mvcFlow"))}</button>
+      </div>
+      <div class="set-row">
+        <span>🏗️ Ver flujo MVC ahora</span>
+        <button class="k sm" data-act="mvcsee">VER</button>
+      </div>
+      <div class="set-row">
+        <span>🔎 Trazabilidad requerimiento → código</span>
+        <button class="k sm" data-act="trace">VER</button>
       </div>` : ""}
 
       ${this.#save ? `<div class="set-row">

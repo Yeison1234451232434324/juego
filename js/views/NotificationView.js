@@ -35,15 +35,17 @@ export class NotificationView {
 
   ruleBlocked(r) {
     $(".rule-pop")?.remove();
-    const pop = el("div", { class: "rule-pop" }, [
-      el("div", { class: "rp-card" }, [
-        el("div", { class: "rp-tag", text: "REGLA DE NEGOCIO" }),
-        el("p", { class: "rp-reason", text: `🚫 ${r.reason}` }),
-        el("p", { text: r.rule }),
-        el("p", { class: "rp-note", html: "Esta regla vive en las <b>reglas de negocio</b> (el Modelo), no en la pantalla." }),
-        el("button", { text: "Entendido", on: { click: () => pop.remove() } }),
-      ]),
+    const card = el("div", { class: "rp-card" }, [
+      el("div", { class: "rp-tag", text: "REGLA DE NEGOCIO" }),
+      el("p", { class: "rp-reason", text: `🚫 ${r.reason}` }),
+      el("p", { text: r.rule }),
     ]);
+    if (r.fn) card.append(el("p", { class: "rp-fn", html: `⚙️ Regla ejecutada: <code>${r.fn}</code>` }));
+    card.append(
+      el("p", { class: "rp-note", html: "La regla vive en el <b>Modelo</b> (<code>BusinessRules</code>). La <b>Vista</b> solo muestra el resultado." }),
+    );
+    const pop = el("div", { class: "rule-pop" }, [card]);
+    card.append(el("button", { text: "Entendido", on: { click: () => pop.remove() } }));
     pop.addEventListener("click", (e) => { if (e.target === pop) pop.remove(); });
     $("#ui").append(pop);
   }

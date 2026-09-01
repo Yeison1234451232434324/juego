@@ -600,6 +600,13 @@ export class ChallengeService {
   groupSolved(group) { return this.#solvedGroups.has(group); }
   doneCount() { return this.#totalSolved; }
 
+  /** Fallos acumulados (esta sesión) en cualquier variante de un grupo. */
+  groupFails(group) {
+    const g = CHALLENGE_GROUPS.find((x) => x.group === group);
+    if (!g) return 0;
+    return g.variants.reduce((s, v) => s + (this.#fails.get(v.id) ?? 0), 0);
+  }
+
   hydrate(d) {
     this.#solvedGroups = new Set(d?.solvedGroups ?? []);
     this.#totalSolved = d?.totalSolved ?? this.#solvedGroups.size;

@@ -141,17 +141,36 @@ export class CodingStationView {
     if (!out) return;
     const code = this.#modal.frame.querySelector("#editor")?.value ?? "";
     this.#refreshChecklist(code);
-    const first = result.failed[0];
     out.className = "term-out bad";
-    let txt = `❌ RESPUESTA INCORRECTA\n> ${first?.error ?? "Revisa tu código."}`;
-    if (explain) txt += `\n\n${explain}`;
-    // la pista siempre disponible (aquí no depende de la mejora)
-    let hint = result.failed.find((f) => f.hint)?.hint;
+
+    // ---- DEBUGGER: localiza el problema y lo explica (no resuelve el reto) ----
+    let dbg = null;
+    try { dbg = CodeValidator.diagnose(code, this.#ch.checks, this.#ch); } catch { /* noop */ }
+    // pista: básica siempre; más específica si tiene el Analizador de código
+    let hint = dbg?.hint || result.failed.find((f) => f.hint)?.hint || "";
     if (!hint) {
-      try { hint = CodeValidator.validate(code, this.#ch.checks, true).failed.find((f) => f.hint)?.hint; } catch { /* noop */ }
+      try { hint = CodeValidator.validate(code, this.#ch.checks, true).failed.find((f) => f.hint)?.hint || ""; } catch { /* noop */ }
     }
-    if (hint) txt += `\n\n💡 PISTA: ${hint}`;
-    out.textContent = txt;
+
+    if (dbg) {
+      const pointer = dbg.line
+        ? `<div class="dbg-code"><span class="dbg-ln">L${dbg.line}</span><code>${esc(dbg.snippet)}</code>` +
+          (dbg.col ? `<div class="dbg-caret" style="--c:${dbg.col}">↑</div>` : "") + `</div>`
+        : "";
+      out.innerHTML = `<div class="dbg">
+        <div class="dbg-top">🐞 ERROR DE CÓDIGO${dbg.line ? ` · Línea ${dbg.line}` : ""}</div>
+        ${pointer}
+        <p class="dbg-problem"><b>Problema:</b> ${esc(dbg.problem)}</p>
+        <p class="dbg-concept"><b>Concepto:</b> ${esc(dbg.concept)}</p>
+        ${explain ? `<p class="dbg-explain">${esc(explain)}</p>` : ""}
+        ${hint ? `<p class="dbg-hint">💡 <b>Pista:</b> ${esc(hint)}</p>` : ""}
+      </div>`;
+    } else {
+      let txt = `❌ RESPUESTA INCORRECTA\n> ${result.failed[0]?.error ?? "Revisa tu código."}`;
+      if (explain) txt += `\n\n${explain}`;
+      if (hint) txt += `\n\n💡 PISTA: ${hint}`;
+      out.textContent = txt;
+    }
 
     // botón para probar otro reto del mismo concepto (ya rotado)
     const btns = this.#modal.frame.querySelector(".term-btns");
@@ -163,7 +182,10 @@ export class CodingStationView {
     if (fails >= 2) {
       const ed = this.#modal.frame.querySelector("#editor");
       if (ed) { ed.value = this.#ch.ejemplo; this.#refreshChecklist(ed.value); }
-      out.textContent += `\n\n(Te he puesto un ejemplo válido en el editor. Ajústalo y pulsa EJECUTAR.)`;
+      const note = document.createElement("p");
+      note.className = "dbg-note";
+      note.textContent = "Te he puesto un ejemplo válido en el editor. Ajústalo y pulsa EJECUTAR.";
+      out.appendChild(note);
     }
   }
 

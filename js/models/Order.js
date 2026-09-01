@@ -64,6 +64,47 @@ export class Order extends GameEntity {
       .join(", ");
   }
 
+  /**
+   * REQUERIMIENTOS FUNCIONALES del pedido — derivados de sus productos.
+   * Un pedido ES un requerimiento del negocio; esto lo hace explícito y
+   * consultable desde la estación PEDIDOS. Deterministas: no se guardan.
+   */
+  get functionalReqs() {
+    const es = CONFIG.MUEBLE_ES[this.mainType] ?? this.mainType;
+    const el = ({ Chair: "La silla", Table: "La mesa", Cabinet: "El armario" })[this.mainType] ?? "El producto";
+    const feature = ({ Chair: "un respaldo", Table: "un tablero resistente", Cabinet: "puertas y baldas" })[this.mainType] ?? "sus partes";
+    const rq = [
+      { id: "RF·1", text: `El sistema debe permitir registrar ${es === "Silla" ? "una silla" : es === "Mesa" ? "una mesa" : "un armario"} (una clase de mueble).`, concept: "clase" },
+      { id: "RF·2", text: `${el} debe tener ${feature} (un atributo propio).`, concept: "atributo" },
+      { id: "RF·3", text: `${el} debe almacenar un precio protegido.`, concept: "encapsulamiento" },
+      { id: "RF·4", text: `${el} debe poder calcular su tiempo de producción.`, concept: "polimorfismo" },
+      { id: "RF·5", text: `${el} no puede fabricarse si faltan materiales.`, concept: "regla" },
+    ];
+    if (this.#lines.some((l) => l.qty > 1)) {
+      const l = this.#lines.slice().sort((a, b) => b.qty - a.qty)[0];
+      rq.push({ id: "RF·6", text: `El sistema debe producir ${l.qty} unidades sin exceder los materiales disponibles.`, concept: "regla" });
+    }
+    if (new Set(this.#lines.map((l) => l.type)).size > 1) {
+      rq.push({ id: "RF·7", text: "El sistema debe tratar los distintos muebles como una familia (herencia de Furniture).", concept: "herencia" });
+    }
+    return rq;
+  }
+
+  /** REGLAS DE NEGOCIO que se aplicarán a este pedido (viven en BusinessRules). */
+  get businessRules() {
+    const rn = [
+      { id: "RN-001", text: "El precio de venta debe ser mayor que 0.", fn: "BusinessRules.validatePrice()" },
+      { id: "RN-002", text: "La fabricación requiere todos los materiales.", fn: "BusinessRules.canCraft()" },
+      { id: "RN-003", text: "Solo se fabrica lo que un pedido aceptado necesita.", fn: "BusinessRules.furnitureIsNeeded()" },
+      { id: "RN-004", text: "El trabajador debe estar disponible.", fn: "BusinessRules.workerAvailable()" },
+      { id: "RN-006", text: "No se entrega un pedido hasta fabricar todas las piezas.", fn: "BusinessRules.canDeliver()" },
+    ];
+    if (this.#lines.some((l) => l.qty > 1)) {
+      rn.splice(4, 0, { id: "RN-005", text: "No se fabrica más cantidad que materiales disponibles.", fn: "BusinessRules.canCraftQuantity()" });
+    }
+    return rn;
+  }
+
   /** Cuántos productos de un tipo faltan. */
   remainingOf(type) {
     const l = this.#lines.find((x) => x.type === type);

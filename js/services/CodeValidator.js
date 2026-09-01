@@ -82,4 +82,88 @@ export class CodeValidator {
     }
     return { ok: failed.length === 0, syntaxError: "", passed, failed };
   }
+
+  /**
+   * DEBUGGER educativo: localiza el PRIMER problema del código y lo explica.
+   * Nunca resuelve el reto; solo señala dónde y por qué falla.
+   * @returns {{line:number, col:number, snippet:string, problem:string, concept:string, hint:string}|null}
+   */
+  static diagnose(code, checks = [], challenge = null) {
+    const raw = String(code ?? "").replace(/\r/g, "");
+    const lines = raw.split("\n");
+    const conceptLabel = ({
+      clase: "🧩 Clases", encapsulamiento: "🔐 Encapsulamiento", herencia: "🧬 Herencia",
+      polimorfismo: "🎭 Polimorfismo", abstracción: "🧱 Abstracción", composición: "🧩 Composición",
+    })[challenge?.concept] ?? "🧩 Programación";
+
+    const at = (i, col, problem, hint) => ({
+      line: i + 1, col: Math.max(1, col),
+      snippet: (lines[i] ?? "").trimEnd(),
+      problem, concept: conceptLabel,
+      hint: hint || checks.find((c) => c.hint)?.hint || "",
+    });
+
+    // 1) asignación sin valor:  this.precio = ;   |   const x =
+    for (let i = 0; i < lines.length; i++) {
+      const m = lines[i].match(/=\s*(;|$)/);
+      if (m && !/[=!<>]=/.test(lines[i].slice(0, m.index + 1))) {
+        return at(i, m.index + 2, "Falta un valor a la derecha del `=`. No hay nada que asignar.",
+          "Escribe el valor después del `=` (por ejemplo un número, un texto entre comillas o un parámetro).");
+      }
+    }
+
+    // 2) return sin valor cuando el reto pide devolver algo
+    if (/devuelv|return true|return this/i.test(JSON.stringify(checks))) {
+      for (let i = 0; i < lines.length; i++) {
+        if (/\breturn\s*;/.test(lines[i])) {
+          return at(i, lines[i].indexOf("return") + 1, "`return` no devuelve ningún valor.",
+            "Pon el valor justo después de `return` (por ejemplo `return true;`).");
+        }
+      }
+    }
+
+    // 3) llaves / paréntesis descompensados
+    const pairs = { "}": "{", ")": "(" };
+    const stack = [];
+    for (let i = 0; i < lines.length; i++) {
+      for (let j = 0; j < lines[i].length; j++) {
+        const ch = lines[i][j];
+        if (ch === "{" || ch === "(") stack.push({ ch, i, j });
+        else if (ch === "}" || ch === ")") {
+          const top = stack.pop();
+          if (!top || top.ch !== pairs[ch]) {
+            return at(i, j + 1, `Hay un \`${ch}\` que no corresponde a ninguna apertura.`,
+              "Revisa que cada `{` tenga su `}` y cada `(` su `)`, en el orden correcto.");
+          }
+        }
+      }
+    }
+    if (stack.length) {
+      const o = stack[0];
+      return at(o.i, o.j + 1, `Falta cerrar este \`${o.ch}\`.`,
+        `Añade el \`${o.ch === "{" ? "}" : ")"}\` que falta.`);
+    }
+
+    // 4) error de sintaxis genérico (compila y falla)
+    const s = CodeValidator.checkSyntax(raw);
+    if (!s.ok) {
+      const i = Math.max(0, lines.map((l) => l.trim()).lastIndexOf("") - 1);
+      return at(Math.min(i, lines.length - 1), 1, s.message,
+        "Compara tu código con los PASOS del reto, línea por línea.");
+    }
+
+    // 5) compila pero no cumple un requisito: señala el concepto
+    const firstFail = checks.find((c) => {
+      try { return !c.test(CodeValidator.#flatten(raw), raw); } catch { return true; }
+    });
+    if (firstFail) {
+      return {
+        line: 0, col: 0, snippet: "",
+        problem: `Aún no se cumple: ${firstFail.label}. ${firstFail.error}`,
+        concept: conceptLabel,
+        hint: firstFail.hint || "Vuelve a leer el PASO correspondiente del reto.",
+      };
+    }
+    return null;
+  }
 }
