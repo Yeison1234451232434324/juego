@@ -39,7 +39,11 @@ export const CONFIG = Object.freeze({
   // Nombre en español de cada mueble (las claves internas están en inglés).
   MUEBLE_ES: Object.freeze({ Chair: "Silla", Table: "Mesa", Cabinet: "Armario" }),
 
-  XP: Object.freeze({ perLevel: 260, craft: 100, order: 90, challenge: 50, mvc: 40 }),
+  XP: Object.freeze({
+    perLevel: 260, craft: 100, order: 90, challenge: 50, mvc: 40,
+    // Bonus de XP por dificultad del pedido (se suma por unidad pedida).
+    difficulty: Object.freeze({ Chair: 0, Table: 20, Cabinet: 40 }),
+  }),
 
   MATERIAL_META: Object.freeze({
     wood:  { name: "Madera",  source: "Resuelve retos de CLASES en la computadora 💻." },

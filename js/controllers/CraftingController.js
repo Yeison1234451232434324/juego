@@ -1,4 +1,5 @@
 import { BusinessRules } from "../services/BusinessRules.js";
+import { QualityService } from "../services/QualityService.js";
 import { CONFIG } from "../config/gameConfig.js";
 
 /**
@@ -44,7 +45,14 @@ export class CraftingController {
     return Math.max(3, Math.round(base * mult));
   }
 
-  craft(type) {
+  /** Cuántas piezas de este tipo faltan aún para los pedidos activos. */
+  pendingOf(type) {
+    const rem = this.#gs.workshop.orders.reduce((s, o) => s + o.remainingOf(type), 0);
+    return Math.max(0, rem - this.#gs.workshop.countStock(type) - this.jobs.filter((j) => j.type === type).length);
+  }
+
+  /** `batch` = seguir con la siguiente pieza automáticamente al terminar. */
+  craft(type, batch = false) {
     const recipe = CONFIG.RECIPES[type];
     if (!recipe) return this.#deny({ reason: "Ese mueble no existe.", rule: "" });
 
@@ -57,7 +65,7 @@ export class CraftingController {
 
     this.#gs.workshop.inventory.consume(recipe);
     this.#gs.workshop.worker.assign();
-    const job = { id: `j${Date.now()}`, type, elapsed: 0, total: this.#craftSeconds(type) };
+    const job = { id: `j${Date.now()}`, type, elapsed: 0, total: this.#craftSeconds(type), batch: !!batch };
     this.jobs.push(job);
     this.#bus.emit("craft:started", job);
     this.#bus.emit("state:changed");
@@ -78,12 +86,24 @@ export class CraftingController {
   #finish(job) {
     this.jobs = this.jobs.filter((x) => x !== job);
     this.#gs.workshop.worker.release();
-    this.#gs.workshop.addStock(job.type);
+
+    // CALIDAD de la pieza (del progreso real del jugador)
+    const q = QualityService.evaluatePiece(this.#gs);
+    this.#gs.workshop.addStock(job.type, "rústico", q.score);
+    this.#gs.player.recordQuality(q.score);
+
     this.#gs.player.stats.objectsCreated++;
     this.#gs.requirements.complete("RF-006");
     const lvls = this.#gs.player.addXp(CONFIG.XP.craft);
-    this.#bus.emit("craft:done", job);
+    this.#bus.emit("craft:done", { ...job, quality: q });
     if (lvls) this.#bus.emit("player:levelup", this.#gs.player.level);
+
+    // PRODUCCIÓN POR LOTES: encadena la siguiente pieza si aún falta y se puede.
+    if (job.batch && this.pendingOf(job.type) > 0
+        && BusinessRules.canCraft(CONFIG.RECIPES[job.type], this.#gs.workshop.inventory).ok
+        && this.#gs.workshop.worker.isAvailable) {
+      this.craft(job.type, true);
+    }
     this.#bus.emit("state:changed");
   }
 

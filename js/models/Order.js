@@ -18,8 +18,12 @@ export class Order extends GameEntity {
   #status = "open";   // open | delivered
   code;
   isFinal = false;
+  priority = "normal";   // normal | urgente | premium
+  deadline = 0;          // días estimados (informativo)
+  brief = "";            // frase del cliente ("Necesito 5 sillas resistentes…")
 
-  constructor({ customer, lines, notes = [], reward, metalReward = 0, code }) {
+  constructor({ customer, lines, notes = [], reward, metalReward = 0, code,
+                priority = "normal", deadline = 0, brief = "" }) {
     super(`Pedido ${customer.name}`);
     this.#customer = customer;
     this.#lines = lines.map((l) => ({ type: l.type, qty: l.qty, done: l.done ?? 0 }));
@@ -27,6 +31,9 @@ export class Order extends GameEntity {
     this.#reward = reward;
     this.#metalReward = metalReward;
     this.code = code;
+    this.priority = priority;
+    this.deadline = deadline;
+    this.brief = brief;
   }
 
   get customer() { return this.#customer; }
@@ -126,24 +133,28 @@ export class Order extends GameEntity {
   toJSON() {
     return {
       code: this.code,
-      customer: { name: this.#customer.name, kind: this.#customer.kind },
+      customer: { name: this.#customer.name, kind: this.#customer.kind, pref: this.#customer.pref },
       lines: this.#lines.map((l) => ({ ...l })),
       notes: this.#notes,
       reward: this.#reward,
       metalReward: this.#metalReward,
       status: this.#status,
       isFinal: this.isFinal,
+      priority: this.priority, deadline: this.deadline, brief: this.brief,
     };
   }
 
   static fromJSON(d) {
     const o = new Order({
-      customer: new Customer(d.customer.name, d.customer.kind),
+      customer: new Customer(d.customer.name, d.customer.kind, d.customer.pref ?? ""),
       lines: d.lines,
       notes: d.notes,
       reward: d.reward,
       metalReward: d.metalReward,
       code: d.code,
+      priority: d.priority ?? "normal",
+      deadline: d.deadline ?? 0,
+      brief: d.brief ?? "",
     });
     o.setStatus(d.status ?? "open");
     o.isFinal = !!d.isFinal;

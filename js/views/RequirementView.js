@@ -63,14 +63,17 @@ export class RequirementView {
     const disponibles = this.#orderCtrl.available().map((o) => {
       const d = DIFF[o.mainType] ?? DIFF.Chair;
       const openTag = this.#open.has(o.id);
+      const pri = o.priority === "urgente" ? `<span class="pri urgente">⚠️ URGENTE</span>`
+        : o.priority === "premium" ? `<span class="pri premium">💰 PREMIUM</span>` : "";
       return `
       <div class="doc ${o.isFinal ? "final" : ""}">
         <div class="doc-pin"></div>
-        <b>PEDIDO ${o.code}</b>
+        <b>PEDIDO ${o.code}</b> ${pri}
         <p>Cliente: ${esc(o.customer.name)} · <span class="diff ${d.cls}">${o.isFinal ? "🏨 PROYECTO FINAL" : d.tag}</span></p>
+        ${o.brief ? `<p class="doc-brief">${esc(o.brief)}</p>` : ""}
         <p>Producto: <b>${o.summary}</b></p>
         <p class="doc-mats">Materiales necesarios:  ${this.#matLine(o)}</p>
-        <p class="doc-reward">Pago: 🪙 $${o.reward}</p>
+        <p class="doc-reward">Pago: 🪙 $${o.reward}${o.deadline ? ` · ⏳ ${o.deadline} día${o.deadline > 1 ? "s" : ""}` : ""}</p>
         <div class="doc-btns">
           <button class="k sm" data-act="reqs" data-id="${o.id}">${openTag ? "▲ Ocultar" : "📋 Ver"} requerimientos</button>
           <button class="k" data-act="accept" data-id="${o.id}" ${full ? "disabled" : ""}>

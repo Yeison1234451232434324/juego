@@ -36,7 +36,10 @@ export class LoadingView {
     bus.on("craft:done", (job) => {
       const n = CONFIG.MUEBLE_ES[job?.type] ?? "Mueble";
       const g = n === "Armario" ? "listo" : "lista";
-      this.#done(`✓ ¡${n} ${g}!`, "Ahora entrégala al Cliente en el Mostrador 🧾.");
+      const q = job?.quality?.score;
+      this.#done(`✓ ¡${n} ${g}!`,
+        Number.isFinite(q) ? `Calidad ${q}/100. Entrégala al Cliente en el Mostrador 🧾.`
+          : "Ahora entrégala al Cliente en el Mostrador 🧾.");
     });
 
     bus.on("workshop:ready", () => this.#hideNow());

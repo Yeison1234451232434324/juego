@@ -14,10 +14,14 @@ export class NotificationView {
 
     bus.on("challenge:solved", ({ award, xp }) =>
       this.toast(`✓ Reto resuelto · +${award?.amount ?? 0} ${MAT_ES[award?.material] ?? "materiales"} · +${xp} XP`, "ok"));
-    bus.on("craft:done", (j) => this.toast(`✓ ${CONFIG.MUEBLE_ES[j?.type] ?? "Mueble"} fabricada`, "ok"));
+    bus.on("craft:done", (j) => {
+      const q = j?.quality?.score;
+      this.toast(`✓ ${CONFIG.MUEBLE_ES[j?.type] ?? "Mueble"} fabricada${Number.isFinite(q) ? ` · calidad ${q}/100` : ""}`,
+        Number.isFinite(q) && q < 60 ? "info" : "ok");
+    });
     bus.on("order:accepted", (o) => this.toast(`📋 Trabajo aceptado: ${o.summary}`, "info"));
     bus.on("order:cancelled", (o) => this.toast(`✖️ Trabajo cancelado: ${o.code}`, "info"));
-    bus.on("order:delivered", (o) => this.toast(`✓ Pedido ${o.code} entregado · +$${o.reward}`, "ok"));
+    bus.on("order:delivered", (o) => this.toast(`✓ Pedido ${o.code} entregado`, "ok"));
     bus.on("shop:bought", (d) => this.toast(`🛒 +${d.qty} ${MAT_ES[d.type] ?? d.type} (−$${d.cost})`, "info"));
     bus.on("upgrade:bought", (u) => this.toast(`⭐ Mejora: ${u.name}`, "ok"));
     bus.on("player:levelup", (lvl) => this.toast(`⬆️ Nivel ${lvl}`, "level"));

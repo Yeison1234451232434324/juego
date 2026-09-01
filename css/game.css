@@ -726,3 +726,27 @@ body.is-fullscreen #game, body.is-fullscreen #ui { height:100vh; height:100dvh; 
 /* --- regla ejecutada en el pop de reglas de negocio --- */
 .rp-fn { margin-top:6px; font-size:.82rem; color:#4a2c14; }
 .rp-fn code { background:#e4d9bf; padding:1px 5px; border-radius:4px; }
+
+/* ================================================================
+   FASE 2 — calidad, clientes, dificultad, lotes
+   ================================================================ */
+.doc-brief { font-style:italic; color:#5a4326; font-size:.82rem; margin:2px 0 4px; }
+.pri { font-size:.66rem; font-weight:800; padding:1px 6px; border-radius:5px; }
+.pri.urgente { background:#f2ccc6; color:#8a2b20; }
+.pri.premium { background:#fdeeba; color:#8a5a15; }
+
+/* barra de producción por lotes */
+.batch-bar { height:8px; background:#0002; border-radius:4px; overflow:hidden; margin:5px 0; box-shadow:inset 0 0 0 1px #0002; }
+.batch-bar i { display:block; height:100%; background:linear-gradient(90deg,#6fae4f,#a6e06a); transition:width .25s linear; }
+
+/* pantalla de satisfacción del cliente */
+.wood-panel.sat { text-align:center; }
+.sat-face { font-size:3rem; line-height:1; margin:4px 0; }
+.sat-stars { font-size:1.5rem; letter-spacing:2px; color:var(--gold); }
+.sat-quote { font-size:1rem; color:#3a2a14; margin:8px 0; }
+.sat-score { font-weight:700; color:#4a2c14; margin-bottom:8px; }
+.sat-break { list-style:none; margin:0 auto 10px; padding:0; max-width:280px; text-align:left; }
+.sat-break li { display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:4px 0; border-bottom:1px dashed #d8c9a0; font-size:.86rem; color:#3a2a18; }
+.sat-break li:last-child { border-bottom:0; }
+.sat-break li b { color:var(--gold); letter-spacing:1px; white-space:nowrap; }

@@ -57,6 +57,16 @@ export class Player {
   learn(concept) { this.stats.concepts[concept] = true; }
   knows(concept) { return !!this.stats.concepts[concept]; }
 
+  /** Registra la calidad de una pieza fabricada (para medias y evaluación). */
+  recordQuality(score) {
+    this.stats.qualitySum = (this.stats.qualitySum || 0) + score;
+    this.stats.qualityCount = (this.stats.qualityCount || 0) + 1;
+    this.stats.bestQuality = Math.max(this.stats.bestQuality || 0, score);
+  }
+  get avgQuality() {
+    return this.stats.qualityCount ? Math.round(this.stats.qualitySum / this.stats.qualityCount) : 0;
+  }
+
   hydrate(d) {
     if (!d) return;
     this.#x = d.x ?? this.#x; this.#y = d.y ?? this.#y;

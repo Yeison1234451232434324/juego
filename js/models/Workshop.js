@@ -18,12 +18,12 @@ export class Workshop {
   get stock() { return this.#stock; }
   get orders() { return this.#orders; }
 
-  addStock(type, style = "rústico") { this.#stock.push({ type, style }); }
+  addStock(type, style = "rústico", quality = 70) { this.#stock.push({ type, style, quality }); }
+  /** Saca una pieza del stock y la devuelve (o null). */
   takeStock(type) {
     const i = this.#stock.findIndex((s) => s.type === type);
-    if (i < 0) return false;
-    this.#stock.splice(i, 1);
-    return true;
+    if (i < 0) return null;
+    return this.#stock.splice(i, 1)[0];
   }
   countStock(type) { return this.#stock.filter((s) => s.type === type).length; }
 
@@ -39,7 +39,10 @@ export class Workshop {
   hydrate(d) {
     if (!d) return;
     this.#inventory = new Inventory(d.inventory ?? {});
-    this.#stock = d.stock ?? [];
+    // MIGRACIÓN v5→v6: las piezas antiguas no tenían calidad → 70 por defecto.
+    this.#stock = (d.stock ?? []).map((s) => ({
+      type: s.type, style: s.style ?? "rústico", quality: Number.isFinite(s.quality) ? s.quality : 70,
+    }));
     this.#worker = new Worker("Mario");   // siempre libre al recargar
     this.#orders = (d.orders ?? []).map((od) => Order.fromJSON(od));
   }

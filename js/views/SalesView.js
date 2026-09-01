@@ -1,6 +1,7 @@
 import { Modal } from "./ui/Modal.js";
 import { esc } from "./ui/dom.js";
 import { CONFIG } from "../config/gameConfig.js";
+import { QualityService } from "../services/QualityService.js";
 
 const mueble = (t) => CONFIG.MUEBLE_ES[t] ?? t;
 
@@ -17,7 +18,7 @@ export class SalesView {
     this.#modal.bind({
       deliver: (d) => {
         const r = this.#orderCtrl.deliver(d.id);
-        if (r?.ok) this.#delivered(r.order); else this.#render();
+        if (r?.ok) this.#delivered(r); else this.#render();
       },
       close: () => this.#modal.close(),
     });
@@ -35,11 +36,15 @@ export class SalesView {
         return `<span class="m ${ok ? "ok" : "bad"}">${mueble(l.type)} ${made}/${l.qty} ${ok ? "✓" : "✗"}</span>`;
       }).join(" ");
       const canDeliver = o.lines.every((l) => this.#gs.workshop.countStock(l.type) + l.done >= l.qty);
+      // calidad media de las piezas ya en stock para este pedido
+      const pieces = o.lines.flatMap((l) => this.#gs.workshop.stock.filter((s) => s.type === l.type));
+      const q = pieces.length ? Math.round(pieces.reduce((s, p) => s + (p.quality ?? 70), 0) / pieces.length) : null;
       return `<div class="sale-row">
         <b>${o.code} · ${esc(o.customer.name)}</b>
-        <p>${o.summary}</p>
+        <p>${o.summary}${o.priority !== "normal" ? ` · <span class="pri ${o.priority}">${o.priority === "urgente" ? "⚠️ urgente" : "💰 premium"}</span>` : ""}</p>
         <div class="cr-mats">${lines}</div>
-        <p class="doc-reward">Pago: 🪙 $${o.reward}</p>
+        ${q != null ? `<p class="cr-worker">Calidad en stock: <b>${QualityService.stars(q / 20)}</b> ${q}/100</p>` : ""}
+        <p class="doc-reward">Pago base: 🪙 $${o.reward} <span class="wp-sub">(según calidad)</span></p>
         <button class="k" data-act="deliver" data-id="${o.id}" ${canDeliver ? "" : "disabled"}>
           ${canDeliver ? "ENTREGAR PEDIDO" : "Faltan piezas por fabricar"}</button>
       </div>`;
@@ -53,12 +58,20 @@ export class SalesView {
     </div>`);
   }
 
-  #delivered(o) {
-    this.#modal.render(`<div class="wood-panel">
-      <h2>🧾 Pedido ${o.code}</h2>
-      <p class="q-cust">${esc(o.customer.name)}:</p>
-      <p style="font-size:1rem;margin:6px 0">"Perfecto. ¡Muchas gracias!"</p>
-      <p class="doc-reward big">Recompensa:  🪙 +$${o.reward}   ⭐ +90 XP${o.metalReward ? `   🔩 +${o.metalReward} metal` : ""}</p>
+  #delivered(res) {
+    const o = res.order, t = res.tier;
+    const bonus = res.paid !== o.reward
+      ? ` <span class="wp-sub">(base $${o.reward} × ${t.mult.toFixed(2)})</span>` : "";
+    this.#modal.render(`<div class="wood-panel sat">
+      <h2>👨‍💼 ${esc(o.customer.name)}</h2>
+      <div class="sat-face">${t.face}</div>
+      <div class="sat-stars">${QualityService.stars(res.stars)}</div>
+      <p class="sat-quote">“${esc(res.quote)}”</p>
+      <div class="sat-score">Calidad del pedido: <b>${res.quality}/100</b> · ${t.label}</div>
+      <ul class="sat-break">
+        ${res.breakdown.map((r) => `<li><span>${esc(r.label)}</span><b>${QualityService.stars(r.stars)}</b></li>`).join("")}
+      </ul>
+      <p class="doc-reward big">🪙 +$${res.paid}${bonus}   ⭐ +${res.xp} XP   👍 +${res.rep} reputación${o.metalReward ? `   🔩 +${o.metalReward}` : ""}</p>
       <p class="ok">✓ PEDIDO COMPLETADO</p>
       <button class="k run" data-act="close">Continuar [ESC]</button>
     </div>`);

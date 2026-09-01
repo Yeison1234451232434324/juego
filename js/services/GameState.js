@@ -103,7 +103,10 @@ export class GameState {
 
   toJSON() {
     return {
-      version: 5,
+      // v6: piezas con calidad, pedidos con prioridad/cliente enriquecido, stats
+      // de calidad. MISMA clave de guardado: los campos nuevos usan valores por
+      // defecto al cargar un guardado v5 (migración segura, no se pierde nada).
+      version: 6,
       player: this.player.toJSON(),
       workshop: this.workshop.toJSON(),
       requirements: this.requirements.toJSON(),
