@@ -30,6 +30,7 @@ import { RequirementView } from "./views/RequirementView.js";
 import { SalesView } from "./views/SalesView.js";
 import { EvaluationView } from "./views/EvaluationView.js";
 import { SettingsView, toggleFullscreen } from "./views/SettingsView.js";
+import { IntroView, introSeen } from "./views/IntroView.js";
 import { TouchView } from "./views/TouchView.js";
 
 // ---------- adaptación a la pantalla (móvil / tablet / PC) ----------
@@ -110,7 +111,8 @@ const shop = new ShopView(game.workshop, game.upgrades, gs, bus);
 const req = new RequirementView(game.orders, null, gs, bus);
 const sales = new SalesView(game.orders, gs, bus);
 const evaluation = new EvaluationView(game);
-const settings = new SettingsView(audio, save);
+const intro = new IntroView(audio);
+const settings = new SettingsView(audio, save, (after) => intro.open(after));
 
 const menu = new MenuView(onMenu);
 const entrada = { x: 0, y: 0 };
@@ -216,7 +218,13 @@ phaser.events.on("menu:ready", () => {
   audio.setInGame(false);
   updateSoundHint();
   refreshLayout();
-  if (sessionStorage.getItem("cc:tutorial") === "1") {
+
+  const startTut = sessionStorage.getItem("cc:tutorial") === "1";
+  // La 1.ª vez de todas: introducción educativa ANTES del menú (una sola vez).
+  if (!introSeen() && !startTut) {
+    intro.open(() => refreshLayout());
+  }
+  if (startTut) {
     try { tutorial.open(true); }
     catch (e) { console.warn("tutorial:", e); sessionStorage.removeItem("cc:tutorial"); setTimeout(startGame, 60); }
   }

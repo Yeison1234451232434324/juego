@@ -7,11 +7,12 @@ import { el, $ } from "./ui/dom.js";
  * El contenido es scrollable (.modal-frame) para caber en móviles pequeños.
  */
 export class SettingsView {
-  #audio; #save;
+  #audio; #save; #onIntro;
 
-  constructor(audio, save) {
+  constructor(audio, save, onIntro) {
     this.#audio = audio;
     this.#save = save ?? null;
+    this.#onIntro = typeof onIntro === "function" ? onIntro : null;
     this.root = el("div", { class: "modal", attrs: { id: "settings" } });
     this.frame = el("div", { class: "modal-frame wood" });
     this.root.append(this.frame);
@@ -29,6 +30,7 @@ export class SettingsView {
       if (act === "music") { this.#audio.setMusicOn(!this.#audio.prefs.musicOn); this.#render(); }
       if (act === "sfx") { this.#audio.setSfxOn(!this.#audio.prefs.sfxOn); this.#audio.play("click"); this.#render(); }
       if (act === "fs") { toggleFullscreen(); }
+      if (act === "intro" && this.#onIntro) { this.close(); this.#onIntro(() => this.open()); }
       if (act === "retut") this.#confirmReset(true);
       if (act === "reset") this.#confirmReset(false);
       if (act === "close") this.close();
@@ -89,6 +91,11 @@ export class SettingsView {
       ${fsSupported ? `<div class="set-row">
         <span>⛶ Pantalla completa</span>
         <button class="k sm" data-act="fs">${fsOn ? "SALIR" : "ACTIVAR"}</button>
+      </div>` : ""}
+
+      ${this.#onIntro ? `<div class="set-row">
+        <span>🎓 Ver introducción educativa</span>
+        <button class="k sm" data-act="intro">VER</button>
       </div>` : ""}
 
       ${this.#save ? `<div class="set-row">

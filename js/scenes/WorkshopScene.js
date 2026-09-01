@@ -457,7 +457,7 @@ export class WorkshopScene extends Phaser.Scene {
   // ---------- bucle ----------
   update(_t, dt) {
     this.paused = !!document.querySelector(
-      ".modal.open, .menu-root:not(.hidden), .rule-pop, .dialogue.open, .tutorial-root:not(.hidden)");
+      ".modal.open, .menu-root:not(.hidden), .rule-pop, .dialogue.open, .tutorial-root:not(.hidden), .intro-root:not(.hidden)");
     // Al REANUDAR (se cerró la ventana) soltamos cualquier tecla que quedara
     // marcada mientras el jugador escribía en un campo HTML.
     if (this._wasPaused && !this.paused) this._release();
