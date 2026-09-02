@@ -28,7 +28,11 @@ export class RequirementView {
       accept: (d) => { this.#orderCtrl.accept(d.id); this.#render(); },
       cancel: (d) => { this.#orderCtrl.cancel(d.id); this.#render(); },
       focus: (d) => { this.#gs.focusOrderId = d.id; this.#bus.emit("state:changed"); this.#render(); },
-      reqs: (d) => { this.#open.has(d.id) ? this.#open.delete(d.id) : this.#open.add(d.id); this.#render(); },
+      reqs: (d) => {
+        if (this.#open.has(d.id)) this.#open.delete(d.id);
+        else { this.#open.add(d.id); this.#bus.emit("requirements:viewed"); }
+        this.#render();
+      },
       trace: () => this.#bus.emit("open:traceability"),
       close: () => this.#modal.close(),
     });

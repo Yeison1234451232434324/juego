@@ -21,8 +21,11 @@ export class Player {
     rulesRespected: 0,
     rulesTotal: 0,
     ordersDelivered: 0,
+    errors: 0,                // retos fallados (acumulado)
+    labSolved: 0,             // ejercicios del laboratorio resueltos
+    coinsEarned: 0,           // dinero total ganado (no el saldo)
     startedAt: Date.now(),
-    concepts: {},             // encapsulamiento, herencia... -> true
+    concepts: {},             // encapsulamiento, herencia, Vista, Modelo... -> true
   };
 
   constructor(x = 480, y = 330) {
@@ -41,7 +44,7 @@ export class Player {
 
   setPosition(x, y) { this.#x = x; this.#y = y; }
 
-  earn(n) { this.#coins += n; }
+  earn(n) { this.#coins += n; if (n > 0) this.stats.coinsEarned = (this.stats.coinsEarned || 0) + n; }
   spend(n) { if (n > this.#coins) return false; this.#coins -= n; return true; }
   addReputation(n) { this.#reputation += n; }
 

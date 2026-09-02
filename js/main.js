@@ -34,6 +34,7 @@ import { SettingsView, toggleFullscreen } from "./views/SettingsView.js";
 import { IntroView, introSeen } from "./views/IntroView.js";
 import { TraceabilityView } from "./views/TraceabilityView.js";
 import { MvcFlowView } from "./views/MvcFlowView.js";
+import { KnowledgeView } from "./views/KnowledgeView.js";
 import { TouchView } from "./views/TouchView.js";
 
 // ---------- adaptación a la pantalla (móvil / tablet / PC) ----------
@@ -118,6 +119,7 @@ const evaluation = new EvaluationView(game);
 const intro = new IntroView(audio);
 const traceability = new TraceabilityView(gs, bus);
 const mvcFlow = new MvcFlowView(bus, edu);
+const knowledge = new KnowledgeView(game.programming, gs, bus);
 const settings = new SettingsView(audio, save, (after) => intro.open(after), edu, bus);
 bus.on("edu:mvcflow", () => mvcFlow.showManual());
 
@@ -142,6 +144,15 @@ fsBtn.className = "hidden";
 fsBtn.setAttribute("aria-label", "Pantalla completa");
 fsBtn.addEventListener("click", () => toggleFullscreen());
 document.getElementById("ui").appendChild(fsBtn);
+
+// Botón 🧠 "Mi conocimiento" (in-game) → árbol POO, conceptos, laboratorio, progreso.
+const knowBtn = document.createElement("button");
+knowBtn.id = "know-btn";
+knowBtn.textContent = "🧠";
+knowBtn.className = "hidden";
+knowBtn.setAttribute("aria-label", "Mi conocimiento");
+knowBtn.addEventListener("click", () => bus.emit("open:knowledge"));
+document.getElementById("ui").appendChild(knowBtn);
 
 // Banner de objetivo (slim, centrado arriba) — se actualiza solo.
 const objBanner = document.createElement("div");
@@ -221,6 +232,7 @@ phaser.events.on("menu:ready", () => {
   hud.show(false); touch.show(false); quest.show(false);
   gearBtn.classList.add("hidden");
   fsBtn.classList.add("hidden");
+  knowBtn.classList.add("hidden");
   objBanner.classList.add("hidden");
   audio.setInGame(false);
   updateSoundHint();
@@ -247,6 +259,7 @@ phaser.events.on("workshop:ready", (sc) => {
   document.body.classList.add("in-game");
   hud.show(true); touch.show(true); quest.show(true);
   gearBtn.classList.remove("hidden");
+  knowBtn.classList.remove("hidden");
   fsBtn.classList.toggle("hidden", !document.body.classList.contains("controls-on"));
   objBanner.classList.remove("hidden");
   renderObjective();

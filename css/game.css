@@ -103,7 +103,7 @@ button { font:inherit; cursor:pointer; }
 #gear-btn.hidden { display:none; }
 #fs-btn { position:fixed; z-index:43;
   top:calc(8px + env(safe-area-inset-top));
-  right:calc(46px + env(safe-area-inset-right));
+  right:calc(84px + env(safe-area-inset-right));
   width:32px; height:32px; border-radius:9px; font-size:1rem; line-height:1;
   background:rgba(20,12,6,.82); border:2px solid #4a3a24; color:var(--gold-l); }
 #fs-btn.hidden { display:none; }
@@ -750,3 +750,70 @@ body.is-fullscreen #game, body.is-fullscreen #ui { height:100vh; height:100dvh; 
   padding:4px 0; border-bottom:1px dashed #d8c9a0; font-size:.86rem; color:#3a2a18; }
 .sat-break li:last-child { border-bottom:0; }
 .sat-break li b { color:var(--gold); letter-spacing:1px; white-space:nowrap; }
+
+/* ================================================================
+   FASE 3 — conocimiento (árbol POO, conceptos, polimorfismo, laboratorio, progreso)
+   ================================================================ */
+.hud-rank { font-size:.64rem; color:#c9a86a; font-weight:700; margin-top:1px; }
+#know-btn { position:fixed; z-index:43;
+  top:calc(8px + env(safe-area-inset-top));
+  right:calc(46px + env(safe-area-inset-right));
+  width:32px; height:32px; border-radius:9px; font-size:1rem; line-height:1;
+  background:rgba(20,12,6,.82); border:2px solid #4a3a24; color:var(--gold-l); }
+#know-btn.hidden { display:none; }
+
+.kv .kv-tabs { display:flex; flex-wrap:wrap; gap:4px; margin:6px 0 10px; }
+.kv-tab { background:#e4d9bf; color:#4a2c14; border:1px solid #c3af86; border-radius:7px;
+  padding:6px 9px; font-weight:700; font-size:.76rem; }
+.kv-tab.on { background:linear-gradient(#f0c04a,var(--gold)); border-color:#a8760c; }
+.kv-content { min-height:120px; }
+.kv-content h3 { margin:12px 0 5px; color:#4a2c14; font-size:.92rem; }
+
+.tree { text-align:center; margin:6px 0 10px; }
+.tree-root { display:inline-block; background:#3a2a14; color:var(--gold-l); font-weight:800;
+  padding:6px 12px; border-radius:8px; }
+.tree-root span { color:#cdbf9f; font-weight:400; font-size:.82em; }
+.tree-branch { display:flex; justify-content:center; gap:8px; margin-top:8px; flex-wrap:wrap; }
+.tree-leaf { background:#fffef7; border:1px solid #d8c9a0; border-radius:8px; padding:6px 10px; }
+.tree-leaf b { display:block; color:#4a2c14; font-family:ui-monospace,Consolas,monospace; }
+.tree-leaf span { font-size:.72rem; color:#6a5233; }
+
+.kv-chips { display:flex; flex-wrap:wrap; gap:5px; }
+.kv-chip { background:#e5dcc6; border:1px solid #c3af86; border-radius:999px; padding:5px 10px; font-size:.78rem; font-weight:700; color:#4a2c14; }
+.kv-chip.on { background:#cfe8c8; border-color:#7aa06a; }
+
+.kv-row { display:flex; flex-direction:column; gap:1px; text-align:left; width:100%;
+  background:#fffef7; border:1px solid #d8c9a0; border-radius:8px; padding:7px 10px; margin-bottom:5px; }
+.kv-row.on { border-color:#7aa06a; background:#f1f8ec; }
+.kv-row > span:first-child { font-weight:700; color:#3a2a18; }
+.kv-row .wp-sub { margin:0; font-size:.74rem; }
+.kv-mini { display:block; height:5px; background:#0002; border-radius:3px; overflow:hidden; margin-top:3px; }
+.kv-mini b { display:block; height:100%; background:linear-gradient(90deg,#6fae4f,#a6e06a); }
+
+.kv-what { color:#3a2a18; margin:4px 0; }
+.kv-game, .kv-used { font-size:.84rem; color:#4a3a20; margin:4px 0; }
+.kv .intro-code { background:#0c120f; }
+
+.poly-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:7px 0; border-bottom:1px dashed #d8c9a0; }
+.poly-row b { min-width:64px; color:#4a2c14; }
+.poly-row code { background:#e4d9bf; padding:1px 5px; border-radius:4px; font-size:.82em; }
+.poly-out { font-weight:800; color:#9aa3af; }
+.poly-out.done { color:#2f7a2b; }
+#poly-note { color:#2f5e26; font-size:.84rem; }
+
+.kv-rank { background:#3a2a14; color:var(--gold-l); border-radius:8px; padding:8px 12px; font-size:.9rem; margin-bottom:8px; }
+.kv-stats { display:grid; grid-template-columns:repeat(2,1fr); gap:6px; margin-bottom:6px; }
+.kv-stat { background:#fffef7; border:1px solid #d8c9a0; border-radius:8px; padding:7px 10px; text-align:center; }
+.kv-stat b { display:block; font-size:1.05rem; color:#4a2c14; }
+.kv-stat span { font-size:.72rem; color:#6a5233; }
+.kv-bar { display:flex; align-items:center; gap:8px; margin:4px 0; font-size:.8rem; color:#3a2a18; }
+.kv-bar > span { flex:0 0 96px; }
+.kv-bar i { flex:1; height:9px; background:#0002; border-radius:5px; overflow:hidden; }
+.kv-bar i b { display:block; height:100%; background:linear-gradient(90deg,#3b6ea5,#6fa8dc); }
+.kv-bar em { flex:0 0 34px; text-align:right; font-style:normal; font-weight:700; color:#4a2c14; }
+#lab-editor { width:100%; background:#06100c; color:#d6ffe6; border:1px solid #1f4a3a; border-radius:6px;
+  padding:10px; font-family:ui-monospace,Consolas,monospace; font-size:.86rem; line-height:1.45; resize:vertical; margin-top:6px; }
+@media (max-width:600px) {
+  .kv-stats { grid-template-columns:1fr 1fr; }
+  #lab-editor { font-size:16px; }
+}

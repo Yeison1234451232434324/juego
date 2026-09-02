@@ -1,5 +1,25 @@
 import { CodeValidator } from "../services/CodeValidator.js";
 
+/** Ejercicios del LABORATORIO: práctica libre, no afectan a pedidos ni materiales. */
+const LAB = [
+  { id: "lab-clase", icon: "🧩", concept: "clase", title: "Crea una clase",
+    prompt: "Escribe una clase llamada Banco (con su { }).",
+    starter: "class ______ {\n\n}",
+    test: (c) => /class\s+[A-Za-z_]\w*\s*\{[\s\S]*\}/.test(c) },
+  { id: "lab-atributo", icon: "🔖", concept: "atributo", title: "Crea un atributo",
+    prompt: "Dentro del constructor, crea un atributo altura con valor 100.",
+    starter: "class Mesa {\n  constructor() {\n    this._______ = 100;\n  }\n}",
+    test: (c) => /this\.\w+\s*=\s*\d+/.test(c) },
+  { id: "lab-metodo", icon: "⚙️", concept: "metodo", title: "Crea un método",
+    prompt: "Crea un método usar() que devuelva true.",
+    starter: "class Herramienta {\n  _______() {\n    return true;\n  }\n}",
+    test: (c) => /\b\w+\s*\([^)]*\)\s*\{[\s\S]*return\s+true/.test(c) },
+  { id: "lab-objeto", icon: "📦", concept: "objeto", title: "Crea un objeto",
+    prompt: "Crea un objeto silla a partir de la clase Silla.",
+    starter: "class Silla {}\nconst silla = new _______();",
+    test: (c) => /new\s+[A-Za-z_]\w*\s*\(/.test(c) },
+];
+
 /**
  * ProgrammingController — CONTROLADOR de la computadora (retos de producción).
  *
@@ -87,5 +107,30 @@ export class ProgrammingController {
   #hasAllMaterials(order) {
     const inv = this.#gs.workshop.inventory;
     return Object.entries(order.materials).every(([m, q]) => inv.count(m) >= q);
+  }
+
+  // ---------- LABORATORIO (práctica libre) ----------
+  labExercises() { return LAB.map((e) => ({ ...e, done: this.#gs.player.knows(e.concept) })); }
+
+  /** Valida un ejercicio del laboratorio. Da XP y aprende el concepto; NUNCA
+   *  entrega materiales ni toca los pedidos. */
+  submitLab(id, code) {
+    const ex = LAB.find((e) => e.id === id);
+    if (!ex) return { ok: false, error: "Ejercicio desconocido." };
+
+    const syntax = CodeValidator.checkSyntax(code);
+    if (!syntax.ok) return { ok: false, error: syntax.message };
+    let pass = false;
+    try { pass = !!ex.test(String(code).replace(/\/\/[^\n]*/g, " ")); } catch { pass = false; }
+    if (!pass) return { ok: false, error: `Aún no cumple: ${ex.title.toLowerCase()}.` };
+
+    const xp = 12;
+    const lvls = this.#gs.player.addXp(xp);
+    this.#gs.player.learn(ex.concept);
+    this.#gs.player.stats.labSolved = (this.#gs.player.stats.labSolved || 0) + 1;
+    this.#bus.emit("lab:solved", { id, concept: ex.concept, xp });
+    if (lvls) this.#bus.emit("player:levelup", this.#gs.player.level);
+    this.#bus.emit("state:changed");
+    return { ok: true, xp, concept: ex.concept };
   }
 }

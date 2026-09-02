@@ -21,6 +21,7 @@ export class CodingStationView {
       hint: () => this.#showHint(),
       example: () => this.#fillExample(),
       other: () => this.open(),          // otro reto (ya rotado tras el fallo)
+      lab: () => { this.#modal.close(); this.#bus.emit("open:knowledge", { tab: "lab" }); },
       close: () => this.#modal.close(),
     });
     bus.on("challenge:solved", (d) => this.#solved(d));
@@ -61,6 +62,7 @@ export class CodingStationView {
           <button class="k run" data-act="run">▶ EJECUTAR CÓDIGO</button>
           <button class="k" data-act="hint">💡 Pista</button>
           <button class="k" data-act="example">Ver ejemplo</button>
+          <button class="k" data-act="lab">🧪 Laboratorio</button>
           <button class="k" data-act="close">Salir [ESC]</button>
         </div>
       </div>`);

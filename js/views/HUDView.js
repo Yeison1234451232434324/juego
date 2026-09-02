@@ -1,5 +1,6 @@
 import { el, $ } from "./ui/dom.js";
 import { CONFIG } from "../config/gameConfig.js";
+import { KnowledgeService } from "../services/KnowledgeService.js";
 
 /**
  * HUDView — HUD MÍNIMO en la esquina: monedas, nivel, XP y materiales. Todo lo
@@ -18,9 +19,11 @@ export class HUDView {
     const wood = gs.workshop.inventory.count("wood");
     const nails = gs.workshop.inventory.count("nails");
     const orders = gs.workshop.orders.length;
+    const rk = KnowledgeService.rank(p.level);
     this.box.innerHTML =
       `<div class="hud-line"><span class="coin">🪙 ${p.coins}</span>` +
-      `<span class="lvl">⭐ Nivel ${p.level}</span></div>` +
+      `<span class="lvl">${rk.icon} Nvl ${p.level}</span></div>` +
+      `<div class="hud-rank">${rk.name}</div>` +
       `<div class="hud-xp"><i style="width:${pct}%"></i></div>` +
       `<div class="hud-line"><span>🪵 ${wood}</span><span>🔩 ${nails}</span>` +
       `<span>📋 ${orders}/${CONFIG.GAMEPLAY.MAX_ACTIVE_ORDERS}</span></div>`;

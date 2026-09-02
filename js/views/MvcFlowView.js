@@ -64,10 +64,11 @@ const FLOWS = {
 };
 
 export class MvcFlowView {
-  #edu; #timer = null;
+  #edu; #bus; #timer = null;
 
   constructor(bus, edu) {
     this.#edu = edu;
+    this.#bus = bus;
     this.box = el("div", { class: "mvc-flow hidden" });
     $("#ui").append(this.box);
 
@@ -80,6 +81,7 @@ export class MvcFlowView {
   show(key, manual = false) {
     const flow = FLOWS[key];
     if (!flow) return;
+    this.#bus?.emit("mvcflow:shown");
     clearTimeout(this.#timer);
     this.box.innerHTML = `
       <div class="mvcf-card">

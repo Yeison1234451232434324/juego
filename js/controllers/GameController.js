@@ -53,6 +53,18 @@ export class GameController {
     this.#bus.on("game:resume", () => { if (this.#gs.tutorialCompleted) this.#freeObjective(); });
 
     this.#bus.on("player:levelup", (lvl) => { if (lvl >= 5) this.#gs.offerFinalProject(); });
+
+    // --- CONOCIMIENTO: los conceptos de MVC se aprenden HACIENDO ---
+    const learn = (k) => { if (!this.#gs.player.knows(k)) { this.#gs.player.learn(k); this.#bus.emit("state:changed"); } };
+    this.#bus.on("challenge:failed", () => { this.#gs.player.stats.errors = (this.#gs.player.stats.errors || 0) + 1; });
+    this.#bus.on("station:open", () => learn("Vista"));
+    this.#bus.on("order:accepted", () => learn("Controlador"));
+    this.#bus.on("craft:started", () => learn("Controlador"));
+    this.#bus.on("craft:done", () => learn("Modelo"));
+    this.#bus.on("rule:blocked", () => learn("Regla de negocio"));
+    this.#bus.on("open:traceability", () => learn("Requerimientos"));
+    this.#bus.on("requirements:viewed", () => learn("Requerimientos"));
+    this.#bus.on("mvcflow:shown", () => learn("Flujo MVC"));
   }
 
   /** Objetivo en juego libre: mira el pedido en el que se centra el jugador. */
