@@ -113,9 +113,23 @@ FurnitureFactory.create("Cabinet");   // devuelve un Cabinet, sin exponer la cla
 
 | Concepto | En el juego |
 |---|---|
-| Abstracción | Reto "MUEBLE ABSTRACTO" (nivel 5) |
-| Clase/objeto | Reto "SILLA" (nivel 1) + cada mueble fabricado |
-| Herencia | Reto "FAMILIA DE MUEBLES" (nivel 3) |
-| Polimorfismo | Reto "TIEMPOS DE PRODUCCIÓN" (nivel 4) |
-| Encapsulamiento | Reto "MESA — precio protegido" (nivel 2) + Mostrador de Ventas |
-| Composición | Reto "EL TALLER COMO SISTEMA" (nivel 6) + Mochila |
+| Clase / objeto | Reto "SILLA" (nivel 1) + `FurnitureFactory.create()` en cada fabricación |
+| Atributo / método | Retos de clase + ficha del concepto en 🧠 Mi conocimiento |
+| Encapsulamiento | Reto "precio protegido" + `Furniture.setPrice()` valida `#price` |
+| Herencia | Reto "FAMILIA DE MUEBLES" + `class Chair extends Furniture` |
+| Polimorfismo | Reto "TIEMPOS DE PRODUCCIÓN" + **demo interactiva** (pestaña 🎭) que ejecuta `calculateProductionTime()` real sobre las 3 clases |
+| Abstracción | Reto "MUEBLE ABSTRACTO"; `Furniture` no se instancia sola |
+| Composición | Reto "EL TALLER COMO SISTEMA"; `Workshop` TIENE inventario, trabajador y pedidos |
+| Factory | `FurnitureFactory` oculta qué subclase se crea |
+
+## 🧠 Mi conocimiento (botón 🧠 del HUD)
+
+- **🌳 Árbol**: `Furniture → Chair / Table / Cabinet` + fichas de los 10 conceptos, que se
+  desbloquean **al usarlos de verdad** (retos resueltos, acciones hechas).
+- **🧠 Conceptos**: cada ficha → qué es · ejemplo de código · cómo aparece en el juego · cómo
+  lo has usado tú. MVC (Vista/Controlador/Modelo/Regla/Requerimientos/Flujo) se aprende HACIENDO.
+- **🧪 Laboratorio**: 4 ejercicios de práctica (clase, atributo, método, objeto). Dan XP y
+  desbloquean el concepto; **no** dan materiales ni tocan pedidos.
+- **📊 Progreso**: estadísticas reales, barras por concepto, rangos y logros.
+
+Los conceptos también se puntúan en la **evaluación final** (nota por concepto + POO global).

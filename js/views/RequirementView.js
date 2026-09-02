@@ -45,9 +45,41 @@ export class RequirementView {
       .map(([m, q]) => `${matIco(m)} ${q} ${matName[m] ?? m}`).join("   ");
   }
 
+  /** Examen final: los 12 pasos del Proyecto Hotel Gran Roble, con estado real. */
+  #finalSteps(o) {
+    const gs = this.#gs, ch = gs.challenges, p = gs.player;
+    const mats = Object.entries(o.materials).every(([m, q]) => gs.workshop.inventory.count(m) >= q);
+    const made = o.lines.every((l) => gs.workshop.countStock(l.type) + l.done >= l.qty);
+    const S = [
+      ["Analizar los requerimientos del cliente", p.knows("Requerimientos")],
+      ["Identificar las reglas de negocio", p.knows("Regla de negocio")],
+      ["Crear las clases de los muebles", ch.groupSolved("clase")],
+      ["Aplicar atributos y métodos", ch.groupSolved("clase")],
+      ["Aplicar encapsulamiento", ch.groupSolved("encapsulamiento")],
+      ["Aplicar herencia", ch.groupSolved("herencia")],
+      ["Aplicar polimorfismo", ch.groupSolved("polimorfismo")],
+      ["Aplicar abstracción / composición", ch.groupSolved("abstraccion") || ch.groupSolved("composicion")],
+      ["Conseguir todos los materiales", mats],
+      ["Fabricar todas las piezas", made],
+      ["Entregar el pedido en el mostrador", o.isDelivered],
+      ["Recibir la evaluación final", !!p.stats.finalDone],
+    ];
+    return `<div class="oreq final-steps">
+      <h4>🏨 Examen final — 12 pasos</h4>
+      <ol class="fs-list">${S.map(([t, done]) =>
+        `<li class="${done ? "done" : ""}">${done ? "✅" : "▫"} ${esc(t)}</li>`).join("")}</ol>
+      <p class="oreq-foot">Este pedido reúne <b>todo</b>: análisis, reglas, POO completa, materiales, fabricación y entrega.</p>
+    </div>`;
+  }
+
   /** Bloque desplegable: requerimientos funcionales + reglas de negocio. */
   #specBlock(o) {
+    if (o.isFinal) return this.#finalSteps(o) + (this.#open.has(o.id) ? this.#specRows(o) : "");
     if (!this.#open.has(o.id)) return "";
+    return this.#specRows(o);
+  }
+
+  #specRows(o) {
     const rf = o.functionalReqs.map((r) =>
       `<li><b>${r.id}</b> ${esc(r.text)} <span class="oreq-c">🧩 ${esc(r.concept)}</span></li>`).join("");
     const rn = o.businessRules.map((r) =>

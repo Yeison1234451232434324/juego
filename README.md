@@ -119,3 +119,35 @@ un subdirectorio de Pages.
 | Mejoras de la tienda | `js/services/UpgradeService.js` |
 | Nuevo mueble | crea `js/models/Sofa.js` (`extends Furniture`) y regístralo en `FurnitureFactory.js` |
 | Sonido propio | pon archivos en `assets/audio/` y amplía `AudioManager.js` (por defecto los efectos se **sintetizan**) |
+| Calidad del producto | `js/services/QualityService.js` |
+| Clientes / dificultad / lotes | `js/services/OrderService.js` |
+| Eventos del taller | `js/services/EventService.js` |
+| Árbol POO, laboratorio, rangos | `js/services/KnowledgeService.js` + `js/views/KnowledgeView.js` |
+
+---
+
+## Sistemas educativos
+
+El juego enseña **POO** y **codificación de requerimientos según la lógica de negocio en
+MVC** con mecánicas, no con teoría suelta:
+
+- **Introducción cinemática** (1.ª vez, reabrible en Ajustes): 12 escenas con código real.
+- **Requerimientos por pedido**: cada trabajo trae sus RF (funcionales, con su concepto POO)
+  y RN (reglas de negocio, con el método real de `BusinessRules`). Se leen en 📋 PEDIDOS.
+- **🔎 Trazabilidad**: RF → regla → clase → método → capa → estado (🟢/🟡/🔴), según tu progreso.
+- **🏗️ Flujo MVC**: al fabricar/entregar/aceptar, un aviso breve muestra
+  Vista → Controlador → Modelo → Regla → Resultado (se apaga en Ajustes).
+- **🐞 Debugger**: al fallar un reto, señala la línea, el problema, el concepto y una pista.
+  Nunca resuelve el reto por ti.
+- **Calidad del producto** (0-100): sale de tu POO aplicada, requerimientos, reglas
+  respetadas, atajos y errores. Ajusta la recompensa y la satisfacción del cliente.
+- **🧠 Mi conocimiento**: árbol POO, conceptos POO+MVC con progreso real, demo interactiva de
+  polimorfismo, **laboratorio** de práctica (no gasta materiales), estadísticas, logros y
+  **rangos** (Aprendiz → … → Maestro del Taller).
+- **Evaluación final** al entregar el Proyecto Hotel Gran Roble: nota por concepto y cuatro
+  notas globales (POO / MVC / lógica de negocio / calidad).
+- **Eventos del taller** ocasionales y opcionales (pedido urgente, cliente premium,
+  proveedor retrasado…) que no rompen el flujo.
+
+Regla de oro del diseño: **comprar mejoras NUNCA resuelve un reto**; el editor siempre
+arranca en `ch.starter`. Las mejoras aceleran, dan pistas o más materiales, nada más.

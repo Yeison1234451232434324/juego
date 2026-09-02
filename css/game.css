@@ -821,6 +821,31 @@ body.is-fullscreen #game, body.is-fullscreen #ui { height:100vh; height:100dvh; 
 /* toast de evento del taller (reutiliza .achieve) */
 .achieve.wev { border-color:#6fa8dc; background:linear-gradient(#1a2433,#12161f); }
 
+/* ================================================================
+   FASE 5 — proyecto final + evaluación
+   ================================================================ */
+.final-steps { border-color:var(--gold); background:#fff7df; }
+.fs-list { list-style:none; margin:4px 0 0; padding:0; font-size:.82rem; }
+.fs-list li { padding:3px 0; color:#6a5233; }
+.fs-list li.done { color:#2f5e26; font-weight:600; }
+
+.ev h3 { margin:12px 0 4px; }
+.ev-bar { display:flex; align-items:center; gap:8px; margin:3px 0; font-size:.8rem; color:#3a2a18; }
+.ev-bar > span { flex:0 0 128px; }
+.ev-bar i { flex:1; height:9px; background:#0002; border-radius:5px; overflow:hidden; }
+.ev-bar i b { display:block; height:100%; background:linear-gradient(90deg,#6fae4f,#a6e06a); }
+.ev-bar em { flex:0 0 34px; text-align:right; font-style:normal; font-weight:700; color:#4a2c14; }
+.ev-scores { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:6px 0; }
+.ev-scores > div { background:#fffef7; border:1px solid #d8c9a0; border-radius:8px; padding:8px 4px; text-align:center; }
+.ev-scores b { display:block; font-size:1.2rem; color:#4a2c14; }
+.ev-scores span { font-size:.66rem; color:#6a5233; }
+.ev-final { text-align:center; font-size:1rem; margin:8px 0 2px; color:#4a2c14; }
+.ev-final b { color:#7a5a15; font-size:1.3rem; }
+@media (max-width:600px) {
+  .ev-scores { grid-template-columns:1fr 1fr; }
+  .ev-bar > span { flex:0 0 96px; }
+}
+
 @media (max-width:600px) {
   .kv-stats { grid-template-columns:1fr 1fr; }
   #lab-editor { font-size:16px; }

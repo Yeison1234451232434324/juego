@@ -5,6 +5,7 @@ import { OrderController } from "./OrderController.js";
 import { WorkshopController } from "./WorkshopController.js";
 import { UpgradeController } from "./UpgradeController.js";
 import { TutorialController } from "./TutorialController.js";
+import { KnowledgeService } from "../services/KnowledgeService.js";
 import { CONFIG } from "../config/gameConfig.js";
 
 /**
@@ -131,19 +132,38 @@ export class GameController {
     const rulesPct = p.stats.rulesTotal ? Math.round((p.stats.rulesRespected / p.stats.rulesTotal) * 100) : 100;
     const reqDone = gs.requirements.doneCount(), reqTotal = gs.requirements.total();
     const minutes = Math.max(1, Math.round((Date.now() - p.stats.startedAt) / 60000));
-    const concepts = ["clase", "encapsulamiento", "herencia", "polimorfismo", "abstracción", "composición", "MVC"];
-    const known = concepts.filter((c) => p.knows(c));
-    const stars = Math.max(1, Math.min(5, Math.round(
-      (reqDone / Math.max(1, reqTotal)) * 2 + (known.length / concepts.length) * 2 + (rulesPct / 100)
-    )));
+
+    // POO por concepto (%)
+    const pooKeys = new Set(["clase", "objeto", "atributo", "metodo", "encapsulamiento", "herencia", "polimorfismo", "abstracción", "composición"]);
+    const poo = {};
+    for (const c of KnowledgeService.pooConcepts())
+      if (pooKeys.has(c.key)) poo[c.name] = Math.round(KnowledgeService.pooProgress(gs, c) * 100);
+    // MVC por concepto (%)
+    const mvc = {};
+    for (const m of KnowledgeService.mvcConcepts()) mvc[m.name] = p.knows(m.key) ? 100 : 0;
+
+    const avg = (o) => { const v = Object.values(o); return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : 0; };
+    const pooScore = avg(poo);
+    const mvcScore = avg(mvc);
+    const logicScore = Math.round((rulesPct + (reqDone / Math.max(1, reqTotal)) * 100) / 2);
+    const qualityScore = p.avgQuality || Math.round((pooScore + mvcScore) / 2);
+    const final = Math.round((pooScore + mvcScore + logicScore + qualityScore) / 4);
+    const stars = Math.max(1, Math.min(5, Math.round(final / 20)));
+    const lvl = final >= 90 ? 6 : final >= 75 ? 5 : final >= 55 ? 4 : Math.max(1, p.level);
+    const rank = KnowledgeService.rank(lvl);
+
     return {
       objectsCreated: p.stats.objectsCreated,
       classesImplemented: p.stats.classesImplemented,
+      challengesDone: (p.stats.challengesDone || []).length,
+      errors: p.stats.errors || 0,
       rulesRespected: p.stats.rulesRespected, rulesTotal: p.stats.rulesTotal, rulesPct,
       requirements: `${reqDone}/${reqTotal}`,
-      concepts: Object.fromEntries(concepts.map((c) => [c, p.knows(c)])),
-      minutes, stars,
-      title: stars >= 5 ? "Arquitecto del taller" : stars >= 4 ? "Maestro carpintero" : stars >= 3 ? "Oficial" : "Aprendiz",
+      concepts: Object.fromEntries([...pooKeys, "MVC"].map((c) => [c, p.knows(c)])),
+      poo, mvc, pooScore, mvcScore, logicScore, qualityScore, final,
+      avgQuality: p.avgQuality, reputation: p.reputation,
+      minutes, stars, rank,
+      title: rank.name,
       finalDone: !!p.stats.finalDone,
     };
   }

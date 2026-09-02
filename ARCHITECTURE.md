@@ -63,14 +63,41 @@
 | **MODEL** | Si las reglas pasan: `Inventory.consume(recipe)`, `Worker.assign()`, se crea el *Job*. El `GameController` avanza el Job en `tick(dt)`; al terminar, `Workshop.addStock(...)` y `Player.addXp(100)`. |
 | **VIEW** | Los eventos `craft:started` / `craft:progress` / `craft:done` repintan la barra en el mundo, el HUD y las notificaciones. |
 
-## MVC como gameplay — Mesa de Arquitectura
+## El flujo obligatorio — la lógica de negocio NUNCA vive en la Vista
 
-`RequirementController` sirve un requerimiento (`RF-007`) y hace preguntas del tipo
-"¿en qué capa va esta acción?". Acertar entrega el material **núcleo** y marca el RF. Es la
-misma teoría, jugada.
+```
+Jugador
+  ↓
+Vista        (CraftingView, SalesView, RequirementView…) — solo muestra y capta el clic
+  ↓
+Controlador  (CraftingController, OrderController…) — decide qué hacer
+  ↓
+Modelo       (Order, Workshop, GameState) — datos
+  ↓
+BusinessRules  — { ok, reason, rule, fn } · aquí y solo aquí están las reglas
+  ↓
+Resultado    → la Vista lo muestra
+```
 
-## Persistencia
+Cada método de `BusinessRules` se auto-etiqueta con `fn: "BusinessRules.xxx()"`, que aparece
+en el aviso de "regla ejecutada" y en el visualizador **🏗️ Flujo MVC** (`MvcFlowView`).
 
-`SaveManager` serializa `GameState.toJSON()` a `localStorage` tras cada `state:changed`:
-posición del jugador, monedas, XP, nivel, reputación, inventario, muebles en almacén,
-retos resueltos, requerimientos, mejoras compradas, logros y objetivo actual.
+## Servicios de dominio nuevos
+
+| Servicio | Responsabilidad |
+|---|---|
+| `QualityService` | Calidad 0-100 de una pieza a partir del progreso real; tramos de recompensa. |
+| `KnowledgeService` | Conceptos POO/MVC, progreso, rangos, datos del árbol y de la evaluación. |
+| `EventService` | Eventos del taller ocasionales (estado transitorio, no se guarda). |
+| `EduPrefs` | Preferencias educativas (`codecraft-workshop:edu`, clave aparte, sin migración). |
+
+## Persistencia — `codecraft-workshop:v5` (esquema **v6**)
+
+`SaveManager` serializa `GameState.toJSON()` a `localStorage` tras cada `state:changed`.
+**La clave no cambia**: un guardado v5 se carga sin perder nada; los campos nuevos usan
+valores por defecto (migración segura en `Workshop.hydrate` / `Player.hydrate`).
+
+Incluye: jugador (monedas, XP, nivel, reputación, `concepts`, `errors`, `labSolved`,
+`coinsEarned`, calidad media), taller (inventario, **piezas con `quality`**, pedidos con
+`priority`/`deadline`/`brief`/`pref`), retos resueltos, requerimientos, mejoras, logros,
+objetivo y paso del tutorial.

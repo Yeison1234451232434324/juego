@@ -1,7 +1,10 @@
 import { Modal } from "./ui/Modal.js";
+import { esc } from "./ui/dom.js";
 
 /**
- * EvaluationView — evaluación final basada en lo que el jugador REALMENTE hizo.
+ * EvaluationView — 🎓 EVALUACIÓN FINAL, basada en lo que el jugador REALMENTE
+ * hizo: POO por concepto, MVC por concepto y cuatro notas globales
+ * (POO / MVC / lógica de negocio / calidad del producto) + rango final.
  */
 export class EvaluationView {
   #modal; #gameCtrl;
@@ -12,28 +15,35 @@ export class EvaluationView {
     this.#modal.bind({ close: () => this.#modal.close() });
   }
 
+  #bars(obj) {
+    return Object.entries(obj).map(([k, v]) =>
+      `<div class="ev-bar"><span>${esc(k)}</span><i><b style="width:${v}%"></b></i><em>${v}%</em></div>`).join("");
+  }
+
   open() {
     const e = this.#gameCtrl.evaluation();
-    const check = (k) => e.concepts[k] ? "✓" : "—";
-    this.#modal.render(`<div class="paper-panel">
-      <h2>📊 PROYECTO FINAL — evaluación</h2>
-      <ul class="eval-list">
-        <li>Objetos creados: <b>${e.objectsCreated}</b></li>
-        <li>Clases implementadas: <b>${e.classesImplemented}</b></li>
-        <li>Reglas de negocio respetadas: <b>${e.rulesRespected}/${e.rulesTotal}</b> (${e.rulesPct}%)</li>
-        <li>Requerimientos completados: <b>${e.requirements}</b></li>
-      </ul>
-      <ul class="eval-checks">
-        <li>Encapsulamiento: ${check("encapsulamiento")}</li>
-        <li>Herencia: ${check("herencia")}</li>
-        <li>Polimorfismo: ${check("polimorfismo")}</li>
-        <li>Abstracción: ${check("abstracción")}</li>
-        <li>Composición: ${check("composición")}</li>
-        <li>MVC: ${check("MVC")}</li>
-      </ul>
-      <p class="eval-time">Tiempo: ${e.minutes} min</p>
+    this.#modal.render(`<div class="paper-panel ev">
+      <h2>🎓 Evaluación final — Proyecto Hotel Gran Roble</h2>
+
+      <h3>🧩 Programación Orientada a Objetos</h3>
+      ${this.#bars(e.poo)}
+
+      <h3>🏗️ MVC + requerimientos</h3>
+      ${this.#bars(e.mvc)}
+
+      <h3>📊 Resultado</h3>
+      <div class="ev-scores">
+        <div><b>${e.pooScore}</b><span>POO</span></div>
+        <div><b>${e.mvcScore}</b><span>MVC</span></div>
+        <div><b>${e.logicScore}</b><span>Lógica de negocio</span></div>
+        <div><b>${e.qualityScore}</b><span>Calidad producto</span></div>
+      </div>
+
+      <p class="ev-final">Nota final: <b>${e.final}/100</b></p>
       <p class="eval-stars">${"★".repeat(e.stars)}${"☆".repeat(5 - e.stars)}</p>
-      <p class="eval-title">"${e.title}"</p>
+      <p class="eval-title">${e.rank.icon} ${esc(e.rank.name)}</p>
+      <p class="eval-time">Retos: ${e.challengesDone} · Errores: ${e.errors} · Reglas: ${e.rulesRespected}/${e.rulesTotal} · Reputación: ${e.reputation} · ${e.minutes} min</p>
+
       <button class="k close" data-act="close">Cerrar [ESC]</button>
     </div>`);
     this.#modal.open();
