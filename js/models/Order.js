@@ -19,7 +19,8 @@ export class Order extends GameEntity {
   code;
   isFinal = false;
   priority = "normal";   // normal | urgente | premium
-  deadline = 0;          // días estimados (informativo)
+  deadline = 0;          // días de plazo
+  acceptedDay = 0;       // día de juego en que se aceptó (para calcular retraso)
   brief = "";            // frase del cliente ("Necesito 5 sillas resistentes…")
 
   constructor({ customer, lines, notes = [], reward, metalReward = 0, code,
@@ -141,6 +142,7 @@ export class Order extends GameEntity {
       status: this.#status,
       isFinal: this.isFinal,
       priority: this.priority, deadline: this.deadline, brief: this.brief,
+      acceptedDay: this.acceptedDay,
     };
   }
 
@@ -156,6 +158,7 @@ export class Order extends GameEntity {
       deadline: d.deadline ?? 0,
       brief: d.brief ?? "",
     });
+    o.acceptedDay = d.acceptedDay ?? 0;
     o.setStatus(d.status ?? "open");
     o.isFinal = !!d.isFinal;
     return o;

@@ -60,6 +60,7 @@ const bus = new EventBus();
 const save = new SaveManager();
 const audio = new AudioManager();
 const edu = new EduPrefs();
+if (edu.get("reduceMotion")) document.body.classList.add("reduce-motion");
 const gs = new GameState(bus);
 const loaded = save.load();
 if (loaded) gs.hydrate(loaded);

@@ -36,6 +36,17 @@ export class RequirementView {
       trace: () => this.#bus.emit("open:traceability"),
       close: () => this.#modal.close(),
     });
+    // La lista de requisitos se marca en vivo al resolver retos.
+    bus.on("challenge:solved", () => this.#modal.isOpen && this.#render());
+  }
+
+  /** ¿El requisito funcional de este concepto ya está implementado? */
+  #rfDone(concept) {
+    const g = { clase: "clase", atributo: "clase", encapsulamiento: "encapsulamiento",
+      polimorfismo: "polimorfismo", herencia: "herencia" }[concept];
+    if (g) return this.#gs.challenges.groupSolved(g);
+    if (concept === "regla") return !!this.#gs.requirements.get("RF-006")?.isDone;
+    return false;
   }
 
   openOrders() { this.#render(); this.#modal.open(); }
@@ -80,14 +91,19 @@ export class RequirementView {
   }
 
   #specRows(o) {
-    const rf = o.functionalReqs.map((r) =>
-      `<li><b>${r.id}</b> ${esc(r.text)} <span class="oreq-c">🧩 ${esc(r.concept)}</span></li>`).join("");
+    const done = o.functionalReqs.filter((r) => this.#rfDone(r.concept)).length;
+    const rf = o.functionalReqs.map((r) => {
+      const ok = this.#rfDone(r.concept);
+      return `<li class="${ok ? "done" : ""}">${ok ? "☑" : "☐"} <b>${r.id}</b> ${esc(r.text)}
+        <span class="oreq-c">🧩 ${esc(r.concept)}</span></li>`;
+    }).join("");
     const rn = o.businessRules.map((r) =>
       `<li><b>${r.id}</b> ${esc(r.text)} <code>${esc(r.fn)}</code></li>`).join("");
     return `<div class="oreq">
-      <h4>Requerimientos funcionales</h4><ul class="oreq-list">${rf}</ul>
+      <h4>Requerimientos funcionales <span class="oreq-prog">${done}/${o.functionalReqs.length}</span></h4>
+      <ul class="oreq-list check">${rf}</ul>
       <h4>Reglas de negocio</h4><ul class="oreq-list rn">${rn}</ul>
-      <p class="oreq-foot">Analiza esto antes de fabricar: cada RF se convierte en código (POO) y cada RN vive en <code>BusinessRules</code>, no en la pantalla.</p>
+      <p class="oreq-foot">Cada RF se cumple <b>escribiendo el código</b> en la computadora 💻; cada RN vive en <code>BusinessRules</code>, no en la pantalla.</p>
     </div>`;
   }
 

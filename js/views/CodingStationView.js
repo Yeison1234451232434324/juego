@@ -4,6 +4,24 @@ import { CodeValidator } from "../services/CodeValidator.js";
 
 const MAT_ES = { wood: "madera", nails: "clavos", screws: "tornillos", paint: "pintura", metal: "metal" };
 
+/** Tipos de error: enseñan que "compila" ≠ "cumple el requisito". */
+const ERR = {
+  sintaxis: { tag: "ERROR DE SINTAXIS", note: "El código no puede ejecutarse.", cls: "e-syn" },
+  poo:      { tag: "ERROR DE POO", note: "El código se ejecuta, pero la clase no está bien definida.", cls: "e-poo" },
+  logica:   { tag: "ERROR DE LÓGICA", note: "El código se ejecuta, pero el resultado no es el pedido.", cls: "e-log" },
+};
+
+/** Qué código real del proyecto satisface cada concepto (para el "requisito cumplido"). */
+const IMPL = {
+  clase: "class Chair extends Furniture { … }",
+  atributo: 'this.nombre = "Silla"; this.precio = 75;',
+  encapsulamiento: "setPrice(v) { if (v <= 0) return { ok:false }; this.#price = v; }",
+  herencia: "class Table extends Furniture { … }",
+  polimorfismo: "calculateProductionTime() { return CONFIG.CRAFT_SECONDS.Chair; }",
+  abstracción: "Furniture.calculateProductionTime() → throw (abstracto)",
+  composición: "class Workshop { #inventory; #worker; #orders; }",
+};
+
 /**
  * CodingStationView — la COMPUTADORA. El jugador escribe código JavaScript real
  * siguiendo instrucciones numeradas muy explícitas. Si acierta, gana materiales
@@ -52,9 +70,9 @@ export class CodingStationView {
         <p class="term-brief">${esc(this.#ch.brief)}</p>
         ${this.#ch.objetivo ? `<p class="term-goal">🎯 ${esc(this.#ch.objetivo)}</p>` : ""}
         ${pasos ? `<div class="term-steps"><b>INSTRUCCIONES — hazlas en orden:</b><ul class="term-steps-list">${pasos}</ul></div>` : ""}
-        <p class="term-h">Requisitos que revisará la computadora:</p>
+        <p class="term-h">Requisitos que revisará la computadora ${this.#ch.rf ? `· <b>${esc(this.#ch.rf)}</b>` : ""}:</p>
         <ul class="term-reqs" id="term-reqs">${reqs}</ul>
-        <textarea id="editor" spellcheck="false" rows="10">${esc(startCode)}</textarea>
+        <div class="editor-wrap"><div class="editor-gutter" id="ed-gutter"></div><textarea id="editor" spellcheck="false" rows="10">${esc(startCode)}</textarea></div>
         <div id="term-out" class="term-out">${fails >= 2
           ? "&gt; Te dejo el ejemplo resuelto. Ajústalo si quieres y pulsa EJECUTAR CÓDIGO."
           : "&gt; Escribe tu código siguiendo las INSTRUCCIONES y pulsa EJECUTAR CÓDIGO."}</div>
@@ -72,7 +90,9 @@ export class CodingStationView {
       if (!ed) return;
       ed.focus();
       this.#refreshChecklist(ed.value);
-      ed.addEventListener("input", () => this.#refreshChecklist(ed.value));
+      this.#syncGutter(ed);
+      ed.addEventListener("input", () => { this.#refreshChecklist(ed.value); this.#syncGutter(ed); });
+      ed.addEventListener("scroll", () => this.#syncGutter(ed));
       ed.addEventListener("keydown", (e) => {
         e.stopPropagation();
         if (e.key === "Tab") {
@@ -85,6 +105,16 @@ export class CodingStationView {
         if (e.key === "Escape") { e.preventDefault(); this.#modal.close(); }
       });
     }, 60);
+  }
+
+  /** Números de línea del editor; `errLine` resalta la línea con el error. */
+  #syncGutter(ed, errLine = 0) {
+    const g = this.#modal.frame.querySelector("#ed-gutter");
+    if (!g || !ed) return;
+    const n = ed.value.split("\n").length;
+    g.innerHTML = Array.from({ length: n }, (_, i) =>
+      `<span class="${i + 1 === errLine ? "err" : ""}">${i + 1}</span>`).join("");
+    g.scrollTop = ed.scrollTop;
   }
 
   #refreshChecklist(code) {
@@ -155,15 +185,19 @@ export class CodingStationView {
     }
 
     if (dbg) {
+      const ed = this.#modal.frame.querySelector("#editor");
+      if (ed && dbg.line) this.#syncGutter(ed, dbg.line);
+      const kind = ERR[dbg.kind] ?? ERR.sintaxis;
       const pointer = dbg.line
         ? `<div class="dbg-code"><span class="dbg-ln">L${dbg.line}</span><code>${esc(dbg.snippet)}</code>` +
           (dbg.col ? `<div class="dbg-caret" style="--c:${dbg.col}">↑</div>` : "") + `</div>`
         : "";
       out.innerHTML = `<div class="dbg">
-        <div class="dbg-top">🐞 ERROR DE CÓDIGO${dbg.line ? ` · Línea ${dbg.line}` : ""}</div>
+        <div class="dbg-top ${kind.cls}">❌ ${kind.tag}${dbg.line ? ` · Línea ${dbg.line}` : ""}</div>
+        <p class="dbg-kind">${esc(kind.note)}</p>
         ${pointer}
         <p class="dbg-problem"><b>Problema:</b> ${esc(dbg.problem)}</p>
-        <p class="dbg-concept"><b>Concepto:</b> ${esc(dbg.concept)}</p>
+        <p class="dbg-concept"><b>Concepto:</b> ${esc(dbg.concept)}${dbg.rf ? ` &nbsp;·&nbsp; <b>Requisito:</b> ${esc(dbg.rf)}` : ""}</p>
         ${explain ? `<p class="dbg-explain">${esc(explain)}</p>` : ""}
         ${hint ? `<p class="dbg-hint">💡 <b>Pista:</b> ${esc(hint)}</p>` : ""}
       </div>`;
@@ -194,14 +228,34 @@ export class CodingStationView {
   #solved({ challenge, award, xp, orderReady }) {
     const matEs = MAT_ES[award?.material] ?? award?.material ?? "materiales";
     const progreso = award?.need
-      ? `\n${award.material === "wood" ? "🪵" : "🔩"} ${matEs}: ${Math.min(award.have, award.need)}/${award.need}`
+      ? `${award.material === "wood" ? "🪵" : "🔩"} ${matEs}: ${Math.min(award.have, award.need)}/${award.need}`
       : "";
+    const impl = IMPL[challenge.concept] ?? "";
+    const prod = challenge.product ?? "Chair";
+    const inst = { Chair: "silla01", Table: "mesa01", Cabinet: "armario01" }[prod] ?? "obj01";
+
     this.#modal.render(`
       <div class="term">
         <div class="term-top ok">✓ RETO COMPLETADO</div>
-        <p>Aplicaste: <b>${esc(challenge.concept)}</b>${challenge.rf ? ` · ${challenge.rf} ✓` : ""}</p>
+
+        ${challenge.rf ? `<div class="rf-done">
+          <div class="rf-done-h">✅ REQUISITO CUMPLIDO · <b>${esc(challenge.rf)}</b></div>
+          <div class="rf-done-c">implementado mediante <code>${esc(impl)}</code></div>
+        </div>` : ""}
+
+        <div class="obj-insp">
+          <div class="oi-h">🔬 INSPECTOR DE OBJETO</div>
+          <div class="oi-tree">Furniture <i>↑</i> ${esc(prod)} <i>↓</i> <b>${esc(inst)}</b></div>
+          <div class="oi-grid">
+            <span>Clase</span><code>${esc(prod)}</code>
+            <span>Hereda de</span><code>Furniture</code>
+            <span>Atributos</span><code>nombre · precio · materiales</code>
+            <span>Métodos</span><code>setPrice() · calculateProductionTime()</code>
+          </div>
+        </div>
+
         <p class="term-reward big">Recompensa:  +${award?.amount ?? 0} ${matEs}   ·   +${xp} XP</p>
-        <pre class="term-progress">${esc(progreso.trim())}</pre>
+        ${progreso ? `<pre class="term-progress">${esc(progreso)}</pre>` : ""}
         ${orderReady
           ? `<p class="ok">✓ MATERIALES COMPLETOS. Ya puedes fabricar tu pedido en el Banco de trabajo 🔨.</p>`
           : `<p class="wp-sub">Aún faltan materiales para tu pedido. Resuelve otro reto.</p>`}

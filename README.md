@@ -151,3 +151,21 @@ MVC** con mecánicas, no con teoría suelta:
 
 Regla de oro del diseño: **comprar mejoras NUNCA resuelve un reto**; el editor siempre
 arranca en `ch.starter`. Las mejoras aceleran, dan pistas o más materiales, nada más.
+
+### Fase 6 — profesionalización
+
+- **Requisito ↔ código en vivo**: en 📋 PEDIDOS la lista de RF se marca `☑` sola conforme
+  resuelves retos. Al acertar, la computadora dice *«REQUISITO CUMPLIDO · RF-001 →
+  implementado mediante `class Chair extends Furniture`»* y abre un **🔬 inspector de objeto**
+  (clase, herencia, atributos, métodos).
+- **Tipos de error**: el debugger distingue **SINTAXIS** (no ejecuta) · **POO** (clase mal
+  definida) · **LÓGICA** (resultado incorrecto) — enseña que *compilar ≠ cumplir el requisito*.
+- **Editor con números de línea** y la línea del error resaltada en el margen.
+- **Ciclo del taller** visible en el panel de objetivos: `📋 › 💻 › 📦 › 🔨 › 🧾 › 💰` con la
+  etapa actual resaltada.
+- **Clientes con impacto**: entregar tarde (más días que el plazo) baja la calidad y la
+  reputación. Cada NPC lleva su rol («Ana · requisitos», «BYTE · programación»…).
+- **Mejoras por categoría** (Producción / Programación / Logística) para que la compra sea
+  una decisión, no una lista.
+- **Accesibilidad**: `♿ Reducir animaciones` en Ajustes, `:focus-visible`, música/efectos
+  independientes, feedback textual (nunca solo color).

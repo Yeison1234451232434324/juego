@@ -84,9 +84,11 @@ export class CodeValidator {
   }
 
   /**
-   * DEBUGGER educativo: localiza el PRIMER problema del código y lo explica.
+   * DEBUGGER educativo: localiza el PRIMER problema del código y lo explica,
+   * y lo CLASIFICA (sintaxis / POO / lógica) para enseñar que
+   * "código correcto ≠ requisito cumplido".
    * Nunca resuelve el reto; solo señala dónde y por qué falla.
-   * @returns {{line:number, col:number, snippet:string, problem:string, concept:string, hint:string}|null}
+   * @returns {{line:number, col:number, snippet:string, problem:string, concept:string, hint:string, kind:string}|null}
    */
   static diagnose(code, checks = [], challenge = null) {
     const raw = String(code ?? "").replace(/\r/g, "");
@@ -95,11 +97,12 @@ export class CodeValidator {
       clase: "🧩 Clases", encapsulamiento: "🔐 Encapsulamiento", herencia: "🧬 Herencia",
       polimorfismo: "🎭 Polimorfismo", abstracción: "🧱 Abstracción", composición: "🧩 Composición",
     })[challenge?.concept] ?? "🧩 Programación";
+    const rf = challenge?.rf ?? "";
 
-    const at = (i, col, problem, hint) => ({
+    const at = (i, col, problem, hint, kind = "sintaxis") => ({
       line: i + 1, col: Math.max(1, col),
       snippet: (lines[i] ?? "").trimEnd(),
-      problem, concept: conceptLabel,
+      problem, concept: conceptLabel, rf, kind,
       hint: hint || checks.find((c) => c.hint)?.hint || "",
     });
 
@@ -117,7 +120,7 @@ export class CodeValidator {
       for (let i = 0; i < lines.length; i++) {
         if (/\breturn\s*;/.test(lines[i])) {
           return at(i, lines[i].indexOf("return") + 1, "`return` no devuelve ningún valor.",
-            "Pon el valor justo después de `return` (por ejemplo `return true;`).");
+            "Pon el valor justo después de `return` (por ejemplo `return true;`).", "logica");
         }
       }
     }
@@ -152,14 +155,16 @@ export class CodeValidator {
         "Compara tu código con los PASOS del reto, línea por línea.");
     }
 
-    // 5) compila pero no cumple un requisito: señala el concepto
+    // 5) compila pero no cumple un requisito: ¿es de POO o de lógica?
     const firstFail = checks.find((c) => {
       try { return !c.test(CodeValidator.#flatten(raw), raw); } catch { return true; }
     });
     if (firstFail) {
+      const lbl = (firstFail.label || "").toLowerCase();
+      const kind = /clase|hereda|extends|constructor|molde|subclase|abstract/.test(lbl) ? "poo" : "logica";
       return {
-        line: 0, col: 0, snippet: "",
-        problem: `Aún no se cumple: ${firstFail.label}. ${firstFail.error}`,
+        line: 0, col: 0, snippet: "", rf, kind,
+        problem: `El código compila, pero aún no cumple el requisito: «${firstFail.label}». ${firstFail.error}`,
         concept: conceptLabel,
         hint: firstFail.hint || "Vuelve a leer el PASO correspondiente del reto.",
       };

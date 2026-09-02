@@ -17,12 +17,12 @@ const MX = Math.max(0, Math.round((CONFIG.VIEW.width - W) / 2));
  * `sign`  = { name, dy } placa de señalización bajo la estación.
  */
 const STATIONS = [
-  { id: "orders", label: "[E] Revisar pedidos",   x: 190, y: 116, icon: "📋", kind: "board",    npc: "ana",    solid: { w: 60, h: 14, dy: 12 }, sign: { name: "PEDIDOS",       dy: 60 } },
-  { id: "coding", label: "[E] Programar",          x: 470, y: 118, icon: "💻", kind: "pc",       npc: "byte",   solid: { w: 60, h: 14, dy: 14 }, sign: { name: "PROGRAMACIÓN",  dy: 62 } },
-  { id: "shelf",  label: "[E] Revisar materiales", x: 806, y: 128, icon: "📦", kind: "shelf",    npc: "beto",   solid: { w: 74, h: 30, dy: 12 }, sign: { name: "MATERIALES",    dy: 66 } },
-  { id: "bench",  label: "[E] Fabricar",           x: 300, y: 430, icon: "🔨", kind: "bench",    npc: "mario",  solid: { w: 80, h: 16, dy: 4 },  sign: { name: "FABRICACIÓN",   dy: 46 } },
-  { id: "shop",   label: "[E] Mejorar taller",     x: 130, y: 476, icon: "🔧", kind: "shop",     npc: "carlos", solid: { w: 66, h: 14, dy: 10 }, sign: { name: "MEJORAS",       dy: 46 } },
-  { id: "sales",  label: "[E] Entregar pedido",    x: 792, y: 486, icon: "🧾", kind: "register", npc: "client", solid: { w: 44, h: 14, dy: 6 },  sign: { name: "CLIENTES",      dy: 44 } },
+  { id: "orders", label: "[E] Ana · requisitos del cliente",   x: 190, y: 116, icon: "📋", kind: "board",    npc: "ana",    solid: { w: 60, h: 14, dy: 12 }, sign: { name: "PEDIDOS",       dy: 60 } },
+  { id: "coding", label: "[E] BYTE · programación (POO)",       x: 470, y: 118, icon: "💻", kind: "pc",       npc: "byte",   solid: { w: 60, h: 14, dy: 14 }, sign: { name: "PROGRAMACIÓN",  dy: 62 } },
+  { id: "shelf",  label: "[E] Beto · materiales del taller",    x: 806, y: 128, icon: "📦", kind: "shelf",    npc: "beto",   solid: { w: 74, h: 30, dy: 12 }, sign: { name: "MATERIALES",    dy: 66 } },
+  { id: "bench",  label: "[E] Mario · fabricación",             x: 300, y: 430, icon: "🔨", kind: "bench",    npc: "mario",  solid: { w: 80, h: 16, dy: 4 },  sign: { name: "FABRICACIÓN",   dy: 46 } },
+  { id: "shop",   label: "[E] Carlos · mejoras del taller",     x: 130, y: 476, icon: "🔧", kind: "shop",     npc: "carlos", solid: { w: 66, h: 14, dy: 10 }, sign: { name: "MEJORAS",       dy: 46 } },
+  { id: "sales",  label: "[E] Cliente · entrega y pago",        x: 792, y: 486, icon: "🧾", kind: "register", npc: "client", solid: { w: 44, h: 14, dy: 6 },  sign: { name: "CLIENTES",      dy: 44 } },
 ];
 
 // Frases cortas que dice el NPC de cada estación (solo en el tutorial).

@@ -491,7 +491,10 @@ body.controls-on #obj-banner { top:auto; bottom:calc(150px + env(safe-area-inset
   body.controls-on #obj-banner { bottom:calc(108px + env(safe-area-inset-bottom)); font-size:.68rem; }
 }
 
-/* Campos de texto: 16px reales evita el zoom automático de iOS al enfocar. */
+/* Campos de texto: 16px reales evita el zoom de iOS y hace legible el editor. */
+@media (pointer: coarse) {
+  #editor, #lab-editor, .editor-gutter { font-size:15px !important; line-height:1.5 !important; }
+}
 @media (max-width: 820px) {
   #editor { font-size:16px; min-height:190px; }
   .price-row input, input[type=text], input[type=number], textarea { font-size:16px; }
@@ -845,6 +848,69 @@ body.is-fullscreen #game, body.is-fullscreen #ui { height:100vh; height:100dvh; 
   .ev-scores { grid-template-columns:1fr 1fr; }
   .ev-bar > span { flex:0 0 96px; }
 }
+
+/* ================================================================
+   FASE 6 — profesionalización (accesibilidad, editor, requisito↔código, ciclo)
+   ================================================================ */
+
+/* --- Accesibilidad --- */
+:focus-visible { outline:3px solid var(--gold-l); outline-offset:2px; border-radius:4px; }
+body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after {
+  animation-duration:.001s !important; animation-iteration-count:1 !important;
+  transition-duration:.001s !important; }
+body.reduce-motion .mvc-flow, body.reduce-motion .intro-shop { animation:none !important; }
+
+/* --- Editor con números de línea --- */
+.editor-wrap { display:flex; background:#06100c; border:1px solid #1f4a3a; border-radius:6px; overflow:hidden; margin-top:2px; }
+.editor-gutter { flex:0 0 auto; padding:10px 6px 10px 8px; text-align:right; user-select:none;
+  font-family:ui-monospace,Consolas,monospace; font-size:.86rem; line-height:1.45;
+  color:#4a6b5c; background:#081511; overflow:hidden; }
+.editor-gutter span { display:block; }
+.editor-gutter span.err { color:#ff6b57; font-weight:800; background:#3a1a14; }
+.editor-wrap #editor { flex:1; border:0; border-radius:0; margin:0; background:transparent; }
+
+/* --- Debugger: tipos de error --- */
+.dbg-top.e-syn { color:#ff8a5c; }
+.dbg-top.e-poo { color:#c9a94a; }
+.dbg-top.e-log { color:#6fd0f5; }
+.dbg-kind { font-size:.8rem; color:#cdbf9f; margin:-2px 0 6px; font-style:italic; }
+
+/* --- Requisito cumplido + inspector de objeto --- */
+.rf-done { background:#0f2a1e; border:1px solid #2f7a4a; border-radius:8px; padding:8px 10px; margin:6px 0; }
+.rf-done-h { color:#8fffc0; font-weight:800; font-size:.82rem; }
+.rf-done-c { color:#bfe9d5; font-size:.8rem; margin-top:2px; }
+.rf-done-c code { background:#06140e; padding:1px 5px; border-radius:4px; color:#d6ffe6; }
+.obj-insp { background:#06140e; border:1px solid #1f4a3a; border-radius:8px; padding:8px 10px; margin:6px 0; }
+.oi-h { color:var(--gold-l); font-weight:800; font-size:.78rem; letter-spacing:.5px; }
+.oi-tree { text-align:center; color:#bfe9d5; font-family:ui-monospace,monospace; font-size:.82rem; margin:5px 0; }
+.oi-tree i { color:#5c8f7a; font-style:normal; }
+.oi-tree b { color:#8fffc0; }
+.oi-grid { display:grid; grid-template-columns:auto 1fr; gap:2px 10px; font-size:.78rem; }
+.oi-grid span { color:#9fd8c0; }
+.oi-grid code { color:#d6ffe6; }
+
+/* --- Checklist de requisitos en vivo (Pedidos) --- */
+.oreq-list.check li { list-style:none; }
+.oreq-list.check li.done { color:#2f5e26; }
+.oreq-prog { float:right; background:#e4d9bf; border-radius:5px; padding:0 6px; font-size:.74rem; color:#6a5233; }
+
+/* --- Ciclo del taller en el panel de objetivos --- */
+.q-cycle { display:flex; align-items:center; gap:2px; margin:5px 0; font-size:.9rem; flex-wrap:wrap; }
+.q-cy { opacity:.35; filter:grayscale(1); }
+.q-cy.done { opacity:.7; filter:none; }
+.q-cy.on { opacity:1; filter:none; transform:scale(1.25); }
+.q-cyar { color:#6a5a3a; font-style:normal; font-size:.7rem; }
+.q-dl { color:#c9a86a; font-size:.68rem; }
+
+/* --- Tienda por categorías --- */
+.shop-cat { margin:10px 0 3px; font-weight:800; font-size:.72rem; letter-spacing:.5px; color:#8a6a3a;
+  border-bottom:1px solid #c3af8655; padding-bottom:2px; }
+.shop-cat:first-child { margin-top:0; }
+
+/* --- Resumen educativo tras la entrega --- */
+.sat-recap { background:#fff7df; border:1px solid #d8c9a0; border-radius:8px; padding:7px 10px;
+  font-size:.78rem; color:#5a4326; margin:6px 0; text-align:left; }
+.sat-recap code { background:#e4d9bf; padding:0 4px; border-radius:4px; }
 
 @media (max-width:600px) {
   .kv-stats { grid-template-columns:1fr 1fr; }

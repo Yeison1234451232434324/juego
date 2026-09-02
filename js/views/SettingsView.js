@@ -33,6 +33,11 @@ export class SettingsView {
       if (act === "sfx") { this.#audio.setSfxOn(!this.#audio.prefs.sfxOn); this.#audio.play("click"); this.#render(); }
       if (act === "fs") { toggleFullscreen(); }
       if (act === "mvcflow" && this.#edu) { this.#edu.set("mvcFlow", !this.#edu.get("mvcFlow")); this.#render(); }
+      if (act === "redmotion" && this.#edu) {
+        this.#edu.set("reduceMotion", !this.#edu.get("reduceMotion"));
+        document.body.classList.toggle("reduce-motion", this.#edu.get("reduceMotion"));
+        this.#render();
+      }
       if (act === "mvcsee" && this.#bus) { this.close(); this.#bus.emit("edu:mvcflow"); }
       if (act === "trace" && this.#bus) { this.close(); this.#bus.emit("open:traceability"); }
       if (act === "intro" && this.#onIntro) { this.close(); this.#onIntro(() => this.open()); }
@@ -103,10 +108,14 @@ export class SettingsView {
         <button class="k sm" data-act="intro">VER</button>
       </div>` : ""}
 
-      ${this.#edu ? `<div class="set-sec">Educativo</div>
+      ${this.#edu ? `<div class="set-sec">Educativo y accesibilidad</div>
       <div class="set-row">
         <span>🏗️ Mostrar flujo MVC</span>
         <button class="k sm" data-act="mvcflow">${toggle(this.#edu.get("mvcFlow"))}</button>
+      </div>
+      <div class="set-row">
+        <span>♿ Reducir animaciones</span>
+        <button class="k sm" data-act="redmotion">${toggle(this.#edu.get("reduceMotion"))}</button>
       </div>
       <div class="set-row">
         <span>🏗️ Ver flujo MVC ahora</span>

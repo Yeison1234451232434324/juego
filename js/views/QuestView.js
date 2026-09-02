@@ -51,20 +51,24 @@ export class QuestView {
         est = `<div class="q-remaining">≈ ${Math.ceil(short / per)} reto(s) más para completar materiales</div>`;
       }
 
-      const step = (done, txt) => `<li class="${done ? "done" : ""}">${done ? "✓" : "○"} ${txt}</li>`;
+      // Ciclo del taller — la etapa actual va resaltada.
+      const cur = !haveMats ? 1 : !madeAll ? 3 : 4;
+      const CYCLE = [["📋", "Pedido"], ["💻", "Programar"], ["📦", "Materiales"], ["🔨", "Fabricar"], ["🧾", "Entregar"], ["💰", "Cobrar"]];
+      const cycle = CYCLE.map(([ic, t], i) => {
+        const cls = i < cur ? "done" : i === cur || (cur === 1 && i === 2) ? "on" : "";
+        return `<span class="q-cy ${cls}" title="${t}">${ic}</span>`;
+      }).join('<i class="q-cyar">›</i>');
+
+      const deadline = o.deadline
+        ? `<span class="q-dl">⏳ ${o.deadline} día${o.deadline > 1 ? "s" : ""}</span>` : "";
       body = `
         <div class="q-order">
           <b>${ICON[o.lines[0]?.type] ?? "🪑"} ${o.summary}</b>
-          <span class="q-cust">${o.customer.name}</span>
+          <span class="q-cust">${o.customer.name} ${deadline}</span>
         </div>
+        <div class="q-cycle">${cycle}</div>
         <div class="q-mats">${mats}</div>
-        ${est}
-        <ul class="q-steps">
-          ${step(true, "Pedido aceptado")}
-          ${step(haveMats, "Conseguir materiales")}
-          ${step(madeAll, "Fabricar")}
-          ${step(false, "Entregar al cliente")}
-        </ul>`;
+        ${est}`;
     } else {
       body = `<p class="q-empty">Sin trabajos. Acepta uno en el Tablón de Pedidos 📋.</p>`;
     }

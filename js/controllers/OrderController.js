@@ -30,6 +30,7 @@ export class OrderController {
     if (!rule.ok) { this.#bus.emit("rule:blocked", rule); return { ok: false, ...rule }; }
 
     this.#gs.availableOrders.splice(i, 1);
+    o.acceptedDay = this.#gs.player.stats.day ?? 1;
     this.#gs.workshop.addOrder(o);
     if (!this.#gs.focusOrderId) this.#gs.focusOrderId = o.id;
     this.#gs.refillOrders();
@@ -79,9 +80,14 @@ export class OrderController {
     this.#gs.player.stats.rulesRespected++;
 
     // CALIDAD del pedido = media de las piezas entregadas → recompensa y reputación
-    const quality = taken.length
+    let quality = taken.length
       ? Math.round(taken.reduce((s, p) => s + (Number.isFinite(p.quality) ? p.quality : 70), 0) / taken.length)
       : 70;
+    // Retraso: si tardas más días que el plazo del cliente, baja la satisfacción.
+    const day = this.#gs.player.stats.day ?? 1;
+    const daysTaken = o.acceptedDay ? day - o.acceptedDay : 0;
+    const late = o.deadline > 0 && daysTaken > o.deadline;
+    if (late) quality = Math.max(0, quality - 12);
     const tier = QualityService.tier(quality);
     const breakdown = QualityService.evaluatePiece(this.#gs).rows;
     const paid = Math.max(1, Math.round(o.reward * tier.mult));
@@ -104,7 +110,12 @@ export class OrderController {
     this.#bus.emit("order:delivered", o);
     if (lvls) this.#bus.emit("player:levelup", this.#gs.player.level);
     this.#bus.emit("state:changed");
+
+    // resumen educativo para la pantalla de satisfacción
+    const learned = ["clase", "encapsulamiento", "herencia", "polimorfismo", "abstracción", "composición"]
+      .filter((c) => this.#gs.player.knows(c));
     return { ok: true, order: o, quality, tier, breakdown, paid, rep, xp,
-      stars: Math.round(quality / 20), quote: tier.quote };
+      stars: Math.round(quality / 20), quote: tier.quote, late,
+      learned, rfDone: `${this.#gs.requirements.doneCount()}/${this.#gs.requirements.total()}` };
   }
 }

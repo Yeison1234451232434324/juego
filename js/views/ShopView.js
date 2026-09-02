@@ -29,12 +29,18 @@ export class ShopView {
       return `<div class="shop-row"><span>${name} ×3</span>
         <button class="k" data-act="buymat" data-type="${type}" ${coins >= cost ? "" : "disabled"}>🪙 ${cost}${evMult > 1 ? " ⚠️" : ""}</button></div>`;
     };
-    const ups = this.#upCtrl.list().map((u) => `
-      <div class="shop-up ${u.owned ? "owned" : ""}">
-        <div><b>${u.name}</b><br><span class="wp-sub">${u.desc}</span></div>
-        <button class="k" data-act="buyup" data-key="${u.key}" ${u.owned ? "disabled" : coins >= u.cost ? "" : "disabled"}>
-          ${u.owned ? "✓ Comprada" : `🪙 ${u.cost}`}</button>
-      </div>`).join("");
+    const CATS = ["Producción", "Programación", "Logística", "Economía", "Taller"];
+    const ICO = { Producción: "🔨", Programación: "💻", Logística: "📦", Economía: "🪙", Taller: "🏪" };
+    const ups = CATS.map((cat) => {
+      const list = this.#upCtrl.list().filter((u) => (u.category ?? "Taller") === cat);
+      if (!list.length) return "";
+      return `<div class="shop-cat">${ICO[cat] ?? ""} ${cat}</div>` + list.map((u) => `
+        <div class="shop-up ${u.owned ? "owned" : ""}">
+          <div><b>${u.name}</b><br><span class="wp-sub">${u.desc}</span></div>
+          <button class="k" data-act="buyup" data-key="${u.key}" ${u.owned ? "disabled" : coins >= u.cost ? "" : "disabled"}>
+            ${u.owned ? "✓ Comprada" : `🪙 ${u.cost}`}</button>
+        </div>`).join("");
+    }).join("");
 
     this.#modal.render(`<div class="wood-panel">
       <h2>🏪 Zona de Mejoras — Carlos</h2>

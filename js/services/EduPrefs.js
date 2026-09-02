@@ -4,7 +4,7 @@
  * guardado v5/v6, así que no necesita migración.
  */
 const KEY = "codecraft-workshop:edu";
-const DEFAULTS = Object.freeze({ mvcFlow: true });
+const DEFAULTS = Object.freeze({ mvcFlow: true, reduceMotion: false });
 
 export class EduPrefs {
   data = { ...DEFAULTS };

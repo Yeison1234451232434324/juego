@@ -62,16 +62,20 @@ export class SalesView {
     const o = res.order, t = res.tier;
     const bonus = res.paid !== o.reward
       ? ` <span class="wp-sub">(base $${o.reward} × ${t.mult.toFixed(2)})</span>` : "";
+    const recap = (res.learned && res.learned.length)
+      ? `<div class="sat-recap"><b>📚 Aplicaste:</b> POO (${res.learned.join(", ")})
+         · Requisitos ${res.rfDone} · Flujo <code>Vista → Controlador → Modelo</code></div>` : "";
     this.#modal.render(`<div class="wood-panel sat">
       <h2>👨‍💼 ${esc(o.customer.name)}</h2>
       <div class="sat-face">${t.face}</div>
       <div class="sat-stars">${QualityService.stars(res.stars)}</div>
       <p class="sat-quote">“${esc(res.quote)}”</p>
-      <div class="sat-score">Calidad del pedido: <b>${res.quality}/100</b> · ${t.label}</div>
+      <div class="sat-score">Calidad del pedido: <b>${res.quality}/100</b> · ${t.label}${res.late ? ' · <span class="bad">entrega tardía −12</span>' : ""}</div>
       <ul class="sat-break">
         ${res.breakdown.map((r) => `<li><span>${esc(r.label)}</span><b>${QualityService.stars(r.stars)}</b></li>`).join("")}
       </ul>
       <p class="doc-reward big">🪙 +$${res.paid}${bonus}   ⭐ +${res.xp} XP   👍 +${res.rep} reputación${o.metalReward ? `   🔩 +${o.metalReward}` : ""}</p>
+      ${recap}
       <p class="ok">✓ PEDIDO COMPLETADO</p>
       <button class="k run" data-act="close">Continuar [ESC]</button>
     </div>`);
