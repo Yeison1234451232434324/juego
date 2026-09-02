@@ -80,16 +80,22 @@ export class WorkshopScene extends Phaser.Scene {
     this._release = () => { this.input.keyboard.resetKeys(); this.entrada.x = 0; this.entrada.y = 0; };
     window.addEventListener("blur", this._release);
     this.input.on("gameout", this._release);
+
+    // Suscripciones al EventBus: se guardan las bajas para limpiarlas si la
+    // escena se reinicia (así no se acumulan listeners ni se toca un objeto
+    // Phaser ya destruido).
+    const bench = STATIONS.find((s) => s.id === "bench");
+    this._offs = [
+      this.bus.on("craft:progress", (p) => this.#bar("bench", p.ratio)),
+      this.bus.on("craft:done", () => { this.#bar("bench", 0, true); this.#burst(bench.x, bench.y - 10); }),
+      this.bus.on("objective:changed", (o) => this.#setHint(o?.hintStation ?? this.gs.hintStation)),
+    ];
     this.events.once("shutdown", () => {
       window.removeEventListener("blur", this._release);
       this.input.off("gameout", this._release);
+      this._offs.forEach((off) => off?.());
     });
     this._wasPaused = false;
-
-    const bench = STATIONS.find((s) => s.id === "bench");
-    this.bus.on("craft:progress", (p) => this.#bar("bench", p.ratio));
-    this.bus.on("craft:done", () => { this.#bar("bench", 0, true); this.#burst(bench.x, bench.y - 10); });
-    this.bus.on("objective:changed", (o) => this.#setHint(o?.hintStation ?? this.gs.hintStation));
 
     const p = this.gs.player;
     if (p.x && p.y) this.pj.setPosition(p.x, p.y);

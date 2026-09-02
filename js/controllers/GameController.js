@@ -6,7 +6,6 @@ import { WorkshopController } from "./WorkshopController.js";
 import { UpgradeController } from "./UpgradeController.js";
 import { TutorialController } from "./TutorialController.js";
 import { KnowledgeService } from "../services/KnowledgeService.js";
-import { CONFIG } from "../config/gameConfig.js";
 
 /**
  * GameController — CONTROLADOR PRINCIPAL.
@@ -21,6 +20,7 @@ export class GameController {
 
   #dayAcc = 0;
   #autoAcc = 0;
+  #saveT = null;
 
   constructor(gs, bus, save) {
     this.#gs = gs; this.#bus = bus; this.#save = save;
@@ -37,11 +37,22 @@ export class GameController {
 
   get state() { return this.#gs; }
 
+  /** Guarda como mucho una vez cada ~500 ms (evita N serializaciones al hilo). */
+  #saveDebounced() {
+    if (this.#saveT) return;
+    this.#saveT = setTimeout(() => { this.#saveT = null; this.#save.save(this.#gs); }, 500);
+  }
+  /** Guardado inmediato (al cerrar la pestaña / cambiar de escena). */
+  flush() { clearTimeout(this.#saveT); this.#saveT = null; this.#save.save(this.#gs); }
+
   #wire() {
     this.#bus.on("state:changed", () => {
       this.#gs.achievements.check(this.#gs.player);
-      this.#save.save(this.#gs);
+      this.#saveDebounced();
     });
+    // No perder los últimos cambios al recargar / cerrar la pestaña.
+    window.addEventListener("pagehide", () => this.flush());
+    window.addEventListener("beforeunload", () => this.flush());
 
     // El objetivo de juego LIBRE se recalcula ante cualquier avance.
     const recalc = () => { if (this.#gs.tutorialCompleted) this.#freeObjective(); };
@@ -66,6 +77,9 @@ export class GameController {
     this.#bus.on("open:traceability", () => learn("Requerimientos"));
     this.#bus.on("requirements:viewed", () => learn("Requerimientos"));
     this.#bus.on("mvcflow:shown", () => learn("Flujo MVC"));
+    // Una vista puede PEDIR marcar un concepto (p. ej. la demo de polimorfismo);
+    // la mutación del modelo la hace aquí, no la vista.
+    this.#bus.on("concept:learned", (k) => learn(k));
   }
 
   /** Objetivo en juego libre: mira el pedido en el que se centra el jugador. */

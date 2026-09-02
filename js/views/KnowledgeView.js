@@ -120,8 +120,7 @@ export class KnowledgeView {
     if (done) {
       const note = this.#modal.frame.querySelector("#poly-note");
       if (note) note.innerHTML = "✅ Una sola llamada, tres resultados: <b>eso es polimorfismo</b>. Cada subclase implementa su propio <code>calculateProductionTime()</code>.";
-      this.#gs.player.learn("polimorfismo");
-      this.#bus.emit("state:changed");
+      this.#bus.emit("concept:learned", "polimorfismo");   // la mutación la hace el controlador
     }
   }
 

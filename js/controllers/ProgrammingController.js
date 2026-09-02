@@ -77,16 +77,23 @@ export class ProgrammingController {
     }
 
     // ---- éxito: SOLO ahora se marca el reto como resuelto ----
+    const cd = (this.#gs.player.stats.challengesDone ??= []);
+    const firstTime = !cd.includes(ch.id);
+
     const info = this.#gs.challenges.registerSolved(ch.id);
     const { material, amount } = this.#award(ch);
-    this.#gs.workshop.inventory.add(material, amount);
+    this.#gs.workshop.inventory.add(material, amount);   // el grifo de materiales SIEMPRE fluye
 
-    const xp = 50;
+    // XP: completa la 1.ª vez; simbólica al repetir un reto ya resuelto
+    // (evita farmear niveles resolviendo el mismo reto en bucle).
+    const xp = firstTime ? 50 : 8;
     const lvls = this.#gs.player.addXp(xp);
 
     if (info.concept) this.#gs.player.learn(info.concept);
-    this.#gs.player.stats.classesImplemented++;
-    (this.#gs.player.stats.challengesDone ??= []).push(ch.id);
+    if (firstTime) {
+      cd.push(ch.id);
+      this.#gs.player.stats.classesImplemented++;
+    }
     if (info.firstOfConcept && info.rf) this.#gs.requirements.complete(info.rf);
 
     const order = this.#gs.focusOrder;

@@ -9,9 +9,12 @@ import { CONFIG } from "../config/gameConfig.js";
  */
 export class CraftingController {
   #gs; #bus;
-  jobs = [];
 
   constructor(gs, bus) { this.#gs = gs; this.#bus = bus; }
+
+  /** Las fabricaciones en curso viven en el MODELO (Workshop) para que
+   *  persistan: recargar en mitad de una fabricación NO pierde los materiales. */
+  get jobs() { return this.#gs.workshop.jobs; }
 
   /** Tipos de mueble que algún pedido activo necesita fabricar. */
   neededTypes() {
@@ -65,17 +68,18 @@ export class CraftingController {
 
     this.#gs.workshop.inventory.consume(recipe);
     this.#gs.workshop.worker.assign();
-    const job = { id: `j${Date.now()}`, type, elapsed: 0, total: this.#craftSeconds(type), batch: !!batch };
-    this.jobs.push(job);
+    const job = { id: `j${Date.now()}${Math.floor(Math.random() * 1000)}`, type, elapsed: 0, total: this.#craftSeconds(type), batch: !!batch };
+    this.#gs.workshop.jobs.push(job);
     this.#bus.emit("craft:started", job);
     this.#bus.emit("state:changed");
     return { ok: true, job };
   }
 
   tick(dt) {
-    if (!this.jobs.length) return;
+    const jobs = this.#gs.workshop.jobs;
+    if (!jobs.length) return;
     const finished = [];
-    for (const j of this.jobs) {
+    for (const j of jobs) {
       j.elapsed += dt;
       this.#bus.emit("craft:progress", { id: j.id, ratio: Math.min(1, j.elapsed / j.total) });
       if (j.elapsed >= j.total) finished.push(j);
@@ -84,8 +88,9 @@ export class CraftingController {
   }
 
   #finish(job) {
-    this.jobs = this.jobs.filter((x) => x !== job);
-    this.#gs.workshop.worker.release();
+    const ws = this.#gs.workshop;
+    ws.jobs = ws.jobs.filter((x) => x !== job);
+    ws.worker.release();
 
     // CALIDAD de la pieza (del progreso real del jugador)
     const q = QualityService.evaluatePiece(this.#gs);

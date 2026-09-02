@@ -10,8 +10,9 @@ import { Order } from "./Order.js";
 export class Workshop {
   #inventory = new Inventory({});
   #worker = new Worker("Mario");
-  #stock = [];        // [{ type, style }]  muebles fabricados sin entregar
+  #stock = [];        // [{ type, style, quality }]  muebles fabricados sin entregar
   #orders = [];       // pedidos aceptados
+  jobs = [];          // fabricaciones en curso [{ id, type, elapsed, total, batch }]
 
   get inventory() { return this.#inventory; }
   get worker() { return this.#worker; }
@@ -43,8 +44,13 @@ export class Workshop {
     this.#stock = (d.stock ?? []).map((s) => ({
       type: s.type, style: s.style ?? "rústico", quality: Number.isFinite(s.quality) ? s.quality : 70,
     }));
-    this.#worker = new Worker("Mario");   // siempre libre al recargar
     this.#orders = (d.orders ?? []).map((od) => Order.fromJSON(od));
+    // Fabricaciones en curso: se reanudan al recargar (no se pierden materiales).
+    this.jobs = Array.isArray(d.jobs) ? d.jobs.map((j) => ({
+      id: j.id, type: j.type, elapsed: +j.elapsed || 0, total: +j.total || 15, batch: !!j.batch,
+    })) : [];
+    this.#worker = new Worker("Mario");
+    if (this.jobs.length) this.#worker.assign();   // Mario sigue ocupado si había trabajo
   }
 
   toJSON() {
@@ -52,6 +58,7 @@ export class Workshop {
       inventory: this.#inventory.toJSON(),
       stock: this.#stock,
       orders: this.#orders.map((o) => o.toJSON()),
+      jobs: this.jobs,
     };
   }
 }

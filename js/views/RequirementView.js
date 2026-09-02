@@ -1,6 +1,5 @@
 import { Modal } from "./ui/Modal.js";
 import { esc } from "./ui/dom.js";
-import { CONFIG } from "../config/gameConfig.js";
 
 const matName = { wood: "Madera", nails: "Clavos", paint: "Pintura", screws: "Tornillos" };
 const matIco = (m) => (m === "wood" ? "🪵" : m === "nails" ? "🔩" : m === "paint" ? "🎨" : "🔩");
