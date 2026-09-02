@@ -186,7 +186,14 @@ export class KnowledgeView {
         ${stat("Calidad media", s.avgQuality + "/100")}
         ${stat("Reputación", s.reputation)}
       </div>
-      <h3>Dominio por concepto</h3>${bars}`;
+      <h3>Dominio por concepto</h3>${bars}
+      <h3>🏆 Logros ${this.#achv().filter((a) => a.unlocked).length}/${this.#achv().length}</h3>
+      <div class="kv-achv">${this.#achv().map((a) =>
+        `<div class="kv-ach ${a.unlocked ? "on" : ""}" title="${esc(a.desc)}">${a.unlocked ? a.icon : "🔒"} ${esc(a.name)}</div>`).join("")}</div>`;
+  }
+
+  #achv() {
+    try { return this.#gs.achievements.all(); } catch { return []; }
   }
 
   #body() {

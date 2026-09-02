@@ -98,6 +98,7 @@ export class GameController {
     const dt = dtMs / 1000;
     this.crafting.tick(dt);
     this.workshop.tick(dt);
+    this.#gs.events?.tick(dt);
 
     this.#dayAcc += dt;
     if (this.#dayAcc >= 60) {

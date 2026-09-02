@@ -14,7 +14,9 @@ export class WorkshopController {
 
   buy(type, qty = 3) {
     const unit = CONFIG.ECONOMY.buyPrices[type] ?? 6;
-    const cost = unit * qty;
+    // "Proveedor retrasado" (evento del taller) encarece la compra temporalmente.
+    const mult = this.#gs.events?.shopMultiplier ?? 1;
+    const cost = Math.round(unit * qty * mult);
     const rule = BusinessRules.canAfford(this.#gs.player, cost);
     if (!rule.ok) { this.#bus.emit("rule:blocked", rule); return { ok: false, ...rule }; }
     this.#gs.player.spend(cost);

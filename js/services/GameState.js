@@ -6,6 +6,7 @@ import { ChallengeService } from "./ChallengeService.js";
 import { OrderService } from "./OrderService.js";
 import { UpgradeService } from "./UpgradeService.js";
 import { AchievementService } from "./AchievementService.js";
+import { EventService } from "./EventService.js";
 
 /**
  * GameState — ÚNICA FUENTE DE VERDAD del MODELO.
@@ -21,6 +22,7 @@ export class GameState {
   orders = new OrderService();
   upgrades = new UpgradeService();
   achievements;
+  events;
 
   availableOrders = [];
   objective = "Habla con BYTE.";
@@ -35,6 +37,7 @@ export class GameState {
     this.#bus = bus;
     this.requirements = new RequirementService(bus);
     this.achievements = new AchievementService(bus);
+    this.events = new EventService(this, bus);
     this.availableOrders.push(this.orders.starter());
   }
 
@@ -57,7 +60,11 @@ export class GameState {
   refillOrders() {
     const want = this.tutorialCompleted ? 3 : 1;
     while (this.availableOrders.length < want) {
-      this.availableOrders.push(this.orders.generate(this.player.level));
+      const premium = this.events?.premiumNext ?? false;
+      if (premium) this.events.premiumNext = false;
+      this.availableOrders.push(this.orders.generate(this.player.level, {
+        premium, reputation: this.player.reputation,
+      }));
     }
   }
 

@@ -28,6 +28,8 @@ export class NotificationView {
     bus.on("requirement:done", (r) => this.toast(`📌 ${r.code ?? r} completado`, "info"));
     bus.on("rule:blocked", (r) => this.ruleBlocked(r));
     bus.on("achievement:unlocked", (a) => this.achievement(a));
+    bus.on("lab:solved", (d) => this.toast(`🧪 Ejercicio resuelto · +${d.xp} XP · ${d.concept}`, "ok"));
+    bus.on("workshop:event", (e) => this.event(e));
   }
 
   toast(text, kind = "info") {
@@ -52,6 +54,14 @@ export class NotificationView {
     card.append(el("button", { text: "Entendido", on: { click: () => pop.remove() } }));
     pop.addEventListener("click", (e) => { if (e.target === pop) pop.remove(); });
     $("#ui").append(pop);
+  }
+
+  event(e) {
+    const t = el("div", { class: "achieve wev",
+      html: `<span>${e.icon}</span><div><b>${e.title}</b><br>${e.desc}</div>` });
+    this.stack.append(t);
+    requestAnimationFrame(() => t.classList.add("in"));
+    setTimeout(() => { t.classList.remove("in"); setTimeout(() => t.remove(), 300); }, 5200);
   }
 
   achievement(a) {

@@ -23,10 +23,11 @@ export class ShopView {
 
   #render() {
     const coins = this.#gs.player.coins;
+    const evMult = this.#gs.events?.shopMultiplier ?? 1;
     const mat = (type, name) => {
-      const cost = 3 * (CONFIG.ECONOMY.buyPrices[type] ?? 6);
+      const cost = Math.round(3 * (CONFIG.ECONOMY.buyPrices[type] ?? 6) * evMult);
       return `<div class="shop-row"><span>${name} ×3</span>
-        <button class="k" data-act="buymat" data-type="${type}" ${coins >= cost ? "" : "disabled"}>🪙 ${cost}</button></div>`;
+        <button class="k" data-act="buymat" data-type="${type}" ${coins >= cost ? "" : "disabled"}>🪙 ${cost}${evMult > 1 ? " ⚠️" : ""}</button></div>`;
     };
     const ups = this.#upCtrl.list().map((u) => `
       <div class="shop-up ${u.owned ? "owned" : ""}">

@@ -35,8 +35,9 @@ export class OrderService {
     });
   }
 
-  generate(level) {
+  generate(level, opts = {}) {
     const c = CLIENTES[Math.floor(Math.random() * CLIENTES.length)];
+    const reputation = opts.reputation ?? 0;
 
     // líneas según la necesidad del cliente y el nivel del jugador
     const counts = {};
@@ -51,8 +52,11 @@ export class OrderService {
     }));
 
     const units = lines.reduce((s, l) => s + l.qty, 0);
-    const priority = Math.random() < 0.16 ? "urgente" : Math.random() < 0.1 ? "premium" : "normal";
-    const budget = c.budget * (priority === "premium" ? 1.4 : priority === "urgente" ? 1.1 : 1);
+    const priority = opts.premium ? "premium"
+      : Math.random() < 0.16 ? "urgente" : Math.random() < 0.1 ? "premium" : "normal";
+    // Más reputación → mejores presupuestos (tope +25 %).
+    const repBonus = 1 + Math.min(0.25, reputation / 120);
+    const budget = c.budget * repBonus * (priority === "premium" ? 1.4 : priority === "urgente" ? 1.1 : 1);
     const reward = Math.round(lines.reduce((s, l) => s + CONFIG.ECONOMY.sellBase[l.type] * l.qty, 0) * budget);
     const deadline = priority === "urgente" ? 1 : 2 + Math.floor(Math.random() * 3);
 
