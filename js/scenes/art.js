@@ -310,6 +310,63 @@ function planks() {
     <circle cx="7" cy="22" r="2.2" fill="#5a3a1e"/><circle cx="53" cy="22" r="2.2" fill="#5a3a1e"/>
   </svg>`;
 }
+/** Zócalo/moldura de la pared trasera (banda de y≈44 a y≈80). */
+function wallRail() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 36">
+    <rect width="32" height="36" fill="#3f2814"/>
+    <rect y="0" width="32" height="5" fill="#5a3a1e"/>
+    <rect y="4" width="32" height="2" fill="#7a5228"/>
+    <rect y="6" width="32" height="1.5" fill="#00000040"/>
+    <rect y="13" width="32" height="14" fill="#4a3018" opacity=".55"/>
+    <rect x="15" y="8" width="2" height="20" fill="#00000022"/>
+    <rect y="30" width="32" height="6" fill="#241608"/>
+  </svg>`;
+}
+
+/** Pila de tablones larga apoyada en la pared (hero prop). */
+function lumberStack() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 74">
+    <ellipse cx="50" cy="68" rx="46" ry="6" fill="#000" opacity=".24"/>
+    ${[0, 1, 2, 3, 4, 5].map((i) => {
+      const y = 54 - i * 7, sk = i * 2.4;
+      return `<rect x="${6 + sk}" y="${y}" width="${86 - sk}" height="7" rx="1.5" fill="${i % 2 ? "#b9884e" : "#a5763f"}" stroke="#6b4423" stroke-width="0.7"/>
+        <ellipse cx="${9 + sk}" cy="${y + 3.5}" rx="2" ry="3" fill="#7a4a24"/>
+        <ellipse cx="90" cy="${y + 3.5}" rx="2" ry="3" fill="#8a5a34"/>`;
+    }).join("")}
+  </svg>`;
+}
+
+/** Panel de herramientas de pared (pegboard con herramientas). */
+function toolRack() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 124 58">
+    <rect width="124" height="58" rx="3" fill="#4a3320"/>
+    <rect x="2" y="2" width="120" height="54" rx="2" fill="#6b4a2a"/>
+    ${Array.from({ length: 32 }, (_, i) => `<circle cx="${10 + (i % 8) * 15}" cy="${10 + ((i / 8) | 0) * 13}" r="1.2" fill="#00000030"/>`).join("")}
+    <rect x="14" y="7" width="4" height="26" rx="2" fill="#7a4a24"/><rect x="8" y="5" width="17" height="8" rx="2" fill="#9aa3af"/>
+    <path d="M40 9 L78 9 L78 16 Q59 21 40 16 Z" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1"/>
+    <rect x="34" y="7" width="8" height="13" rx="2" fill="#8a5a30"/>
+    <rect x="96" y="9" width="6" height="36" rx="3" fill="#9aa3af"/>
+    <path d="M92 7 q7 -4 14 0 l-3 6 q-4 -2 -8 0 z" fill="#9aa3af"/>
+    <rect x="56" y="28" width="4" height="22" rx="2" fill="#c0392b"/><rect x="56" y="48" width="4" height="8" fill="#cbd5e1"/>
+    <circle cx="118" cy="30" r="9" fill="none" stroke="#9aa3af" stroke-width="3"/>
+  </svg>`;
+}
+
+/** Estantería con muebles terminados en exposición (hero prop). */
+function furnDisplay() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 92 98">
+    <ellipse cx="46" cy="92" rx="43" ry="7" fill="#000" opacity=".26"/>
+    <rect x="4" y="2" width="84" height="92" rx="3" fill="#5a3a1e"/>
+    <rect x="8" y="6" width="76" height="84" rx="2" fill="#6b4423"/>
+    <rect x="8" y="33" width="76" height="5" fill="#3a2412"/><rect x="8" y="62" width="76" height="5" fill="#3a2412"/>
+    <g transform="translate(16 9)"><rect x="0" y="4" width="3" height="16" fill="#b9884e"/><rect x="15" y="4" width="3" height="16" fill="#b9884e"/><rect x="0" y="5" width="18" height="3" fill="#b9884e"/><rect x="0" y="9" width="18" height="3" fill="#b9884e"/><rect x="-1" y="14" width="20" height="4" fill="#a5763f"/></g>
+    <g transform="translate(48 13)"><rect x="0" y="0" width="26" height="4" rx="1" fill="#b9884e"/><rect x="2" y="4" width="3" height="11" fill="#8a5a30"/><rect x="21" y="4" width="3" height="11" fill="#8a5a30"/></g>
+    <g transform="translate(20 42)"><rect x="0" y="0" width="22" height="19" rx="1" fill="#8a5a30" stroke="#6b4423" stroke-width="1"/><rect x="10.2" y="1" width="1.6" height="17" fill="#6b4423"/><circle cx="7" cy="10" r="1" fill="#e0a92b"/><circle cx="15" cy="10" r="1" fill="#e0a92b"/></g>
+    <g transform="translate(54 45)"><rect x="0" y="0" width="8" height="11" rx="1" fill="#3b6ea5"/><rect x="10" y="3" width="8" height="8" rx="1" fill="#c0392b"/></g>
+    <g transform="translate(16 71)"><ellipse cx="6" cy="7" rx="6" ry="6" fill="#c8a46c"/><ellipse cx="6" cy="7" rx="2" ry="2" fill="#7a4a24"/><ellipse cx="22" cy="7" rx="6" ry="6" fill="#c8a46c"/><ellipse cx="22" cy="7" rx="2" ry="2" fill="#7a4a24"/></g>
+  </svg>`;
+}
+
 /** Halo radial suave — se usa (con blend ADD) como "luz" de lámparas, estufa y
  *  focos de estación, y (con MULTIPLY) como sombra de contacto y viñeta. */
 function glow() {
@@ -361,6 +418,10 @@ export function artManifest() {
   list.push({ key: "planks", svg: planks(), w: 60, h: 34, s: 1 });
   list.push({ key: "chair_done", svg: chairDone(), w: 34, h: 40, s: 1 });
   list.push({ key: "glow", svg: glow(), w: 128, h: 128, s: 1 });
+  list.push({ key: "wallrail", svg: wallRail(), w: 32, h: 36, s: 1 });
+  list.push({ key: "lumber", svg: lumberStack(), w: 100, h: 74, s: 1 });
+  list.push({ key: "toolrack", svg: toolRack(), w: 124, h: 58, s: 1 });
+  list.push({ key: "furndisplay", svg: furnDisplay(), w: 92, h: 98, s: 1 });
   return list.map((it) => {
     const rw = it.w * it.s, rh = it.h * it.s;
     return { key: it.key, rw, rh, svg: it.svg.replace("<svg ", `<svg width="${rw}" height="${rh}" `) };

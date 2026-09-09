@@ -50,7 +50,8 @@ export class WorkshopScene extends Phaser.Scene {
     // La cámara ve todo el lienzo (VIEW) y centra el taller (WORLD) dentro.
     this.cameras.main.setBounds(-MX, 0, W + MX * 2, H).setBackgroundColor("#20140a");
     // El ÚNICO límite del jugador: los bordes del taller. Nada de paredes sueltas.
-    this.physics.world.setBounds(30, 66, W - 60, H - 100);
+    // (top a 82 = pared + zócalo; el borde inferior queda igual que antes).
+    this.physics.world.setBounds(30, 82, W - 60, H - 116);
     this.solids = this.physics.add.staticGroup();
 
     this.#floor();
@@ -151,8 +152,8 @@ export class WorkshopScene extends Phaser.Scene {
 
     // --- viñeta horneada: penumbra en los bordes del suelo ---
     const dark = (x, y, w, h, a) => rt.fill(0x120a04, a, x, y, w, h);
-    for (let i = 0; i < 46; i++) {          // sombra profunda bajo la pared
-      dark(0, 48 + i, fw, 1, 0.014 * (1 - i / 46) + 0.004);
+    for (let i = 0; i < 50; i++) {          // sombra profunda bajo la pared + zócalo
+      dark(0, 80 + i, fw, 1, 0.016 * (1 - i / 50) + 0.004);
     }
     for (let i = 0; i < 60; i++) {          // laterales
       const a = 0.010 * (1 - i / 60);
@@ -164,8 +165,11 @@ export class WorkshopScene extends Phaser.Scene {
   #wallsAndWindows() {
     // La pared superior es solo DECORACIÓN: el límite lo pone physics.world.
     const wx0 = -Math.ceil(MX / 32) * 32, wx1 = W + Math.ceil(MX / 32) * 32;
-    const wallRT = this.add.renderTexture(wx0, 0, wx1 - wx0, 48).setOrigin(0).setDepth(6);
+    const wallRT = this.add.renderTexture(wx0, 0, wx1 - wx0, 46).setOrigin(0).setDepth(6);
     for (let i = wx0; i < wx1; i += 32) wallRT.draw("wall", i - wx0, 0);
+    // zócalo/moldura: da altura y remate a la pared (y 44 → 80)
+    const railRT = this.add.renderTexture(wx0, 44, wx1 - wx0, 36).setOrigin(0).setDepth(6);
+    for (let i = wx0; i < wx1; i += 32) railRT.draw("wallrail", i - wx0, 0);
     this.#floorTrim(0, H - 26, W);
     // ventanas con cielo cálido de tarde + haz de luz entrando al taller
     const ADD = Phaser.BlendModes.ADD;
@@ -190,22 +194,22 @@ export class WorkshopScene extends Phaser.Scene {
   #wallDecor() {
     const g = this.add.graphics().setDepth(7);
     // panel de corcho con notas ENCIMA del tablón de pedidos (izquierda)
+    g.fillStyle(0x2a1c0e, 1); g.fillRoundedRect(118, 4, 124, 38, 3);
     g.fillStyle(0x8a6a3a, 1); g.fillRoundedRect(120, 6, 120, 34, 3);
     [[130, 12], [158, 10], [186, 14], [210, 9]].forEach(([nx, ny]) => {
       g.fillStyle(0xfdf6e3, 1); g.fillRect(nx, ny, 18, 14);
       g.fillStyle(0xc0392b, 1); g.fillCircle(nx + 9, ny, 1.6);
     });
-    // reloj de pared (centro)
-    g.fillStyle(0x1c1c1c, 1); g.fillCircle(600, 24, 13); g.fillStyle(0xf3e6cc, 1); g.fillCircle(600, 24, 10);
-    g.lineStyle(2, 0x1c1c1c, 1); g.lineBetween(600, 24, 600, 17); g.lineBetween(600, 24, 606, 24);
-    // pegboard con herramientas ENCIMA del banco (Mario, x300)
-    g.fillStyle(0x6b4a2a, 1); g.fillRoundedRect(230, 8, 150, 32, 3);
-    g.fillStyle(0xc9c9d2, 1); g.fillTriangle(255, 34, 245, 14, 265, 14);       // sierra
-    g.fillStyle(0x8a5a30, 1); g.fillRect(300, 12, 5, 22); g.fillStyle(0x9aa3af, 1); g.fillRect(294, 10, 17, 7); // martillo
-    g.lineStyle(4, 0xc9c9d2, 1); g.beginPath(); g.arc(345, 22, 11, 0, Math.PI); g.strokePath(); // llave
-    // vigas del techo
-    g.fillStyle(0x3a2412, 1);
-    [140, 470, 800].forEach((x) => g.fillRect(x, 48, 24, 14));
+    // reloj de pared (hueco entre las dos ventanas)
+    g.fillStyle(0x241608, 1); g.fillCircle(500, 20, 15);
+    g.fillStyle(0x1c1c1c, 1); g.fillCircle(500, 20, 13); g.fillStyle(0xf3e6cc, 1); g.fillCircle(500, 20, 10);
+    g.lineStyle(2, 0x1c1c1c, 1); g.lineBetween(500, 20, 500, 13); g.lineBetween(500, 20, 506, 20);
+    // panel de herramientas en el hueco de pared central
+    this.add.image(400, 24, "toolrack").setScale(0.9).setDepth(7);
+    // vigas del techo (alineadas con las lámparas)
+    g.fillStyle(0x241608, 1);
+    [W * 0.34, W * 0.68].forEach((x) => g.fillRect(x - 12, 44, 24, 12));
+    [120, W - 140].forEach((x) => g.fillRect(x, 44, 22, 10));
   }
 
   #shelfDraw(x, y) {
@@ -358,20 +362,22 @@ export class WorkshopScene extends Phaser.Scene {
     };
     const deco = (tex, x, y, d = 3) => this.add.image(x, y, tex).setDepth(d);
 
-    // esquinas y paredes: cajas y barriles reales (colisionan, pegados a los bordes)
-    solid("crate", 58, 470); solid("crate", 86, 450, 4); solid("crate", 74, 428, 5);
-    solid("barrel", 912, 100); solid("barrel", 40, 300);
-    solid("crate", 910, 466); solid("barrel", 890, 430, 4);
+    // --- HERO PROPS: pocos, grandes, bien colocados (un taller, no un trastero) ---
+    solid("lumber", 94, 262);                     // pila de tablones junto a la pared izq.
+    solid("furndisplay", 906, 156).setScale(0.82).setDepth(3);   // vitrina de muebles, esquina sup. der.
+    solid("barrel", 46, 300);                     // hueco pared izq.
+    solid("barrel", 924, 470); solid("crate", 900, 452, 4);      // esquina inf. der.
 
-    // decoración ambiental (atravesable, llena el taller sin estorbar el paso)
-    deco("planks", 470, 486); deco("planks", 700, 300);
-    deco("chair_done", 636, 486); deco("chair_done", 672, 476, 4);
-    deco("chair_done", 150, 250); deco("planks", 850, 300); deco("planks", 150, 486);
-    // montones de aserrín repartidos
+    // decoración ambiental suelta (atravesable, poca) — muebles terminados
+    // apilados junto al mostrador (esperando al cliente)
+    deco("chair_done", 700, 470); deco("chair_done", 726, 462, 4);
+    deco("planks", 690, 320); deco("planks", 250, 496);
+
+    // montón de aserrín solo junto al banco (donde se trabaja)
     const s = this.add.graphics().setDepth(3);
-    [[300, 458, 34], [190, 420, 24], [760, 452, 28]].forEach(([x, y, w]) => {
-      s.fillStyle(0xd8c49a, 0.75); s.fillEllipse(x, y, w, w * 0.35);
-      s.fillStyle(0xc8b184, 0.75); s.fillEllipse(x, y - 2, w * 0.6, w * 0.22);
+    [[300, 460, 40], [232, 448, 24]].forEach(([x, y, w]) => {
+      s.fillStyle(0xd8c49a, 0.7); s.fillEllipse(x, y, w, w * 0.34);
+      s.fillStyle(0xc8b184, 0.7); s.fillEllipse(x, y - 2, w * 0.6, w * 0.2);
     });
     // clavos y tablas sueltas cerca de la computadora
     const t = this.add.graphics().setDepth(3);
@@ -410,10 +416,10 @@ export class WorkshopScene extends Phaser.Scene {
     const cam = this.cameras.main;
     if (!cam.postFX || !cam.postFX.enable) return;
     try {
-      cam.postFX.addVignette(0.5, 0.52, 0.92, 0.36);
-      cam.postFX.addBloom(0xfff2d6, 1, 1, 0.55, 0.55, 4);
+      cam.postFX.addVignette(0.5, 0.53, 0.95, 0.32);
+      cam.postFX.addBloom(0xfff2d6, 1, 1, 0.55, 0.5, 4);
       const cm = cam.postFX.addColorMatrix();
-      cm.brightness(1.035);
+      cm.brightness(1.06);
       cm.saturate(0.1);
     } catch { /* si el pipeline no está disponible, sin grade */ }
   }
