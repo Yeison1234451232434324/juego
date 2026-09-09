@@ -152,14 +152,14 @@ export class WorkshopScene extends Phaser.Scene {
 
     // --- viñeta horneada: penumbra en los bordes del suelo ---
     const dark = (x, y, w, h, a) => rt.fill(0x120a04, a, x, y, w, h);
-    for (let i = 0; i < 50; i++) {          // sombra profunda bajo la pared + zócalo
-      dark(0, 80 + i, fw, 1, 0.016 * (1 - i / 50) + 0.004);
+    for (let i = 0; i < 42; i++) {          // sombra bajo la pared + zócalo
+      dark(0, 80 + i, fw, 1, 0.010 * (1 - i / 42) + 0.003);
     }
-    for (let i = 0; i < 60; i++) {          // laterales
-      const a = 0.010 * (1 - i / 60);
+    for (let i = 0; i < 46; i++) {          // laterales
+      const a = 0.006 * (1 - i / 46);
       dark(i, 0, 1, H, a); dark(fw - 1 - i, 0, 1, H, a);
     }
-    for (let i = 0; i < 40; i++) dark(0, H - 1 - i, fw, 1, 0.011 * (1 - i / 40));  // borde inferior
+    for (let i = 0; i < 30; i++) dark(0, H - 1 - i, fw, 1, 0.007 * (1 - i / 30));  // borde inferior
   }
 
   #wallsAndWindows() {
@@ -404,17 +404,21 @@ export class WorkshopScene extends Phaser.Scene {
       this.add.image(x, y, "glow").setScale(scale).setTint(tint).setAlpha(alpha)
         .setBlendMode(ADD).setDepth(depth);
 
+    // Relleno ambiental cálido: sube el nivel general de luz del taller.
+    light(W * 0.5, H * 0.46, 9.0, 0xffe4b8, 0.12);
+    light(W * 0.5, H * 0.5, 6.0, 0xffdca8, 0.10);
+
     // Foco cálido bajo cada estación → el puesto "sale" del suelo.
-    for (const s of STATIONS) light(s.x, s.y + 6, 1.7, 0xffcf88, 0.20);
+    for (const s of STATIONS) light(s.x, s.y + 6, 1.9, 0xffcf88, 0.30);
 
     // Dos lámparas colgantes con su cono de luz.
     for (const lx of [W * 0.34, W * 0.68]) {
       this.add.line(0, 0, lx, 48, lx, 150, 0x241608).setLineWidth(2).setDepth(7).setOrigin(0);
       const shade = this.add.triangle(lx, 150, -15, 0, 15, 0, 0, 17, 0x3a2412).setDepth(8);
       const bulb = this.add.circle(lx, 158, 4.5, 0xffe6a8).setDepth(8);
-      const cone = light(lx, 235, 4.0, 0xffe2ac, 0.15, 1);
+      const cone = light(lx, 235, 4.6, 0xffe2ac, 0.24, 1);
       this.tweens.add({ targets: [shade, bulb, cone], x: lx + 4, yoyo: true, repeat: -1, duration: 2600, ease: "Sine.inOut" });
-      this.tweens.add({ targets: cone, alpha: 0.10, scale: 3.7, yoyo: true, repeat: -1, duration: 2600 });
+      this.tweens.add({ targets: cone, alpha: 0.18, scale: 4.3, yoyo: true, repeat: -1, duration: 2600 });
       this.tweens.add({ targets: bulb, alpha: 0.75, yoyo: true, repeat: -1, duration: 1800 });
     }
 
@@ -429,11 +433,11 @@ export class WorkshopScene extends Phaser.Scene {
     const cam = this.cameras.main;
     if (!cam.postFX || !cam.postFX.enable) return;
     try {
-      cam.postFX.addVignette(0.5, 0.53, 0.95, 0.32);
+      cam.postFX.addVignette(0.5, 0.52, 1.1, 0.18);
       cam.postFX.addBloom(0xfff2d6, 1, 1, 0.55, 0.5, 4);
       const cm = cam.postFX.addColorMatrix();
-      cm.brightness(1.06);
-      cm.saturate(0.1);
+      cm.brightness(1.18);
+      cm.saturate(0.12);
     } catch { /* si el pipeline no está disponible, sin grade */ }
   }
 
