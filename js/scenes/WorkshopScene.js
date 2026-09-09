@@ -288,7 +288,20 @@ export class WorkshopScene extends Phaser.Scene {
         this.physics.add.existing(r, true); this.solids.add(r);
       }
       if (s.sign) this.#sign(s.x, s.y + s.sign.dy, s.icon, s.sign.name);
+      if (s.kind === "pc") this.#pcScreen(s.x, s.y);
     }
+  }
+
+  /** Pantalla del PC de Programación: brillo suave + cursor parpadeante. */
+  #pcScreen(x, y) {
+    const ADD = Phaser.BlendModes.ADD;
+    const glow = this.add.image(x, y - 23, "glow")
+      .setScale(0.7).setTint(0x7dffb0).setAlpha(0.16).setBlendMode(ADD).setDepth(3);
+    this.tweens.add({ targets: glow, alpha: 0.28, scale: 0.8, duration: 1600,
+      yoyo: true, repeat: -1, ease: "Sine.inOut" });
+    const caret = this.add.rectangle(x - 15, y - 15, 5, 2, 0x7dffb0).setDepth(3);
+    this.tweens.add({ targets: caret, alpha: 0, duration: 520, yoyo: true,
+      repeat: -1, hold: 120, repeatDelay: 120 });
   }
 
   /**
