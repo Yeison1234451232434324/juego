@@ -140,9 +140,9 @@ export class WorkshopScene extends Phaser.Scene {
 
     // --- desgaste y suciedad: manchas oscuras grandes y difusas (rompen el patrón) ---
     for (const [gx, gy, sc, a] of [
-      [W * 0.28, H * 0.55, 3.2, 0.10], [W * 0.62, H * 0.4, 2.6, 0.08],
-      [W * 0.8, H * 0.7, 2.9, 0.09], [W * 0.15, H * 0.3, 2.2, 0.07],
-      [W * 0.5, H * 0.82, 3.4, 0.09],
+      [W * 0.28, H * 0.55, 3.2, 0.05], [W * 0.62, H * 0.4, 2.6, 0.04],
+      [W * 0.8, H * 0.7, 2.9, 0.05], [W * 0.15, H * 0.3, 2.2, 0.035],
+      [W * 0.5, H * 0.82, 3.4, 0.045],
     ]) {
       const img = this.make.image({ x: 0, y: 0, key: "glow", add: false })
         .setTint(0x000000).setAlpha(a).setScale(sc);
@@ -160,6 +160,12 @@ export class WorkshopScene extends Phaser.Scene {
       dark(i, 0, 1, H, a); dark(fw - 1 - i, 0, 1, H, a);
     }
     for (let i = 0; i < 30; i++) dark(0, H - 1 - i, fw, 1, 0.007 * (1 - i / 30));  // borde inferior
+
+    // --- baño de luz cálida sobre todo el suelo (sube el nivel general) ---
+    rt.fill(0xffe6c2, 0.12, 0, 0, fw, H);
+    for (let i = 0; i < 90; i++) {          // gradiente central más luminoso
+      rt.fill(0xfff0d6, 0.045 * (1 - i / 90), 0, 150 + i, fw, 1);
+    }
   }
 
   #wallsAndWindows() {
@@ -405,8 +411,9 @@ export class WorkshopScene extends Phaser.Scene {
         .setBlendMode(ADD).setDepth(depth);
 
     // Relleno ambiental cálido: sube el nivel general de luz del taller.
-    light(W * 0.5, H * 0.46, 9.0, 0xffe4b8, 0.12);
-    light(W * 0.5, H * 0.5, 6.0, 0xffdca8, 0.10);
+    light(W * 0.5, H * 0.46, 11.0, 0xffe4b8, 0.20);
+    light(W * 0.5, H * 0.52, 7.0, 0xffdca8, 0.16);
+    light(W * 0.5, H * 0.3, 8.0, 0xffe8c0, 0.12);
 
     // Foco cálido bajo cada estación → el puesto "sale" del suelo.
     for (const s of STATIONS) light(s.x, s.y + 6, 1.9, 0xffcf88, 0.30);
@@ -433,11 +440,11 @@ export class WorkshopScene extends Phaser.Scene {
     const cam = this.cameras.main;
     if (!cam.postFX || !cam.postFX.enable) return;
     try {
-      cam.postFX.addVignette(0.5, 0.52, 1.1, 0.18);
-      cam.postFX.addBloom(0xfff2d6, 1, 1, 0.55, 0.5, 4);
+      cam.postFX.addVignette(0.5, 0.52, 1.3, 0.10);
+      cam.postFX.addBloom(0xfff2d6, 1, 1, 0.6, 0.55, 4);
       const cm = cam.postFX.addColorMatrix();
-      cm.brightness(1.18);
-      cm.saturate(0.12);
+      cm.brightness(1.34);
+      cm.saturate(0.16);
     } catch { /* si el pipeline no está disponible, sin grade */ }
   }
 
