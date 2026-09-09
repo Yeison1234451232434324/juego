@@ -3,6 +3,8 @@ import { CONFIG } from "../config/gameConfig.js";
 import { CHAR_SCALE } from "./art.js";
 
 const W = CONFIG.WORLD.width, H = CONFIG.WORLD.height;
+// Escala de personaje en pantalla (un pelín más grandes = más presencia).
+const CS = CHAR_SCALE * 1.12;
 // Margen a cada lado: el lienzo (VIEW) es más ancho que el taller (WORLD).
 const MX = Math.max(0, Math.round((CONFIG.VIEW.width - W) / 2));
 
@@ -61,6 +63,7 @@ export class WorkshopScene extends Phaser.Scene {
     this.#lighting();
     this.#dust();
     this.#objectiveMarker();
+    this.#grade();
 
     // IMPORTANTE: enableCapture = false → las teclas SÍ llegan al editor de código.
     // El teclado de Phaser queda SIEMPRE activo (nunca lo desactivamos por frame:
@@ -85,11 +88,23 @@ export class WorkshopScene extends Phaser.Scene {
     // escena se reinicia (así no se acumulan listeners ni se toca un objeto
     // Phaser ya destruido).
     const bench = STATIONS.find((s) => s.id === "bench");
+    // chispas del martillo: solo mientras Mario fabrica
+    this.benchSparks = this.add.particles(bench.x + 6, bench.y - 14, "spark", {
+      lifespan: 320, speed: { min: 30, max: 90 }, angle: { min: 200, max: 340 },
+      gravityY: 220, scale: { start: 0.7, end: 0 }, tint: [0xffe6a8, 0xffb14a],
+      frequency: 70, quantity: 2, emitting: false,
+    }).setDepth(11);
     this._offs = [
       this.bus.on("craft:progress", (p) => this.#bar("bench", p.ratio)),
-      this.bus.on("craft:done", () => { this.#bar("bench", 0, true); this.#burst(bench.x, bench.y - 10); }),
+      this.bus.on("craft:started", () => this.benchSparks.start()),
+      this.bus.on("craft:done", () => {
+        this.#bar("bench", 0, true); this.#burst(bench.x, bench.y - 10);
+        if (!this.gs.workshop.jobs.length) this.benchSparks.stop();
+      }),
       this.bus.on("objective:changed", (o) => this.#setHint(o?.hintStation ?? this.gs.hintStation)),
     ];
+    // si recargamos con una fabricación en curso, retomar las chispas
+    if (this.gs.workshop.jobs?.length) this.benchSparks.start();
     this.events.once("shutdown", () => {
       window.removeEventListener("blur", this._release);
       this.input.off("gameout", this._release);
@@ -112,7 +127,8 @@ export class WorkshopScene extends Phaser.Scene {
   #floor() {
     const x0 = -Math.ceil(MX / 32) * 32;            // alinear a la rejilla
     const x1 = W + Math.ceil(MX / 32) * 32;
-    const rt = this.add.renderTexture(x0, 0, x1 - x0, H).setOrigin(0).setDepth(-20);
+    const fw = x1 - x0;
+    const rt = this.add.renderTexture(x0, 0, fw, H).setOrigin(0).setDepth(-20);
     for (let y = 0; y < H; y += 32)
       for (let x = x0; x < x1; x += 32) {
         const t = (Math.abs((x * 7 + y * 13) % 97) % 10 < 2) ? 2 : (((x / 32) + (y / 32)) % 2 ? 1 : 0);
@@ -120,6 +136,29 @@ export class WorkshopScene extends Phaser.Scene {
       }
     const rug = this.textures.get("rug").getSourceImage();
     rt.draw("rug", W / 2 - rug.width / 2 - x0, 330 - rug.height / 2);
+
+    // --- desgaste y suciedad: manchas oscuras grandes y difusas (rompen el patrón) ---
+    for (const [gx, gy, sc, a] of [
+      [W * 0.28, H * 0.55, 3.2, 0.10], [W * 0.62, H * 0.4, 2.6, 0.08],
+      [W * 0.8, H * 0.7, 2.9, 0.09], [W * 0.15, H * 0.3, 2.2, 0.07],
+      [W * 0.5, H * 0.82, 3.4, 0.09],
+    ]) {
+      const img = this.make.image({ x: 0, y: 0, key: "glow", add: false })
+        .setTint(0x000000).setAlpha(a).setScale(sc);
+      rt.draw(img, gx - x0, gy);
+      img.destroy();
+    }
+
+    // --- viñeta horneada: penumbra en los bordes del suelo ---
+    const dark = (x, y, w, h, a) => rt.fill(0x120a04, a, x, y, w, h);
+    for (let i = 0; i < 46; i++) {          // sombra profunda bajo la pared
+      dark(0, 48 + i, fw, 1, 0.014 * (1 - i / 46) + 0.004);
+    }
+    for (let i = 0; i < 60; i++) {          // laterales
+      const a = 0.010 * (1 - i / 60);
+      dark(i, 0, 1, H, a); dark(fw - 1 - i, 0, 1, H, a);
+    }
+    for (let i = 0; i < 40; i++) dark(0, H - 1 - i, fw, 1, 0.011 * (1 - i / 40));  // borde inferior
   }
 
   #wallsAndWindows() {
@@ -128,12 +167,18 @@ export class WorkshopScene extends Phaser.Scene {
     const wallRT = this.add.renderTexture(wx0, 0, wx1 - wx0, 48).setOrigin(0).setDepth(6);
     for (let i = wx0; i < wx1; i += 32) wallRT.draw("wall", i - wx0, 0);
     this.#floorTrim(0, H - 26, W);
-    // ventanas en la pared superior
-    [[220, 0], [640, 0]].forEach(([wx]) => {
-      this.add.rectangle(wx + 70, 24, 108, 34, 0x0d1a26).setDepth(7);
-      this.add.rectangle(wx + 70, 24, 100, 26, 0xbfe3ff).setDepth(8);
-      this.add.rectangle(wx + 70, 24, 4, 26, 0x0d1a26).setDepth(9);
-      this.add.rectangle(wx + 70, 24, 100, 3, 0x0d1a26).setDepth(9);
+    // ventanas con cielo cálido de tarde + haz de luz entrando al taller
+    const ADD = Phaser.BlendModes.ADD;
+    [[220], [640]].forEach(([wx]) => {
+      const cx = wx + 70;
+      this.add.rectangle(cx, 24, 108, 34, 0x1a1208).setDepth(7);
+      this.add.rectangle(cx, 26, 100, 24, 0xffd9a0).setDepth(8);   // cielo cálido
+      this.add.rectangle(cx, 16, 100, 8, 0xfff0cc).setDepth(8);
+      this.add.rectangle(cx, 24, 4, 26, 0x2a1c0e).setDepth(9);
+      this.add.rectangle(cx, 24, 100, 3, 0x2a1c0e).setDepth(9);
+      const beam = this.add.triangle(cx - 6, 42, -26, 0, 32, 0, 8, 150, 0xfff0c8)
+        .setBlendMode(ADD).setAlpha(0.06).setDepth(2);
+      this.tweens.add({ targets: beam, alpha: 0.03, yoyo: true, repeat: -1, duration: 3200, ease: "Sine.inOut" });
     });
   }
 
@@ -272,7 +317,7 @@ export class WorkshopScene extends Phaser.Scene {
     for (const s of STATIONS) {
       const id = s.npc;
       const ny = s.y + (DY[s.kind] ?? 22);
-      const sp = this.add.sprite(s.x, ny, `${id}_work_0`).setScale(CHAR_SCALE);
+      const sp = this.add.sprite(s.x, ny, `${id}_work_0`).setScale(CS);
       sp._t = Math.random() * 900;
       sp.setDepth(8 + ny * 0.02);
       this.npc[id] = sp;
@@ -284,7 +329,7 @@ export class WorkshopScene extends Phaser.Scene {
   }
 
   #player() {
-    this.pj = this.physics.add.sprite(480, 320, "pj_d_0").setDepth(9).setScale(CHAR_SCALE);
+    this.pj = this.physics.add.sprite(480, 320, "pj_d_0").setDepth(9).setScale(CS);
     // La textura mide 44x60. El cuerpo va a los PIES del personaje.
     this.pj.body.setSize(20, 12);
     this.pj.body.setOffset(12, 46);
@@ -335,20 +380,60 @@ export class WorkshopScene extends Phaser.Scene {
   }
 
   #lighting() {
-    // lámpara colgante
-    this.add.line(0, 0, W / 2, 48, W / 2, 150, 0x2a1a0e).setLineWidth(2).setDepth(7).setOrigin(0);
-    const shade = this.add.triangle(W / 2, 150, -16, 0, 16, 0, 0, 18, 0x3a2412).setDepth(8);
-    const bulb = this.add.circle(W / 2, 158, 5, 0xffe6a8).setDepth(8);
-    this.tweens.add({ targets: [shade, bulb], x: W / 2 + 4, yoyo: true, repeat: -1, duration: 2600, ease: "Sine.inOut" });
-    this.tweens.add({ targets: bulb, alpha: 0.7, yoyo: true, repeat: -1, duration: 1800 });
+    const ADD = Phaser.BlendModes.ADD;
+    const light = (x, y, scale, tint, alpha, depth = 1) =>
+      this.add.image(x, y, "glow").setScale(scale).setTint(tint).setAlpha(alpha)
+        .setBlendMode(ADD).setDepth(depth);
+
+    // Foco cálido bajo cada estación → el puesto "sale" del suelo.
+    for (const s of STATIONS) light(s.x, s.y + 6, 1.7, 0xffcf88, 0.20);
+
+    // Dos lámparas colgantes con su cono de luz.
+    for (const lx of [W * 0.34, W * 0.68]) {
+      this.add.line(0, 0, lx, 48, lx, 150, 0x241608).setLineWidth(2).setDepth(7).setOrigin(0);
+      const shade = this.add.triangle(lx, 150, -15, 0, 15, 0, 0, 17, 0x3a2412).setDepth(8);
+      const bulb = this.add.circle(lx, 158, 4.5, 0xffe6a8).setDepth(8);
+      const cone = light(lx, 235, 4.0, 0xffe2ac, 0.15, 1);
+      this.tweens.add({ targets: [shade, bulb, cone], x: lx + 4, yoyo: true, repeat: -1, duration: 2600, ease: "Sine.inOut" });
+      this.tweens.add({ targets: cone, alpha: 0.10, scale: 3.7, yoyo: true, repeat: -1, duration: 2600 });
+      this.tweens.add({ targets: bulb, alpha: 0.75, yoyo: true, repeat: -1, duration: 1800 });
+    }
+
+    // Luz real y parpadeante de la estufa (esquina superior izquierda).
+    this.stoveLight = light(64, 108, 2.4, 0xff8a38, 0.30, 3);
+    this.tweens.add({ targets: this.stoveLight, alpha: 0.16, scaleX: 2.0,
+      yoyo: true, repeat: -1, duration: 480, ease: "Sine.inOut" });
+  }
+
+  /** Color‑grade de cámara (solo WebGL; en Canvas el juego se ve igual pero sin FX). */
+  #grade() {
+    const cam = this.cameras.main;
+    if (!cam.postFX || !cam.postFX.enable) return;
+    try {
+      cam.postFX.addVignette(0.5, 0.52, 0.92, 0.36);
+      cam.postFX.addBloom(0xfff2d6, 1, 1, 0.55, 0.55, 4);
+      const cm = cam.postFX.addColorMatrix();
+      cm.brightness(1.035);
+      cm.saturate(0.1);
+    } catch { /* si el pipeline no está disponible, sin grade */ }
   }
 
   #dust() {
+    // polvo en suspensión, más visible dentro de los haces de luz (arriba)
     this.add.particles(0, 0, "spark", {
       x: { min: 40, max: W - 40 }, y: { min: 60, max: H - 60 },
       lifespan: 6000, speedY: { min: -4, max: 6 }, speedX: { min: -3, max: 3 },
-      scale: { start: 0.5, end: 0 }, alpha: { start: 0.16, end: 0 }, frequency: 1100, quantity: 1,
+      scale: { start: 0.5, end: 0 }, alpha: { start: 0.14, end: 0 }, frequency: 1100, quantity: 1,
     }).setDepth(38);
+
+    // aserrín dorado flotando junto al banco de Mario (fabricación)
+    const b = STATIONS.find((s) => s.id === "bench");
+    this.add.particles(b.x, b.y - 6, "spark", {
+      x: { min: -26, max: 26 }, y: { min: -8, max: 8 },
+      lifespan: { min: 1800, max: 3200 }, speedY: { min: -14, max: -4 }, speedX: { min: -8, max: 8 },
+      gravityY: 10, scale: { start: 0.6, end: 0 }, tint: 0xe8c98a,
+      alpha: { start: 0.5, end: 0 }, frequency: 380, quantity: 1,
+    }).setDepth(9);
   }
 
   /**
@@ -424,7 +509,7 @@ export class WorkshopScene extends Phaser.Scene {
 
     // el NPC de ese puesto da un pequeño salto para llamar la atención
     if (sp) {
-      this.tweens.add({ targets: sp, scaleX: CHAR_SCALE * 1.14, scaleY: CHAR_SCALE * 1.14,
+      this.tweens.add({ targets: sp, scaleX: CS * 1.14, scaleY: CS * 1.14,
         duration: 170, yoyo: true, repeat: 2, ease: "Sine.inOut" });
     }
   }

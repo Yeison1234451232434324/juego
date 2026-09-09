@@ -178,7 +178,8 @@ function workPose(p, type, frame) {
       <stop offset="0" stop-color="${p.skin}"/><stop offset="1" stop-color="${p.skinS}"/></radialGradient>
     ${G("sh", p.shirt, p.shirtS)}
   </defs>
-  <ellipse cx="22" cy="55" rx="12" ry="3.2" fill="#000" opacity=".2"/>
+  <ellipse cx="22" cy="55.5" rx="13" ry="3.6" fill="#000" opacity=".32"/>
+  <ellipse cx="22" cy="55.5" rx="8" ry="2.4" fill="#000" opacity=".22"/>
   ${legPair(p)}
   ${torsoOf(p)}
   ${tool}
@@ -234,7 +235,8 @@ function person(key, dir, frame, work = false) {
       <stop offset="0" stop-color="${p.skin}"/><stop offset="1" stop-color="${p.skinS}"/></radialGradient>
     ${G("sh", p.shirt, p.shirtS)}
   </defs>
-  <ellipse cx="22" cy="55" rx="12" ry="3.2" fill="#000" opacity=".2"/>
+  <ellipse cx="22" cy="55.5" rx="13" ry="3.6" fill="#000" opacity=".32"/>
+  <ellipse cx="22" cy="55.5" rx="8" ry="2.4" fill="#000" opacity=".22"/>
   ${legs}
   <g transform="translate(0 ${bob})">
     ${side ? arms : ""}
@@ -272,11 +274,13 @@ function wallTile() {
 }
 function rug() {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 100">
-    <defs><radialGradient id="r" cx="0.5" cy="0.5" r="0.6">
-      <stop offset="0" stop-color="#9a3a40"/><stop offset="1" stop-color="#7a2f34"/></radialGradient></defs>
+    <defs><radialGradient id="r" cx="0.5" cy="0.5" r="0.62">
+      <stop offset="0" stop-color="#7c3f42"/><stop offset="1" stop-color="#5e3033"/></radialGradient></defs>
+    <ellipse cx="75" cy="94" rx="70" ry="7" fill="#000" opacity=".18"/>
     <rect x="4" y="4" width="142" height="92" rx="12" fill="url(#r)"/>
-    <rect x="14" y="14" width="122" height="72" rx="8" fill="none" stroke="#e0a92b" stroke-width="3" opacity=".55"/>
-    <rect x="22" y="22" width="106" height="56" rx="6" fill="none" stroke="#e0a92b" stroke-width="1.5" opacity=".35"/>
+    <rect x="4" y="4" width="142" height="92" rx="12" fill="#000" opacity=".12"/>
+    <rect x="14" y="14" width="122" height="72" rx="8" fill="none" stroke="#c99a58" stroke-width="3" opacity=".45"/>
+    <rect x="22" y="22" width="106" height="56" rx="6" fill="none" stroke="#c99a58" stroke-width="1.5" opacity=".3"/>
   </svg>`;
 }
 function crate() {
@@ -304,6 +308,17 @@ function planks() {
     <ellipse cx="30" cy="30" rx="27" ry="4" fill="#000" opacity=".2"/>
     ${[0, 1, 2, 3, 4].map((i) => `<rect x="3" y="${24 - i * 4}" width="54" height="4.4" rx="1" fill="${i % 2 ? "#b9884e" : "#a5763f"}" stroke="#6b4423" stroke-width="0.6"/>`).join("")}
     <circle cx="7" cy="22" r="2.2" fill="#5a3a1e"/><circle cx="53" cy="22" r="2.2" fill="#5a3a1e"/>
+  </svg>`;
+}
+/** Halo radial suave — se usa (con blend ADD) como "luz" de lámparas, estufa y
+ *  focos de estación, y (con MULTIPLY) como sombra de contacto y viñeta. */
+function glow() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+    <defs><radialGradient id="g" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient></defs>
+    <circle cx="64" cy="64" r="64" fill="url(#g)"/>
   </svg>`;
 }
 function chairDone() {
@@ -345,6 +360,7 @@ export function artManifest() {
   list.push({ key: "barrel", svg: barrel(), w: 32, h: 46, s: 1 });
   list.push({ key: "planks", svg: planks(), w: 60, h: 34, s: 1 });
   list.push({ key: "chair_done", svg: chairDone(), w: 34, h: 40, s: 1 });
+  list.push({ key: "glow", svg: glow(), w: 128, h: 128, s: 1 });
   return list.map((it) => {
     const rw = it.w * it.s, rh = it.h * it.s;
     return { key: it.key, rw, rh, svg: it.svg.replace("<svg ", `<svg width="${rw}" height="${rh}" `) };
