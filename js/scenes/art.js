@@ -101,7 +101,10 @@ function torsoDetail(p) {
     <circle cx="22" cy="29" r="0.9" fill="#ffffff" opacity=".5"/>
     <circle cx="22" cy="34" r="0.9" fill="#ffffff" opacity=".5"/>
     <rect x="13" y="38" width="18" height="3" rx="1" fill="#000" opacity=".18"/>
-    <rect x="13.5" y="38.5" width="17" height="1.4" fill="${p.ac}" opacity=".35"/>`;
+    <rect x="13.5" y="38.5" width="17" height="1.4" fill="${p.ac}" opacity=".35"/>
+    <!-- rim de luz cálida (borde derecho, luz de las lámparas del taller) -->
+    <path d="M30.4 25 q1.6 8.5 0 15" stroke="#ffe8bc" stroke-width="1.3" fill="none" opacity=".22"/>
+    <path d="M14 24 q8.5 -6 16 0" stroke="#ffe8bc" stroke-width="1" fill="none" opacity=".16"/>`;
 }
 function torsoOf(p) { return torsoDetail(p); }
 
@@ -112,7 +115,8 @@ function legPair(p) {
     <rect x="${x - 0.5}" y="45" width="8" height="1" fill="#000" opacity=".15"/>
     <rect x="${x - 2}" y="49.5" width="11" height="6" rx="2.6" fill="${p.shoe}"/>
     <rect x="${x - 2}" y="53.5" width="11" height="2" rx="1" fill="#000" opacity=".25"/>
-    <rect x="${x - 1}" y="50" width="8" height="1.4" rx="0.7" fill="#ffffff" opacity=".14"/>`;
+    <rect x="${x - 1}" y="50" width="8" height="1.4" rx="0.7" fill="#ffffff" opacity=".14"/>
+    <rect x="${x + 5.5}" y="39" width="1.1" height="13" rx="0.5" fill="#ffe8bc" opacity=".16"/>`;
   return l(14) + l(23);
 }
 function workPose(p, type, frame) {
@@ -204,7 +208,8 @@ function person(key, dir, frame, work = false) {
       <rect x="${x - 0.5}" y="45" width="8" height="1" fill="#000" opacity=".14"/>
       <rect x="${x - 2}" y="49.5" width="11" height="6" rx="2.6" fill="${p.shoe}"/>
       <rect x="${x - 2}" y="53.5" width="11" height="2" rx="1" fill="#000" opacity=".22"/>
-      <rect x="${x - 1}" y="50" width="9" height="1.5" rx="0.8" fill="#ffffff" opacity=".13"/></g>`;
+      <rect x="${x - 1}" y="50" width="9" height="1.5" rx="0.8" fill="#ffffff" opacity=".13"/>
+      <rect x="${x + 5.5}" y="39" width="1.1" height="13" rx="0.5" fill="#ffe8bc" opacity=".15"/></g>`;
 
   let legs;
   if (side) legs = `${leg(19, legSw * 0.7)}<g opacity=".82">${leg(21, -legSw * 0.7)}</g>`;

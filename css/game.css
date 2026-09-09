@@ -5,6 +5,14 @@
 :root {
   --wood0:#161009; --wood1:#241708; --wood2:#3d2614; --wood3:#5a3a1e;
   --gold:#e0a92b; --gold-l:#ffd98a; --cream:#f3e6cc; --paper:#f6ecd6;
+  /* placa de madera reutilizable para HUD, panel de objetivos y botones */
+  --plank:
+    linear-gradient(180deg, rgba(255,224,160,.10), transparent 26%, rgba(0,0,0,.16)),
+    repeating-linear-gradient(93deg, #2b1d0f 0 15px, #241708 15px 16px),
+    #241708;
+  --plank-edge:
+    inset 0 1px 0 rgba(255,231,175,.16), inset 0 -2px 4px rgba(0,0,0,.35),
+    0 4px 14px rgba(0,0,0,.5);
   --ok:#5bd06a; --bad:#ff6b57; --scr:#0e2a22; --scr-t:#7dffb0;
   --byte:#6fd0f5;
 }
@@ -56,8 +64,9 @@ button { font:inherit; cursor:pointer; }
 .hud { position:fixed; z-index:40;
   top:calc(8px + env(safe-area-inset-top));
   left:calc(8px + env(safe-area-inset-left));
-  background:rgba(20,12,6,.82); border:2px solid #4a3a24; border-radius:10px;
-  padding:6px 10px; font-size:.78rem; font-weight:700; min-width:150px;
+  background:var(--plank); border:1px solid #6b4a2a; border-radius:10px;
+  box-shadow:var(--plank-edge);
+  padding:7px 11px; font-size:.78rem; font-weight:700; min-width:150px;
   max-width:52vw; }
 .hud .hud-line { display:flex; gap:10px; justify-content:space-between; color:#e8dcc0; }
 .hud .coin { color:var(--gold-l); }
@@ -68,16 +77,18 @@ button { font:inherit; cursor:pointer; }
 /* ---------- prompt in-world ---------- */
 .prompt { position:fixed; left:50%; bottom:76px; transform:translateX(-50%); z-index:38;
   max-width:92vw; text-align:center;
-  background:rgba(20,12,6,.9); border:2px solid var(--gold-l); color:var(--gold-l);
-  font-weight:800; font-size:.82rem; padding:5px 14px; border-radius:8px; }
+  background:var(--plank); border:1px solid var(--gold-l); color:var(--gold-l);
+  box-shadow:var(--plank-edge);
+  font-weight:800; font-size:.82rem; padding:6px 15px; border-radius:8px; }
 
 /* ---------- panel de OBJETIVOS (esquina superior derecha) ---------- */
 .quest { position:fixed; z-index:41;
   top:calc(48px + env(safe-area-inset-top));
   right:calc(8px + env(safe-area-inset-right));
   width:min(260px, 62vw);
-  background:rgba(20,12,6,.88); border:2px solid #4a3a24; border-left:3px solid var(--gold);
-  border-radius:10px; padding:8px 10px; font-size:.74rem; line-height:1.4; }
+  background:var(--plank); border:1px solid #6b4a2a; border-left:3px solid var(--gold);
+  box-shadow:var(--plank-edge);
+  border-radius:10px; padding:9px 11px; font-size:.74rem; line-height:1.4; }
 .quest.hidden { display:none; }
 .q-head { font-weight:800; color:#cdbf9f; letter-spacing:.5px; font-size:.68rem; }
 .q-head b { color:var(--gold-l); }
@@ -95,26 +106,24 @@ button { font:inherit; cursor:pointer; }
 .q-remaining { color:#cdbf9f; font-size:.68rem; margin-top:2px; }
 
 /* ---------- botones flotantes (⚙️ ajustes / 🔊 activar sonido) ---------- */
-#gear-btn { position:fixed; z-index:43;
+#gear-btn, #fs-btn, #know-btn {
+  position:fixed; z-index:43;
   top:calc(8px + env(safe-area-inset-top));
-  right:calc(8px + env(safe-area-inset-right));
-  width:32px; height:32px; border-radius:9px; font-size:.95rem; line-height:1;
-  background:rgba(20,12,6,.82); border:2px solid #4a3a24; color:var(--gold-l); }
-#gear-btn.hidden { display:none; }
-#fs-btn { position:fixed; z-index:43;
-  top:calc(8px + env(safe-area-inset-top));
-  right:calc(84px + env(safe-area-inset-right));
-  width:32px; height:32px; border-radius:9px; font-size:1rem; line-height:1;
-  background:rgba(20,12,6,.82); border:2px solid #4a3a24; color:var(--gold-l); }
-#fs-btn.hidden { display:none; }
+  width:34px; height:34px; border-radius:9px; font-size:1rem; line-height:1;
+  background:var(--plank); border:1px solid #6b4a2a; color:var(--gold-l);
+  box-shadow:var(--plank-edge); transition:transform .1s; }
+#gear-btn:active, #fs-btn:active, #know-btn:active { transform:scale(.92); }
+#gear-btn { right:calc(8px + env(safe-area-inset-right)); }
+#fs-btn { right:calc(88px + env(safe-area-inset-right)); }
+#gear-btn.hidden, #fs-btn.hidden { display:none; }
 
 /* ---------- banner de OBJETIVO (slim, centrado arriba) ---------- */
 #obj-banner { position:fixed; z-index:42; left:50%; transform:translateX(-50%);
   top:calc(6px + env(safe-area-inset-top));
   max-width:min(58vw, 420px); text-align:center;
-  background:rgba(20,12,6,.9); border:2px solid var(--gold); border-radius:999px;
-  padding:5px 14px; font-size:.76rem; line-height:1.25;
-  box-shadow:0 3px 14px #0009; }
+  background:var(--plank); border:1px solid var(--gold); border-radius:999px;
+  padding:6px 16px; font-size:.76rem; line-height:1.25;
+  box-shadow:var(--plank-edge); }
 #obj-banner.hidden { display:none; }
 #obj-banner b { color:var(--gold-l); font-size:.66rem; letter-spacing:.5px; margin-right:4px; }
 #obj-banner span { color:#f0e6d0;
@@ -141,8 +150,9 @@ button { font:inherit; cursor:pointer; }
   left:calc(10px + env(safe-area-inset-left));
   top:calc(118px + env(safe-area-inset-top));
   max-width:min(260px, 62vw); }
-.toast { background:rgba(20,12,6,.95); border-left:4px solid var(--gold); border-radius:6px;
-  padding:7px 12px; font-size:.8rem; transform:translateX(120%); transition:transform .28s; }
+.toast { background:var(--plank); border:1px solid #6b4a2a; border-left:4px solid var(--gold);
+  box-shadow:var(--plank-edge); border-radius:6px;
+  padding:8px 13px; font-size:.8rem; transform:translateX(120%); transition:transform .28s; }
 .toast.in { transform:translateX(0); }
 .toast.ok { border-color:var(--ok); } .toast.level { border-color:var(--byte); }
 .achieve { background:linear-gradient(#2a1a0e,#1a1109); border:2px solid var(--gold);
@@ -758,11 +768,7 @@ body.is-fullscreen #game, body.is-fullscreen #ui { height:100vh; height:100dvh; 
    FASE 3 — conocimiento (árbol POO, conceptos, polimorfismo, laboratorio, progreso)
    ================================================================ */
 .hud-rank { font-size:.64rem; color:#c9a86a; font-weight:700; margin-top:1px; }
-#know-btn { position:fixed; z-index:43;
-  top:calc(8px + env(safe-area-inset-top));
-  right:calc(46px + env(safe-area-inset-right));
-  width:32px; height:32px; border-radius:9px; font-size:1rem; line-height:1;
-  background:rgba(20,12,6,.82); border:2px solid #4a3a24; color:var(--gold-l); }
+#know-btn { right:calc(48px + env(safe-area-inset-right)); }
 #know-btn.hidden { display:none; }
 
 .kv .kv-tabs { display:flex; flex-wrap:wrap; gap:4px; margin:6px 0 10px; }
