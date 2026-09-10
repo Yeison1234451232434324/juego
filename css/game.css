@@ -711,8 +711,12 @@ body.is-fullscreen #game, body.is-fullscreen #ui { height:100vh; height:100dvh; 
   pointer-events:none; opacity:0; transition:opacity .28s, transform .28s; max-width:min(92vw,420px); }
 .mvc-flow.hidden { display:none; }
 .mvc-flow.in { opacity:1; transform:translate(-50%,-50%) scale(1); }
-.mvcf-card { background:linear-gradient(#241708f5,#160d05f5); border:2px solid var(--gold);
+.mvcf-card { position:relative; background:linear-gradient(#241708f5,#160d05f5); border:2px solid var(--gold);
   border-radius:14px; padding:14px 16px; box-shadow:0 14px 44px #000; }
+.mvcf-x { pointer-events:auto; position:absolute; top:6px; right:8px; width:26px; height:26px;
+  border-radius:7px; border:1px solid #6b4a2a; background:#2a1a0e; color:var(--gold-l);
+  font-size:1rem; line-height:1; cursor:pointer; }
+.mvcf-x:active { transform:scale(.92); }
 .mvcf-top { text-align:center; color:var(--gold-l); font-weight:800; font-size:.82rem; letter-spacing:.5px; margin-bottom:8px; }
 .mvcf-steps { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; align-items:center; }
 .mvcf-steps li { text-align:center; color:#ece0c8; font-size:.8rem; opacity:1; animation:mvcf-in .3s ease; }

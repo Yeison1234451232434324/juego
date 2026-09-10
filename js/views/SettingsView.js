@@ -110,7 +110,7 @@ export class SettingsView {
 
       ${this.#edu ? `<div class="set-sec">Educativo y accesibilidad</div>
       <div class="set-row">
-        <span>🏗️ Mostrar flujo MVC</span>
+        <span>🏗️ Mostrar flujo MVC automáticamente</span>
         <button class="k sm" data-act="mvcflow">${toggle(this.#edu.get("mvcFlow"))}</button>
       </div>
       <div class="set-row">

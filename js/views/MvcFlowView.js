@@ -2,10 +2,11 @@ import { el, $ } from "./ui/dom.js";
 
 /**
  * MvcFlowView — 🏗️ FLUJO MVC.
- * Al realizar una acción importante muestra BREVEMENTE (≈3 s) la cadena real
+ * En el PRIMER trabajo muestra UNA vez la cadena real
  * Jugador → Vista → Controlador → Modelo → Regla de negocio → Resultado.
- * No bloquea (pointer-events:none), se auto-oculta y se puede desactivar en
- * Ajustes. También se consulta manualmente desde Ajustes.
+ * No se auto-oculta: el jugador la cierra con la ✕. Tras mostrarse una vez,
+ * desactiva sola la opción "mostrar flujo automáticamente" (queda en Ajustes
+ * para volver a verlo cuando quiera con "Ver flujo MVC ahora").
  */
 const FLOWS = {
   "order:accepted": {
@@ -71,13 +72,21 @@ export class MvcFlowView {
     this.#bus = bus;
     this.box = el("div", { class: "mvc-flow hidden" });
     $("#ui").append(this.box);
+    this.box.addEventListener("click", (e) => {
+      if (e.target.closest(".mvcf-x")) this.hide();
+    });
 
     for (const key of Object.keys(FLOWS)) {
-      bus.on(key, () => { if (this.#edu.get("mvcFlow")) this.show(key); });
+      bus.on(key, () => {
+        if (!this.#edu.get("mvcFlow")) return;
+        // Solo la primera vez: se muestra y se apaga el auto-mostrado.
+        this.#edu.set("mvcFlow", false);
+        this.show(key);
+      });
     }
   }
 
-  /** Muestra una cadena por su clave de evento; `manual` la deja visible más tiempo. */
+  /** Muestra una cadena por su clave de evento. Se cierra con la ✕ (no auto-oculta). */
   show(key, manual = false) {
     const flow = FLOWS[key];
     if (!flow) return;
@@ -85,21 +94,22 @@ export class MvcFlowView {
     clearTimeout(this.#timer);
     this.box.innerHTML = `
       <div class="mvcf-card">
+        <button class="mvcf-x" aria-label="Cerrar">✕</button>
         <div class="mvcf-top">🏗️ FLUJO MVC · ${flow.title}</div>
         <ol class="mvcf-steps">
           ${flow.steps.map((s, i) =>
             `<li style="animation-delay:${i * 90}ms"><b>${s[0]}</b><span>${s[1]}</span></li>`).join("<i>↓</i>")}
         </ol>
-        ${manual ? `<div class="mvcf-foot">La Vista muestra · el Controlador decide · el Modelo guarda datos y reglas</div>` : ""}
+        <div class="mvcf-foot">La Vista muestra · el Controlador decide · el Modelo guarda datos y reglas</div>
       </div>`;
     this.box.classList.remove("hidden");
     this.box.classList.add("in");
-    this.#timer = setTimeout(() => this.hide(), manual ? 7000 : 3400);
   }
 
   showManual() { this.show("craft:started", true); }
 
   hide() {
+    clearTimeout(this.#timer);
     this.box.classList.remove("in");
     this.#timer = setTimeout(() => this.box.classList.add("hidden"), 320);
   }
